@@ -1,0 +1,36 @@
+game {
+	level-secs 90
+	tics-to-drop 60
+	hint-period 3
+	bakudan-period 5
+}
+
+animation {
+	drop-tics 8
+	solve-tics 8
+	swap-tics 8
+	move-tics 4
+}
+
+color-schemes {
+	flowers {
+		main-color <255 143 159>
+		alt-color <120 120 255>
+		bg-gradient <255 32 64> <255 255 255>
+		text-gradient <200 200 255> <120 120 255>
+	}
+	
+	falling-leaves {
+		main-color <227 127 40>
+		alt-color <128 128 255>
+		bg-gradient <200 0 0> <255 255 80>
+		text-gradient <255 192 32> <255 32 0>
+	}
+	
+	clouds {
+		main-color <137 187 255>
+		alt-color <255 255 80>
+		bg-gradient <255 255 255> <20 120 255>
+		text-gradient <255 120 20> <255 255 80>
+	}
+}

@@ -1,0 +1,71 @@
+1 *空
+0 霞花　　緑空
+f 日星
+t Kanji blocks drop from the top of the screen
+w 40
+g 80
+h
+t Swipe left or right to move the kanji blocks
+w 40
+^ 100 -50 -50 -50 20
+l
+g 80
+^ -100 -50 100 -50 20
+r
+g 4 
+r
+g 60
+h
+t Tap on the screen to rotate
+w 40
+^ 0 -100 0 -50 15
+u
+g 40
+h
+t Swipe down to drop
+w 40
+^ 0 -20 0 -300 20
+d
+g 1
+f 茶朝
+g 30
+h
+t Combine the blocks with the ones at the bottom to make two-kanji jukugo!
+w 40
+g 76
+r
+g 60
+r
+g 60
+u
+g 30
+d
+g 1
+f 空火
+g 120
+h
+t Increase your score by making more than one jukugo at the same time!
+w 40
+g 60
+u
+g 80
+d
+g 1
+f 青冬
+g 120
+h
+t Look out for hexagonal blocks!
+w 80
+h
+t Killing an hexagonal block will eliminate all blocks with the same kanji!
+w 40
+g 76
+l
+g 60
+l
+g 60
+d
+g 200
+h
+t We hope you have fun with Kasui! If you like it @1(or even hate it...)@0 please rate us on Google Play ^^
+w 40
