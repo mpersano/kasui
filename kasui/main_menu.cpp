@@ -450,23 +450,10 @@ main_menu_impl::create_game_mode_menu()
 void
 draw_fade_overlay(float alpha)
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	static g2d::vertex_array_flat gv(4);
-
-	gv.reset();
-	gv << 0, 0;
-	gv << 0, window_height;
-	gv << window_width, 0;
-	gv << window_width, window_height;
-
-	program_flat& prog = get_program_instance<program_flat>();
-	prog.use();
-	prog.set_proj_modelview_matrix(get_ortho_projection());
-	prog.set_color(g2d::rgba(1, 1, 1, alpha*alpha));
-
-	gv.draw(GL_TRIANGLE_STRIP);
+	render::set_color({ 1.f, 1.f, 1.f, alpha*alpha });
+	render::draw_quad({ { 0, 0 }, { 0, window_height }, { window_width, window_height }, { window_width, 0 } }, 10);
 }
 
 void
@@ -499,13 +486,11 @@ main_menu_impl::redraw() const
 
 	background.draw();
 
-#if 0
 	if (cur_state == STATE_FADE_IN) {
 		draw_fade_overlay(1. - static_cast<float>(state_t)/FADE_IN_T);
 	} else if (cur_state == STATE_OUTRO) {
 		draw_fade_overlay(1. - cur_menu->get_cur_alpha());
 	}
-#endif
 
 	cur_menu->draw();
 
