@@ -1,6 +1,8 @@
 #include "guava2d/texture_manager.h"
 #include "guava2d/sprite_manager.h"
 
+#include "render.h"
+
 #include "common.h"
 #include "program_registry.h"
 #include "tween.h"
@@ -63,7 +65,7 @@ struct foreground_billboard : title_widget
 {
 	foreground_billboard();
 
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const override;
 
 	const g2d::sprite *bb;
 	float y;
@@ -86,7 +88,7 @@ foreground_billboard::foreground_billboard()
 }
 
 void
-foreground_billboard::draw(const g2d::mat4& proj_modelview) const
+foreground_billboard::draw() const
 {
 	if (cur_state == OUTSIDE)
 		return;
@@ -120,52 +122,27 @@ foreground_billboard::draw(const g2d::mat4& proj_modelview) const
 			assert(0);
 	}
 
-	g2d::mat4 mat = proj_modelview*g2d::mat4::translation(x, y, 0)*g2d::mat4::scale(scale);
+	render::push_matrix();
 
-	program_texture_uniform_alpha& prog = get_program_instance<program_texture_uniform_alpha>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-	prog.set_alpha(alpha);
+	render::translate(x, y);
+	render::scale(scale, scale);
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
+	render::draw_sprite(bb, 0, 0, -10);
 
-	bb->draw(0, 0);
+	render::pop_matrix();
 }
 
 title_background::title_background()
 : fg_billboard(new foreground_billboard)
 , logo(new kasui_logo)
 , bg_texture(g2d::texture_manager::get_instance().load("images/haru-bg.png"))
-, bg_billboard(4)
 {
-	initialize_bg_billboard();
 }
 
 title_background::~title_background()
 {
 	delete fg_billboard;
 	delete logo;
-}
-
-void
-title_background::initialize_bg_billboard()
-{
-	const int w = bg_texture->get_pixmap_width();
-	const int h = bg_texture->get_pixmap_height();
-
-	float scaled_height = window_width*h/w;
-	if (scaled_height < window_height)
-		scaled_height = window_height;
-
-	const float dv = bg_texture->get_v_scale();
-	const float du = bg_texture->get_u_scale();
-
-	const float y1 = .5*(window_height - scaled_height);
-	const float y0 = y1 + scaled_height;
-
-	bg_billboard << 0, y0, 0, 0;
-	bg_billboard << 0, y1, 0, dv;
-	bg_billboard << window_width, y0, du, 0;
-	bg_billboard << window_width, y1, du, dv;
 }
 
 void
@@ -186,26 +163,37 @@ title_background::update(uint32_t dt)
 }
 
 void
-title_background::draw(const g2d::mat4& proj_modelview) const
+title_background::draw() const
 {
-	glDisable(GL_BLEND);
+	render::set_blend_mode(blend_mode::NO_BLEND);
 
 	// bg_billboard
 
-	program_texture_decal& prog = get_program_instance<program_texture_decal>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-	prog.set_texture(0);
+	render::set_color({ 1.f, 1.f, 1.f, 1.f });
 
-	bg_texture->bind();
-	bg_billboard.draw(GL_TRIANGLE_STRIP);
+	const int w = bg_texture->get_pixmap_width();
+	const int h = bg_texture->get_pixmap_height();
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	float scaled_height = window_width*h/w;
+	if (scaled_height < window_height)
+		scaled_height = window_height;
 
-	fg_billboard->draw(proj_modelview);
+	const float dv = bg_texture->get_v_scale();
+	const float du = bg_texture->get_u_scale();
 
-	logo->draw(proj_modelview);
+	const float y1 = .5*(window_height - scaled_height);
+	const float y0 = y1 + scaled_height;
 
-	sakura.draw(proj_modelview);
+	render::draw_quad(bg_texture,
+		{ { 0, y0 }, { 0, y1 }, { window_width, y1 }, { window_width, y0 } },
+		{ { 0, 0 }, { 0, dv }, { du, dv }, { du, 0 } },
+		-20);
+
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
+	fg_billboard->draw();
+
+	logo->draw();
+
+	sakura.draw();
 }

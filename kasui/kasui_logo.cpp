@@ -1,6 +1,8 @@
 #include "guava2d/vertex_array.h"
 #include "guava2d/sprite_manager.h"
 
+#include "render.h"
+
 #include "program_registry.h"
 #include "common.h"
 #include "action.h"
@@ -56,7 +58,7 @@ kasui_logo::update(uint32_t dt)
 }
 
 void
-kasui_logo::draw(const g2d::mat4& proj_modelview) const
+kasui_logo::draw() const
 {
 	if (cur_state == OUTSIDE)
 		return;
@@ -96,28 +98,28 @@ kasui_logo::draw(const g2d::mat4& proj_modelview) const
 	const float x = .5*(window_width - w);
 	const float y = window_height - h + sy*h;
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	program_texture_uniform_alpha& prog = get_program_instance<program_texture_uniform_alpha>();
-	prog.use();
-	prog.set_texture(0);
-	prog.set_alpha(alpha);
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
 
-	g2d::mat4 mv = proj_modelview*g2d::mat4::translation(x, y, 0);
+	render::push_matrix();
+	render::translate(x, y);
 
 	// background
 
-	prog.set_proj_modelview_matrix(mv);
-	bg->draw(0, 0);
+	render::draw_sprite(bg, 0, 0, -15);
 
 	// ka
 
-	prog.set_proj_modelview_matrix(mv*g2d::mat4::scale(1, ka_scale, 1));
-	ka->draw(0, 0);
+	render::push_matrix();
+	render::scale(1, ka_scale);
+	render::draw_sprite(ka, 0, 0, -10);
+	render::pop_matrix();
 
 	// sui
 
-	prog.set_proj_modelview_matrix(mv*g2d::mat4::scale(1, sui_scale, 1));
-	sui->draw(0, 0);
+	render::scale(1, sui_scale);
+	render::draw_sprite(sui, 0, 0, -10);
+
+	render::pop_matrix();
 }

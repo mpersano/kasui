@@ -18,6 +18,8 @@
 #include "guava2d/texture_manager.h"
 #include "guava2d/sprite_manager.h"
 
+#include "render.h"
+
 #include "world.h"
 #include "program_registry.h"
 #include "panic.h"
@@ -400,6 +402,8 @@ kasui_impl::initialize(int width, int height)
 
 	g2d::texture_manager::get_instance().set_downsample_scale(downsample_scale);
 	preload_resources();
+
+	render::init();
 
 	// initialize game
 

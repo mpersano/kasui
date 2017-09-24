@@ -5,6 +5,8 @@
 #include "guava2d/vertex_array.h"
 #include "guava2d/sprite.h"
 
+#include "render.h"
+
 #include "common.h"
 
 namespace g2d {
@@ -30,7 +32,7 @@ struct menu_item
 
 	virtual ~menu_item() { }
 
-	virtual void draw(const g2d::mat4& proj_modelview, bool is_selected, float alpha) const = 0;
+	virtual void draw(bool is_selected, float alpha) const = 0;
 
 	virtual void on_activation();
 
@@ -81,15 +83,10 @@ struct action_menu_item : menu_item
 	, is_back(is_back)
 	{ }
 
-	void draw(const g2d::mat4& proj_modelview, bool is_selected, float alpha) const
+	void draw(bool is_selected, float alpha) const
 	{
-		auto& prog = get_program_instance<program_texture_uniform_alpha>();
-		prog.use();
-		prog.set_proj_modelview_matrix(proj_modelview);
-		prog.set_texture(0);
-		prog.set_alpha(is_enabled() ? alpha : alpha*.4);
-	
-		(is_selected ? inactive_sprite : active_sprite)->draw(0., 0.);
+		render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
+		render::draw_sprite(is_selected ? inactive_sprite : active_sprite, 0., 0., 0);
 	}
 
 	const g2d::sprite *get_sprite(bool active) const
@@ -150,19 +147,17 @@ struct toggle_menu_item : menu_item
 	, on_toggle_fn(on_toggle_fn)
 	{ }
 
-	void draw(const g2d::mat4& proj_modelview, bool is_selected, float alpha) const
+	void draw(bool is_selected, float alpha) const
 	{
-		auto& prog = get_program_instance<program_texture_uniform_alpha>();
-		prog.use();
-		prog.set_proj_modelview_matrix(proj_modelview);
-		prog.set_texture(0);
-		prog.set_alpha(is_enabled() ? alpha : alpha*.4);
-	
-		if (*value_ptr) {
-			(is_selected ? inactive_sprite_true : active_sprite_true)->draw(0., 0.);
-		} else {
-			(is_selected ? inactive_sprite_false : active_sprite_false)->draw(0., 0.);
-		}
+		render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
+
+		const g2d::sprite *s;
+		if (*value_ptr)
+			s = is_selected ? inactive_sprite_true : active_sprite_true;
+		else
+			s = is_selected ? inactive_sprite_false : active_sprite_false;
+
+		render::draw_sprite(s, 0., 0., 0);
 	}
 
 	void on_selection()
@@ -234,7 +229,7 @@ public:
 				on_toggle_fn));
 	}
 
-	virtual void draw(const g2d::mat4& proj_modelview) const;
+	virtual void draw() const;
 	virtual void update(uint32_t dt);
 	virtual void reset();
 

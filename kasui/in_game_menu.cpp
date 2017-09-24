@@ -321,7 +321,9 @@ in_game_menu_impl::redraw() const
 
 	draw_frame(ortho, alpha);
 
+#if 0
 	cur_menu_->draw(ortho);
+#endif
 
 	if (cur_state_ == STATE_FADE_TO_JUKUGO_STATS)
 		draw_fade_overlay(1. - cur_menu_->get_cur_alpha());

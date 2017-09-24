@@ -14,15 +14,12 @@ struct title_background
 
 	void reset();
 	void update(uint32_t dt);
-	void draw(const g2d::mat4& proj_modelview) const;
-
-	void initialize_bg_billboard();
+	void draw() const;
 
 	title_widget *fg_billboard;
 	title_widget *logo;
 
 	const g2d::texture *bg_texture;
-	g2d::vertex_array_texuv bg_billboard;
 
 	sakura_fubuki sakura;
 };

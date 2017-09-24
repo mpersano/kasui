@@ -6,12 +6,6 @@
 
 struct sakura_petal
 {
-	typedef g2d::indexed_vertex_array<
-				GLubyte,
-				g2d::vertex::attrib<GLfloat, 2>,
-				g2d::vertex::attrib<GLshort, 2>,
-				g2d::vertex::attrib<GLfloat, 1> > vertex_array_type;
-
 	float size;
 	g2d::vec2 pos, dir;
 	float angle, delta_angle;
@@ -21,7 +15,7 @@ struct sakura_petal
 	float alpha;
 
 	void reset(bool);
-	void draw(vertex_array_type& gv) const;
+	void draw(const g2d::texture *texture) const;
 	void update(uint32_t dt);
 };
 
@@ -34,7 +28,7 @@ struct sakura_fubuki
 	sakura_fubuki();
 
 	void reset();
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 	void update(uint32_t dt);
 
 	enum { NUM_PETALS = 20 };

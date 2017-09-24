@@ -27,7 +27,7 @@ public:
 	int get_height() const
 	{ return height_ + top_margin_ + bottom_margin_; }
 
-private:
+// private:
 	int left_, top_;
 	int width_, height_;
 	int left_margin_, right_margin_;

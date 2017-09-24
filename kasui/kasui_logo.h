@@ -14,8 +14,8 @@ struct kasui_logo : public title_widget
 	kasui_logo();
 
 	void reset();
-	void update(uint32_t dt);
-	void draw(const g2d::mat4& proj_modelview) const;
+	void update(uint32_t dt) override;
+	void draw() const override;
 
 	const g2d::sprite *bg, *ka, *sui;
 	float ka_scale, sui_scale;

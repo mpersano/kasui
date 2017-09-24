@@ -1,5 +1,7 @@
 #include "guava2d/texture_manager.h"
 
+#include "render.h"
+
 #include "program_registry.h"
 #include "common.h"
 #include "sakura.h"
@@ -68,7 +70,7 @@ sakura_petal::reset(bool from_start)
 }
 
 void
-sakura_petal::draw(vertex_array_type& gv) const
+sakura_petal::draw(const g2d::texture *texture) const
 {
 	float a = cosf(phi_0*tics + phase_0);
 	float b = cosf(phi_1*tics + phase_1);
@@ -92,18 +94,12 @@ sakura_petal::draw(vertex_array_type& gv) const
 	else
 		w = 1;
 
-	const int vert_index = gv.get_num_verts();
+	render::set_color({ 1.f, 1.f, 1.f, w*alpha });
 
-	{
-	const float a = w*alpha;
-	gv << p0.x, p0.y, 0, 0, a;
-	gv << p1.x, p1.y, 1, 0, a;
-	gv << p2.x, p2.y, 1, 1, a;
-	gv << p3.x, p3.y, 0, 1, a;
-	}
-
-	gv < vert_index + 0, vert_index + 1, vert_index + 2;
-	gv < vert_index + 2, vert_index + 3, vert_index + 0;
+	render::draw_quad(texture,
+		{ { p0.x, p0.y }, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y } },
+		{ { 0, 0, }, { 1, 0 }, { 1, 1 }, { 0, 1 } },
+		-1);
 }
 
 void
@@ -135,24 +131,12 @@ sakura_fubuki::reset()
 }
 
 void
-sakura_fubuki::draw(const g2d::mat4& proj_modelview) const
+sakura_fubuki::draw() const
 {
-	static sakura_petal::vertex_array_type gv(NUM_PETALS*4, NUM_PETALS*6);
-
-	gv.reset();
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
 	for (const sakura_petal *p = petals; p != &petals[NUM_PETALS]; p++)
-		p->draw(gv);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		p->draw(petal_texture);
 
 	petal_texture->bind();
-
-	program_texture_alpha& prog = get_program_instance<program_texture_alpha>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-	prog.set_texture(0);
-
-	gv.draw(GL_TRIANGLES);
 }

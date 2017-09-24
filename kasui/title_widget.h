@@ -13,7 +13,7 @@ struct title_widget {
 
 	virtual void update(uint32_t dt);
 	virtual void reset();
-	virtual void draw(const g2d::mat4& proj_modelview) const = 0;
+	virtual void draw() const = 0;
 
 	enum state {
 		OUTSIDE,

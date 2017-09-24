@@ -61,7 +61,7 @@ struct vec2
 	}
 
 	float distance(const vec2& v) const
-	{ 
+	{
 		vec2 d = v - *this;
 		return d.length();
 	}
@@ -89,57 +89,57 @@ struct mat3
 			1., 0., 0.,
 			0., 1., 0.);
 	}
-	
+
 	static mat3 translation(float x, float y)
 	{
 		return mat3(
 			1, 0, x,
 			0, 1, y);
 	}
-	
+
 	static mat3 translation(const vec2& pos)
 	{ return translation(pos.x, pos.y); }
-	
+
 	static mat3 scale(float s)
 	{ return scale(s, s); }
-	
+
 	static mat3 scale(float sx, float sy)
 	{
 		return mat3(
 			sx, 0., 0.,
 			0., sy, 0.);
 	}
-	
+
 	static mat3 rotation(float a)
 	{
 		const float c = cosf(a);
 		const float s = sinf(a);
-	
+
 		return mat3(
 			c, -s, 0.,
 			s, c, 0.);
 	}
-	
+
 	mat3& operator*=(const mat3& m)
 	{
 		return *this = *this*m;
 	}
-	
+
 	mat3 operator*(const mat3& m) const
 	{
 		const float l00 = m00*m.m00 + m01*m.m10;
 		const float l01 = m00*m.m01 + m01*m.m11;
 		const float l02 = m00*m.m02 + m01*m.m12 + m02;
-	
+
 		const float l10 = m10*m.m00 + m11*m.m10;
 		const float l11 = m10*m.m01 + m11*m.m11;
 		const float l12 = m10*m.m02 + m11*m.m12 + m12;
-	
+
 		return mat3(
 			l00, l01, l02,
 			l10, l11, l12);
 	}
-	
+
 	vec2 operator*(const vec2& v) const
 	{
 		const float x = m00*v.x + m01*v.y + m02;

@@ -8,6 +8,8 @@
 #include "guava2d/texture_manager.h"
 #include "guava2d/sprite_manager.h"
 
+#include "render.h"
+
 #include "program_registry.h"
 #include "options.h"
 #include "common.h"
@@ -100,15 +102,15 @@ private:
 	vertical_menu more_menu;
 	vertical_menu game_mode_menu;
 	level_selection_menu level_menu;
-	
+
 	menu *cur_menu;
-	
+
 	enum menu_state {
 		STATE_FADE_IN,
 		STATE_ACTIVE,
 		STATE_OUTRO,
 	};
-	
+
 	menu_state cur_state;
 	uint32_t state_t;
 };
@@ -491,17 +493,23 @@ main_menu_impl::reset()
 void
 main_menu_impl::redraw() const
 {
-	const g2d::mat4 proj_modelview = get_ortho_projection();
+	render::begin_batch();
 
-	background.draw(proj_modelview);
+	render::set_viewport(0, window_width, 0, window_height);
 
+	background.draw();
+
+#if 0
 	if (cur_state == STATE_FADE_IN) {
 		draw_fade_overlay(1. - static_cast<float>(state_t)/FADE_IN_T);
 	} else if (cur_state == STATE_OUTRO) {
 		draw_fade_overlay(1. - cur_menu->get_cur_alpha());
 	}
+#endif
 
-	cur_menu->draw(proj_modelview);
+	cur_menu->draw();
+
+	render::end_batch();
 }
 
 void

@@ -5,6 +5,8 @@
 #include "guava2d/vec2.h"
 #include "guava2d/texture.h"
 
+#include "render.h"
+
 #include "program_registry.h"
 #include "common.h"
 #include "sounds.h"
@@ -64,10 +66,9 @@ menu::append_item(menu_item *item)
 }
 
 void
-menu::draw(const g2d::mat4& proj_modelview) const
+menu::draw() const
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
 	const float alpha = get_cur_alpha();
 
@@ -75,7 +76,12 @@ menu::draw(const g2d::mat4& proj_modelview) const
 
 	for (menu_item *p = item_list; p; p = p->next) {
 		const g2d::vec2 pos = get_item_position(index);
-		p->draw(proj_modelview*g2d::mat4::translation(pos.x, pos.y, 0.), p == cur_selected_item, alpha);
+
+		render::push_matrix();
+		render::translate(pos.x, pos.y);
+		p->draw(p == cur_selected_item, alpha);
+		render::pop_matrix();
+
 		++index;
 	}
 }
