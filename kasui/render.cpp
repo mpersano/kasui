@@ -2,6 +2,7 @@
 #include "noncopyable.h"
 
 #include "gl_check.h"
+#include "program_manager.h"
 
 #include <guava2d/texture.h>
 #include <guava2d/program.h>
@@ -9,7 +10,6 @@
 #include <guava2d/sprite.h> // XXX remove this eventually
 
 #include <cassert>
-#include <memory>
 #include <algorithm>
 #include <stack>
 
@@ -56,6 +56,7 @@ public:
     void set_blend_mode(blend_mode mode);
     void set_color(const g2d::rgba& color);
 
+    void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
     void add_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
     void add_quad(const quad& verts, int layer);
 
@@ -63,6 +64,7 @@ private:
     struct sprite
     {
         int layer;
+        const g2d::program *program;
         const g2d::texture *texture;
         quad verts;
         quad texcoords;
@@ -71,7 +73,6 @@ private:
     };
 
     void load_programs();
-    std::unique_ptr<g2d::program> load_program(const char *vert_source, const char *frag_source) const;
 
     void flush_queue();
     void render_sprites_texture(const sprite *const *sprites, int num_sprites) const;
@@ -87,8 +88,8 @@ private:
     g2d::mat3 matrix_;
     std::stack<g2d::mat3> matrix_stack_;
 
-    std::unique_ptr<g2d::program> program_texture_;
-    std::unique_ptr<g2d::program> program_flat_;
+    const g2d::program *program_texture_;
+    const g2d::program *program_flat_;
 
     std::array<GLfloat, 16> proj_matrix_;
 } g_sprite_batch;
@@ -174,13 +175,14 @@ void sprite_batch::set_color(const g2d::rgba& color)
     color_ = color;
 }
 
-void sprite_batch::add_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
+void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
 {
     if (sprite_queue_size_ == SPRITE_QUEUE_CAPACITY)
         flush_queue();
 
     auto& s = sprite_queue_[sprite_queue_size_++];
 
+    s.program = program;
     s.texture = texture;
 
     s.verts.v00 = matrix_*verts.v00;
@@ -193,6 +195,11 @@ void sprite_batch::add_quad(const g2d::texture *texture, const quad& verts, cons
     s.layer = layer;
     s.blend = blend_mode_;
     s.color = color_;
+}
+
+void sprite_batch::add_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
+{
+    add_quad(nullptr, texture, verts, texcoords, layer);
 }
 
 void sprite_batch::add_quad(const quad& verts, int layer)
@@ -216,30 +223,8 @@ void sprite_batch::add_quad(const quad& verts, int layer)
 
 void sprite_batch::load_programs()
 {
-    program_texture_ = std::move(load_program("shaders/sprite.vert", "shaders/sprite.frag"));
-    program_flat_ = std::move(load_program("shaders/flat.vert", "shaders/flat.frag"));
-}
-
-std::unique_ptr<g2d::program> sprite_batch::load_program(const char *vert_source, const char *frag_source) const
-{
-    // TODO proper program cache
-
-    g2d::shader vert_shader(GL_VERTEX_SHADER);
-    vert_shader.load_source(vert_source);
-    vert_shader.compile();
-
-    g2d::shader frag_shader(GL_FRAGMENT_SHADER);
-    frag_shader.load_source(frag_source);
-    frag_shader.compile();
-
-    std::unique_ptr<g2d::program> program(new g2d::program);
-
-    program->initialize();
-    program->attach(vert_shader);
-    program->attach(frag_shader);
-    program->link();
-
-    return program;
+    program_texture_ = load_program("shaders/sprite.vert", "shaders/sprite.frag");
+    program_flat_ = load_program("shaders/flat.vert", "shaders/flat.frag");
 }
 
 void sprite_batch::flush_queue()
@@ -257,24 +242,35 @@ void sprite_batch::flush_queue()
             return s0->layer < s1->layer;
         } else if (s0->blend != s1->blend) {
             return static_cast<int>(s0->blend) < static_cast<int>(s1->blend);
+        } else if (s0->program != s1->program) {
+            return s0->program < s1->program;
         } else {
             return s0->texture < s1->texture;
         }
     });
 
-    const auto bind_texture = [this](const g2d::texture *texture) {
-        if (texture) {
+    const auto bind_texture = [this](const g2d::program *program, const g2d::texture *texture) {
+        if (texture)
             texture->bind();
-            program_texture_->use();
+
+        if (program != nullptr) {
+            program->use();
+            program->set_uniform_matrix4("proj_modelview", &proj_matrix_[0]);
+            if (texture)
+                program->set_uniform_i("tex", 0);
         } else {
-            program_flat_->use();
+            if (texture != nullptr)
+                program_texture_->use();
+            else
+                program_flat_->use();
         }
     };
 
+    auto cur_program = sorted_sprites[0]->program;
     auto cur_texture = sorted_sprites[0]->texture;
     auto cur_blend_mode = sorted_sprites[0]->blend;
 
-    bind_texture(cur_texture);
+    bind_texture(cur_program, cur_texture);
     gl_set_blend_mode(cur_blend_mode);
 
     int batch_start = 0;
@@ -294,9 +290,10 @@ void sprite_batch::flush_queue()
 
             batch_start = i;
 
-            if (p->texture != cur_texture) {
+            if (p->texture != cur_texture || p->program != cur_program) {
                 cur_texture = p->texture;
-                bind_texture(cur_texture);
+                cur_program = p->program;
+                bind_texture(cur_program, cur_texture);
             }
 
             if (p->blend != cur_blend_mode) {
@@ -465,6 +462,11 @@ void set_blend_mode(blend_mode mode)
 void set_color(const g2d::rgba& color)
 {
     g_sprite_batch.set_color(color);
+}
+
+void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
+{
+    g_sprite_batch.add_quad(program, texture, verts, texcoords, layer);
 }
 
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)

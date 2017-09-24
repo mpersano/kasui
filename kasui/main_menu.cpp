@@ -480,10 +480,6 @@ main_menu_impl::reset()
 void
 main_menu_impl::redraw() const
 {
-	render::begin_batch();
-
-	render::set_viewport(0, window_width, 0, window_height);
-
 	background.draw();
 
 	if (cur_state == STATE_FADE_IN) {
@@ -493,8 +489,6 @@ main_menu_impl::redraw() const
 	}
 
 	cur_menu->draw();
-
-	render::end_batch();
 }
 
 void

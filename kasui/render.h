@@ -40,6 +40,7 @@ void set_color(const g2d::rgba& color);
 
 void draw_quad(const quad& verts, int layer);
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
+void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
 
 void draw_sprite(const g2d::sprite *sprite, float x, float y, int layer);
 

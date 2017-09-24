@@ -77,7 +77,8 @@ CXXFILES = \
 	hiscore_input.cpp \
 	http_request.cpp \
 	leaderboard_page.cpp \
-	render.cpp
+	render.cpp \
+	program_manager.cpp
 
 TARGET = demo
 

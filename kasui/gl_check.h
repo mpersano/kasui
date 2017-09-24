@@ -4,6 +4,8 @@
 
 #include "panic.h"
 
+#if 0
+
 #define GL_CHECK(expr) \
 	[&] { \
 		expr; \
@@ -20,3 +22,10 @@
 			panic("%s:%d: GL error: %x", __FILE__, __LINE__, e); \
 		return r; \
 	}()
+
+#else
+
+#define GL_CHECK(expr) expr
+#define GL_CHECK_R(expr) expr
+
+#endif

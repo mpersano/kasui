@@ -476,7 +476,12 @@ kasui_impl::redraw()
 
 	poll_http_requests();
 
+	render::begin_batch();
+	render::set_viewport(0, window_width, 0, window_height);
+
 	get_cur_state()->redraw();
+
+	render::end_batch();
 
 	prev_update_ = now;
 #else

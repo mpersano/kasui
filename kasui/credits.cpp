@@ -4,13 +4,13 @@
 
 #include "guava2d/vec2.h"
 #include "guava2d/vec3.h"
-#include "guava2d/vertex_array.h"
 #include "guava2d/font.h"
 #include "guava2d/texture.h"
 #include "guava2d/font_manager.h"
 #include "guava2d/rgb.h"
 
-#include "program_registry.h"
+#include "render.h"
+#include "program_manager.h"
 #include "common.h"
 #include "main_menu.h"
 #include "credits.h"
@@ -30,17 +30,17 @@ public:
 	void on_back_key();
 	void on_menu_key();
 
-private:
-	void add_text(const g2d::font *font, float x_base, float y_base, int start_tic, const char *text);
-
 	struct particle {
-		void draw(g2d::vertex_array_texuv_alpha& gv, float t, float alpha) const;
+		void draw(const g2d::program *program, const g2d::texture *texture, float t, const g2d::rgba& color, int layer) const;
 
 		float x_left, x_right;
 		float y_top, y_bottom;
 		g2d::vec2 uv0, uv1, uv2, uv3;
 		int start_tic;
 	};
+
+private:
+	void add_text(const g2d::font *font, float x_base, float y_base, int start_tic, const char *text);
 
 	void add_glyph_fragments(
 		std::vector<particle>& particles,
@@ -50,13 +50,9 @@ private:
 		const g2d::vec2& uv2, const g2d::vec2& uv3,
 		int start_tic, int depth);
 
-	void draw_particles(float alpha) const;
-	void draw_particles(const std::vector<particle>& particles, float t, float alpha) const;
+	void draw_particles(const g2d::program *program, const g2d::rgba& color, int layer) const;
 
-	typedef std::map<const g2d::texture *, std::vector<particle> > map_type;
-	typedef map_type::value_type map_value_type;
-
-	map_type particles_;
+	std::map<const g2d::texture *, std::vector<particle>> particles_;
 
 	int tics_;
 
@@ -72,10 +68,14 @@ private:
 	};
 
 	int state_tics_;
+	const g2d::program *program_outline_;
+	const g2d::program *program_inner_;
 };
 
 
 credits_impl::credits_impl()
+	: program_outline_(load_program("shaders/sprite.vert", "shaders/credits_text_outline.frag"))
+	, program_inner_(load_program("shaders/sprite.vert", "shaders/credits_text_inner.frag"))
 {
 	const g2d::font *tiny_font = g2d::font_manager::get_instance().load("fonts/tiny");
 	const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/small");
@@ -160,21 +160,7 @@ credits_impl::add_glyph_fragments(
 }
 
 void
-credits_impl::draw_particles(const std::vector<particle>& particles, float t, float alpha) const
-{
-	static g2d::vertex_array_texuv_alpha gv(512);
-	gv.reset();
-
-	std::for_each(
-		particles.begin(),
-		particles.end(),
-		[&] (const particle& p) { p.draw(gv, t, alpha); });
-
-	gv.draw(GL_TRIANGLES);
-}
-
-void
-credits_impl::particle::draw(g2d::vertex_array_texuv_alpha& gv, float t, float alpha) const
+credits_impl::particle::draw(const g2d::program *program, const g2d::texture *texture, float t, const g2d::rgba& color, int layer) const
 {
 	if (t < start_tic)
 		return;
@@ -182,6 +168,8 @@ credits_impl::particle::draw(g2d::vertex_array_texuv_alpha& gv, float t, float a
 	t -= start_tic;
 
 	enum { ANIMATION_TICS = 60*MS_PER_TIC };
+
+	// XXX move this to vertex shader?
 
 	const float x_axis = 200.;
 	const float x_origin = 40.;
@@ -194,22 +182,21 @@ credits_impl::particle::draw(g2d::vertex_array_texuv_alpha& gv, float t, float a
 
 	const float dy = 300.*(2.*f*f*g*g + f*f);
 
-	const float a = (1. - f)*alpha;
+	const float y0 = y_top + dy;
+	const float y1 = y_bottom + dy;
 
-	gv << x0, y_top + dy, uv0.x, uv0.y, a;
-	gv << x1, y_top + dy, uv1.x, uv1.y, a;
-	gv << x1, y_bottom + dy, uv2.x, uv2.y, a;
+	const float a = (1. - f)*color.a;
 
-	gv << x1, y_bottom + dy, uv2.x, uv2.y, a;
-	gv << x0, y_bottom + dy, uv3.x, uv3.y, a;
-	gv << x0, y_top + dy, uv0.x, uv0.y, a;
+	render::set_color({ color.r, color.g, color.b, a });
+	render::draw_quad(program, texture,
+		{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+		{ { uv0.x, uv0.y }, { uv1.x, uv1.y }, { uv2.x, uv2.y }, { uv3.x, uv3.y } },
+		layer);
 }
 
 void
 credits_impl::redraw() const
 {
-	const g2d::mat4 proj_modelview = get_ortho_projection();
-
 	float alpha;
 
 	switch (cur_state_) {
@@ -226,40 +213,20 @@ credits_impl::redraw() const
 			break;
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	{
-	program_text_outline_alpha& prog = get_program_instance<program_text_outline_alpha>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-	prog.set_texture(0);
-	prog.set_color(g2d::rgb(.5, 0., 0.));
-
-	draw_particles(alpha);
-	}
-
-	{
-	program_text_alpha& prog = get_program_instance<program_text_alpha>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-	prog.set_texture(0);
-	prog.set_color(g2d::rgb(1., 1., 1.));
-
-	draw_particles(alpha);
-	}
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	draw_particles(program_outline_, { .5f, 0.f, 0.f, alpha }, 10);
+	draw_particles(program_inner_, { 1.f, 1.f, 1.f, alpha }, 20);
 }
 
 void
-credits_impl::draw_particles(float alpha) const
+credits_impl::draw_particles(const g2d::program *program, const g2d::rgba& color, int layer) const
 {
-	std::for_each(
-		particles_.begin(),
-		particles_.end(),
-		[&] (const map_value_type& p) {
-			p.first->bind();
-			draw_particles(p.second, tics_, alpha);
-		});
+	for (const auto& entry : particles_) {
+		const g2d::texture *texture = entry.first;
+
+		for (const auto& particle : entry.second)
+			particle.draw(program, texture, tics_, color, layer);
+	}
 }
 
 void
