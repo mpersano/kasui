@@ -378,19 +378,22 @@ void draw_sprite(const g2d::sprite *sprite, float x, float y, int layer)
 {
     // TODO eventually move this to g2d::sprite itself
 
-	x += sprite->left_margin_;
-	y += sprite->bottom_margin_;
+    const auto x0 = x + sprite->left_margin_;
+    const auto x1 = x0 + sprite->width_;
+
+    const auto y0 = y + sprite->bottom_margin_;
+    const auto y1 = y0 + sprite->height_;
+
+    const auto u0 = sprite->u0_;
+    const auto u1 = sprite->u1_;
+
+    const auto v0 = sprite->v0_;
+    const auto v1 = sprite->v1_;
 
     g_sprite_batch.add_quad(
             sprite->texture_,
-            { { x, y },
-              { x + sprite->width_, y },
-              { x + sprite->width_, y + sprite->height_ },
-              { x, y + sprite->height_ } },
-            { { sprite->u0_, sprite->v1_ },
-              { sprite->u1_, sprite->v1_ },
-              { sprite->u1_, sprite->v0_ },
-              { sprite->u0_, sprite->v0_ } },
+            { { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+            { { u0, v1 }, { u1, v1 }, { u1, v0 }, { u0, v0 } },
             layer);
 }
 
