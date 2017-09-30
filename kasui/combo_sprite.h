@@ -11,7 +11,7 @@ public:
 	combo_sprite(int combo_size, float x, float y, const gradient *g);
 
 	bool update(uint32_t dt);
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 private:
 	g2d::draw_queue text_;

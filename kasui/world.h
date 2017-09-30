@@ -25,7 +25,7 @@ public:
 	falling_block(world& w);
 
 	void initialize();
-	void draw(g2d::indexed_vertex_array_texuv_color& gv) const;
+	void draw() const;
 	void update(uint32_t dt);
 
 	bool on_left_pressed();
@@ -104,7 +104,7 @@ public:
 	virtual ~sprite() { }
 
 	virtual bool update(uint32_t dt) = 0;
-	virtual void draw(const g2d::mat4& mat) const = 0;
+	virtual void draw() const = 0;
 };
 
 class world_event_listener
@@ -142,7 +142,7 @@ public:
 	void reset();
 	void initialize_grid(int num_filled_rows);
 
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 	void update(uint32_t dt);
 	void update_animations(uint32_t dt); // HACK: update() calls update_animations(), so call one or the other!
@@ -206,8 +206,8 @@ public:
 	void set_theme_colors(const g2d::rgb& color, const g2d::rgb& opposite_color);
 	void set_text_gradient(const gradient *g);
 
-	void draw_block(g2d::indexed_vertex_array_texuv_color& gv, int type, float x, float y, float alpha) const;
-	void draw_block(g2d::indexed_vertex_array_texuv_color& gv, int type, float x, float y, float alpha, const g2d::rgb& color) const;
+	void draw_block(int type, float x, float y, float alpha) const;
+	void draw_block(int type, float x, float y, float alpha, const g2d::rgb& color) const;
 
 	void spawn_drop_trail(int row, int col, int type);
 	void spawn_dead_block_sprite(const g2d::vec2& pos, int type);
@@ -221,8 +221,8 @@ private:
 	void init_background_va();
 
 	void draw_background(const g2d::mat4& mat) const;
-	void draw_blocks(const g2d::mat4& mat) const;
-	void draw_flares(const g2d::mat4& mat) const;
+	void draw_blocks() const;
+	void draw_flares() const;
 
 	int get_col_height(int c) const;
 

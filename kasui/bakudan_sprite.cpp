@@ -33,8 +33,9 @@ bakudan_sprite::update(uint32_t dt)
 }
 
 void
-bakudan_sprite::draw(const g2d::mat4& proj_modelview) const
+bakudan_sprite::draw() const
 {
+#ifdef FIX_ME
 	enum {
 		NUM_RAYS = 9
 	};
@@ -114,4 +115,5 @@ bakudan_sprite::draw(const g2d::mat4& proj_modelview) const
 
 	gv_glow.draw(GL_TRIANGLE_STRIP);
 	}
+#endif
 }

@@ -13,6 +13,7 @@
 #include <guava2d/program.h>
 #include <guava2d/xwchar.h>
 
+#include "render.h"
 #include "common.h"
 #include "panic.h"
 #include "tween.h"
@@ -98,7 +99,7 @@ public:
 	}
 
 	bool update(uint32_t dt);
-	void draw(const g2d::mat4& mat) const;
+	void draw() const;
 
 private:
 	g2d::vec2 pos_;
@@ -123,35 +124,31 @@ dead_block_sprite::update(uint32_t dt)
 }
 
 void
-dead_block_sprite::draw(const g2d::mat4& mat) const
+dead_block_sprite::draw() const
 {
-	const int r = color_.r;
-	const int g = color_.g;
-	const int b = color_.b;
-	const int a = 255*ttl_/DEAD_BLOCK_TTL;
-
 	const g2d::vec2 p = pos_;
 
-	static g2d::vertex_array_texuv_color gv(4);
-	gv.reset();
+	const float x0 = p.x;
+	const float x1 = x0 + cell_size_;
 
-	gv << p.x, p.y, uv0_.y, uv1_.x, r, g, b, a;
-	gv << p.x + cell_size_, p.y, uv1_.y, uv1_.x, r, g, b, a;
+	const float y0 = p.y;
+	const float y1 = y0 + cell_size_;
 
-	gv << p.x, p.y + cell_size_, uv0_.y, uv0_.x, r, g, b, a;
-	gv << p.x + cell_size_, p.y + cell_size_, uv1_.y, uv0_.x, r, g, b, a;
+	const float u0 = uv0_.y;
+	const float u1 = uv1_.y;
 
-	texture_->bind();
+	const float v0 = uv0_.x;
+	const float v1 = uv1_.x;
 
-	program_texture_color& prog = get_program_instance<program_texture_color>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
+	const float alpha = static_cast<float>(ttl_)/DEAD_BLOCK_TTL;
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	gv.draw(GL_TRIANGLE_STRIP);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	render::set_color({ color_.r/255.f, color_.g/255.f, color_.b/255.f, alpha });
+	render::draw_quad(
+		texture_,
+		{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+		{ { u0, v1 }, { u1, v1 }, { u1, v0 }, { u0, v0 } },
+		10);
 }
 
 class drop_trail_sprite : public sprite
@@ -174,7 +171,7 @@ public:
 	{ }
 
 	bool update(uint32_t dt);
-	void draw(const g2d::mat4& mat) const;
+	void draw() const;
 
 private:
 	g2d::vec2 pos_;
@@ -194,7 +191,7 @@ drop_trail_sprite::update(uint32_t dt)
 }
 
 void
-drop_trail_sprite::draw(const g2d::mat4& mat) const
+drop_trail_sprite::draw() const
 {
 	enum {
 		NUM_COMPONENTS = 30
@@ -209,38 +206,34 @@ drop_trail_sprite::draw(const g2d::mat4& mat) const
 
 	float alpha = .5*lerp_factor;
 
-	const int r = color_.r;
-	const int g = color_.g;
-	const int b = color_.b;
+	const float r = color_.r/255.f;
+	const float g = color_.g/255.f;
+	const float b = color_.b/255.f;
+
+	const float u0 = uv0_.y;
+	const float u1 = uv1_.y;
+
+	const float v0 = uv0_.x;
+	const float v1 = uv1_.x;
+
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
 	for (int i = 0; i < NUM_COMPONENTS; i++) {
-		const float x = pos_.x;
-		const float y = pos_.y + .5*i*lerp_factor*cell_size_;
+		const float x0 = pos_.x;
+		const float x1 = x0 + cell_size_;
 
-		const int a = 255*alpha;
+		const float y0 = pos_.y + .5*i*lerp_factor*cell_size_;
+		const float y1 = y0 + cell_size_;
 
-		gv << x, y, uv0_.y, uv1_.x, r, g, b, a;
-		gv << x + cell_size_, y, uv1_.y, uv1_.x, r, g, b, a;
-		gv << x + cell_size_, y + cell_size_, uv1_.y, uv0_.x, r, g, b, a;
-
-		gv << x + cell_size_, y + cell_size_, uv1_.y, uv0_.x, r, g, b, a;
-		gv << x, y + cell_size_, uv0_.y, uv0_.x, r, g, b, a;
-		gv << x, y, uv0_.y, uv1_.x, r, g, b, a;
+		render::set_color({ r, g, b, alpha });
+		render::draw_quad(
+			texture_,
+			{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+			{ { u0, v1 }, { u1, v1 }, { u1, v0 }, { u0, v0 } },
+			10);
 
 		alpha *= .8;
 	}
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	texture_->bind();
-
-	program_texture_color& prog = get_program_instance<program_texture_color>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-
-	gv.draw(GL_TRIANGLES);
 }
 
 class explosion_particles : public sprite
@@ -249,7 +242,7 @@ public:
 	explosion_particles(const g2d::vec2& pos, const gradient *g);
 
 	bool update(uint32_t dt);
-	void draw(const g2d::mat4& mat) const;
+	void draw() const;
 
 private:
 	struct particle {
@@ -313,29 +306,22 @@ explosion_particles::update(uint32_t dt)
 }
 
 void
-explosion_particles::draw(const g2d::mat4& mat) const
+explosion_particles::draw() const
 {
-	g2d::vertex_array<
-		g2d::vertex::attrib<GLfloat, 2>,
-		g2d::vertex::attrib<GLshort, 2>,
-		g2d::vertex::attrib<GLubyte, 4>> gv;
-
-	gv.reset();
-
 	for (const auto& p : particles_) {
 		if (!p.is_active())
 			continue;
 
 		int fade_tic = .8*p.ttl;
 
-		int a;
+		float a;
 
 		if (p.tics < FLARE_TICS)
-			a = (255*p.tics)/FLARE_TICS;
+			a = static_cast<float>(p.tics)/FLARE_TICS;
 		else if (p.tics < fade_tic)
-			a = 255;
+			a = 1.f;
 		else
-			a = 255*(1. - static_cast<float>(p.tics - fade_tic)/(p.ttl - fade_tic));
+			a = 1. - static_cast<float>(p.tics - fade_tic)/(p.ttl - fade_tic);
 
 		a *= .6;
 
@@ -352,29 +338,17 @@ explosion_particles::draw(const g2d::mat4& mat) const
 		const g2d::vec2 p2 = pos - up + right;
 		const g2d::vec2 p3 = pos - up - right;
 
-		const int r = p.color.r;
-		const int g = p.color.g;
-		const int b = p.color.b;
+		const float r = p.color.r/255.f;
+		const float g = p.color.g/255.f;
+		const float b = p.color.b/255.f;
 
-		gv << p0.x, p0.y, 0, 0, r, g, b, a;
-		gv << p1.x, p1.y, 0, 1, r, g, b, a;
-		gv << p2.x, p2.y, 1, 1, r, g, b, a;
-
-		gv << p2.x, p2.y, 1, 1, r, g, b, a;
-		gv << p3.x, p3.y, 1, 0, r, g, b, a;
-		gv << p0.x, p0.y, 0, 0, r, g, b, a;
+		render::set_color({ r, g, b, a });
+		render::draw_quad(
+			texture_,
+			{ { p0.x, p0.y }, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y } },
+			{ { 0, 0 }, { 0, 1 }, { 1, 1 }, { 1, 0 } },
+			5);
 	}
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	texture_->bind();
-
-	auto& prog = get_program_instance<program_texture_color>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-
-	gv.draw(GL_TRIANGLES);
 }
 
 } // anonymous namespace
@@ -459,7 +433,7 @@ falling_block::get_block_positions(g2d::vec2& p0, g2d::vec2& p1) const
 }
 
 void
-falling_block::draw(g2d::indexed_vertex_array_texuv_color& gv) const
+falling_block::draw() const
 {
 	const float cell_size = world_.get_cell_size();
 
@@ -475,8 +449,8 @@ falling_block::draw(g2d::indexed_vertex_array_texuv_color& gv) const
 
 	// draw blocks
 
-	world_.draw_block(gv, block_types[0], p0.x, p0.y, alpha);
-	world_.draw_block(gv, block_types[1], p1.x, p1.y, alpha);
+	world_.draw_block(block_types[0], p0.x, p0.y, alpha);
+	world_.draw_block(block_types[1], p1.x, p1.y, alpha);
 
 	// draw block shadows
 
@@ -484,7 +458,7 @@ falling_block::draw(g2d::indexed_vertex_array_texuv_color& gv) const
 		int r = row;
 		while (r > 0 && world_.get_block_at(r - 1, col + i) == 0)
 			--r;
-		world_.draw_block(gv, block_types[i], (col + i)*cell_size, r*cell_size, .25*alpha, g2d::rgb(.5, .5, .5));
+		world_.draw_block(block_types[i], (col + i)*cell_size, r*cell_size, .25*alpha, g2d::rgb(.5, .5, .5));
 	}
 }
 
@@ -1314,32 +1288,24 @@ world::update(uint32_t dt)
 }
 
 void
-world::draw(const g2d::mat4& mat) const
+world::draw() const
 {
-	blocks_texture_->bind();
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+#ifdef FIX_ME
 	draw_background(mat);
-	draw_blocks(mat);
+#endif
+	draw_blocks();
 
 	if (cur_state_ == STATE_FLARES)
-		draw_flares(mat);
+		draw_flares();
 
-	std::for_each(
-		sprites_.begin(),
-		sprites_.end(),
-		[&] (const sprite *p) { p->draw(mat); });
+	for (const auto p : sprites_)
+		p->draw();
 }
 
 void
-world::draw_blocks(const g2d::mat4& mat) const
+world::draw_blocks() const
 {
-	static g2d::indexed_vertex_array_texuv_color gv(512, 512);
-
-	gv.reset();
-
 	for (int c = 0; c < cols_; c++) {
 		const float x = c*cell_size_;
 
@@ -1352,9 +1318,9 @@ world::draw_blocks(const g2d::mat4& mat) const
 					const float alpha = static_cast<hint_text_box *>(sprites_.front())->get_alpha();
 					const g2d::rgb base_color = !(t & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_;
 					const g2d::rgb color = (1. - alpha)*base_color + alpha*g2d::rgb(255, 255, 255);
-					draw_block(gv, t - 1, x, y, 1, color);
+					draw_block(t - 1, x, y, 1, color);
 				} else {
-					draw_block(gv, t - 1, x, y, 1);
+					draw_block(t - 1, x, y, 1);
 				}
 			} else {
 				if (cur_state_ == STATE_DROPPING_HANGING)
@@ -1364,76 +1330,60 @@ world::draw_blocks(const g2d::mat4& mat) const
 	}
 
 	if (cur_state_ == STATE_FALLING_BLOCK && CUR_FALLING_BLOCK->get_is_active())
-		CUR_FALLING_BLOCK->draw(gv);
+		CUR_FALLING_BLOCK->draw();
 
 	if (cur_state_ == STATE_DROPPING_HANGING) {
 		for (int i = 0; i < num_dropping_blocks_; i++) {
 			const auto& p = dropping_blocks_[i];
 			float y = p.height_;
-			draw_block(gv, p.type_, p.col_*cell_size_, y, 1.);
+			draw_block(p.type_, p.col_*cell_size_, y, 1.);
 		}
 	}
 
 #if 0
 	block_sprite::draw_all(gv, lerp_dt);
 #endif
-
-	program_texture_color& prog = get_program_instance<program_texture_color>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-
-	gv.draw(GL_TRIANGLES);
 }
 
 void
-world::draw_flares(const g2d::mat4& mat) const
+world::draw_flares() const
 {
 	// make sure grid_find_matches was called before this!
-
-	static g2d::vertex_array_texuv gv(512);
 
 	const float du = flare_texture_->get_u_scale()/FLARE_TEXTURE_ROWS;
 	const float dv = flare_texture_->get_v_scale()/FLARE_TEXTURE_ROWS;
 
 	int cur_frame = state_tics_*FLARE_NUM_FRAMES/FLARE_TICS;
 
-	const float u = du*(cur_frame%FLARE_TEXTURE_ROWS);
-	const float v = dv*(cur_frame/FLARE_TEXTURE_ROWS);
+	const float u0 = du*(cur_frame%FLARE_TEXTURE_ROWS);
+	const float u1 = u0 + du;
+
+	const float v0 = dv*(cur_frame/FLARE_TEXTURE_ROWS);
+	const float v1 = v0 + dv;
 
 	const float frame_size = FLARE_FRAME_SIZE;
 
-	gv.reset();
+	render::set_blend_mode(blend_mode::ADDITIVE_BLEND);
+	render::set_color({ 1.f, 1.f, 1.f, 1.f });
 
 	for (int i = 0; i < rows_*cols_; i++) {
 		if (matches_[i] && !(grid_[i] & BAKUDAN_FLAG)) {
 			const int r = i/cols_;
 			const int c = i%cols_;
 
-			const float x = (c + .5)*cell_size_ - .5*frame_size;
-			const float y = (r + .5)*cell_size_ - .5*frame_size;
+			const float x0 = (c + .5)*cell_size_ - .5*frame_size;
+			const float x1 = x0 + frame_size;
 
-			gv << x, y, u, v;
-			gv << x + frame_size, y, u + du, v;
-			gv << x + frame_size, y + frame_size, u + du, v + dv;
+			const float y0 = (r + .5)*cell_size_ - .5*frame_size;
+			const float y1 = y0 + frame_size;
 
-			gv << x + frame_size, y + frame_size, u + du, v + dv;
-			gv << x, y + frame_size, u, v + dv;
-			gv << x, y, u, v;
+			render::draw_quad(
+				flare_texture_,
+				{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+				{ { u0, v0 }, { u1, v0 }, { u1, v1 }, { u0, v1 } },
+				20);
 		}
 	}
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-
-	flare_texture_->bind();
-
-	program_texture_decal& prog = get_program_instance<program_texture_decal>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-
-	gv.draw(GL_TRIANGLES);
 }
 
 int
@@ -1660,13 +1610,13 @@ world::draw_background(const g2d::mat4& mat) const
 }
 
 void
-world::draw_block(g2d::indexed_vertex_array_texuv_color& gv, int type, float x, float y, float alpha) const
+world::draw_block(int type, float x, float y, float alpha) const
 {
-	draw_block(gv, type, x, y, alpha, !(type & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_);
+	draw_block(type, x, y, alpha, !(type & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_);
 }
 
 void
-world::draw_block(g2d::indexed_vertex_array_texuv_color& gv, int type, float x, float y, float alpha, const g2d::rgb& color) const
+world::draw_block(int type, float x, float y, float alpha, const g2d::rgb& color) const
 {
 	const block_info& bi = block_infos[type & ~BAKUDAN_FLAG];
 	const block_info::texuv& t = bi.texuvs[!!(type & BAKUDAN_FLAG)];
@@ -1680,6 +1630,7 @@ world::draw_block(g2d::indexed_vertex_array_texuv_color& gv, int type, float x, 
 	const float v0 = sv*t.v0;
 	const float v1 = sv*t.v1;
 
+#if 0
 	const int r = color.r;
 	const int g = color.g;
 	const int b = color.b;
@@ -1694,6 +1645,14 @@ world::draw_block(g2d::indexed_vertex_array_texuv_color& gv, int type, float x, 
 
 	gv < vert_index + 0, vert_index + 1, vert_index + 2,
 	     vert_index + 2, vert_index + 3, vert_index + 0;
+#else
+	render::set_color({ color.r/255.f, color.g/255.f, color.b/255.f, alpha });
+	render::draw_quad(
+		blocks_texture_,
+		{ { x, y }, { x + cell_size_, y }, { x + cell_size_, y + cell_size_ }, { x, y + cell_size_ } },
+		{ { v0, u1 }, { v1, u1 }, { v1, u0 }, { v0, u0 } },
+		0);
+#endif
 }
 
 void

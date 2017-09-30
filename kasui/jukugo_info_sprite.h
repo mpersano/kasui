@@ -20,7 +20,7 @@ public:
 	~jukugo_info_sprite();
 
 	bool update(uint32_t dt);
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 private:
 	void initialize_quads(const jukugo *jukugo_info);

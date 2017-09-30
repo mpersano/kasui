@@ -19,6 +19,7 @@
 #include "guava2d/sprite_manager.h"
 #include "guava2d/rgb.h"
 
+#include "render.h"
 #include "main_menu.h"
 #include "hiscore_input.h"
 #include "world.h"
@@ -1050,6 +1051,7 @@ in_game_state_impl::redraw() const
 
 	background_draw_gradient();
 
+#ifdef FIX_ME
 	theme_->draw();
 
 	if (cur_state_ == STATE_LEVEL_COMPLETED || cur_state_ == STATE_LEVEL_INTRO)
@@ -1061,11 +1063,17 @@ in_game_state_impl::redraw() const
 	pause_button_.draw(ortho, 1);
 
 	draw_hud(ortho);
+#endif
 
-	world_.draw(grid_mv);
+	render::push_matrix();
+	render::translate(grid_base_x, grid_base_y);
+	world_.draw();
+	render::pop_matrix();
 
+#ifdef FIX_ME
 	if (cur_game_animation_)
 		cur_game_animation_->draw(ortho);
+#endif
 }
 
 void

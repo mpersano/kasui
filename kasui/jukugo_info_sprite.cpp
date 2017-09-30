@@ -158,8 +158,9 @@ jukugo_info_sprite::draw_quads() const
 }
 
 void
-jukugo_info_sprite::draw(const g2d::mat4& proj_modelview) const
+jukugo_info_sprite::draw() const
 {
+#ifdef FIX_ME
 	const float scale = 1./(1. + z);
 	const float sy = sinf(flip);
 
@@ -207,4 +208,5 @@ jukugo_info_sprite::draw(const g2d::mat4& proj_modelview) const
 
 	draw_quads();
 	}
+#endif
 }

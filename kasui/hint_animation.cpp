@@ -103,8 +103,9 @@ hint_text_box::~hint_text_box()
 { }
 
 void
-hint_text_box::draw(const g2d::mat4& mat) const
+hint_text_box::draw() const
 {
+#ifdef FIX_ME
 	float scale;
 
 	switch (state_) {
@@ -183,6 +184,7 @@ hint_text_box::draw(const g2d::mat4& mat) const
 	title_texture_->bind();
 
 	title_va_.draw(GL_TRIANGLES);
+#endif
 }
 
 bool

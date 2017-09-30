@@ -413,11 +413,13 @@ tutorial_state_impl::redraw() const
 	theme_->draw();
 
 	{
+#ifdef FIX_ME
 	const g2d::mat4 mat =
 		get_ortho_projection()*
 		g2d::mat4::translation(grid_base_x_, grid_base_y_, 0);
 
 	world_.draw(mat); // XXX: lerp_dt?
+#endif
 	}
 
 	if (show_text_box_) {

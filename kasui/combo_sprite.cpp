@@ -45,8 +45,9 @@ combo_sprite::update(uint32_t dt)
 }
 
 void
-combo_sprite::draw(const g2d::mat4& proj_modelview) const
+combo_sprite::draw() const
 {
+#ifdef FIX_ME
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -68,4 +69,5 @@ combo_sprite::draw(const g2d::mat4& proj_modelview) const
 	prog.set_outline_color(g2d::rgba(outline_color, alpha));
 
 	text_.draw();
+#endif
 }

@@ -1,11 +1,10 @@
 #include <cassert>
 
-#include "guava2d/vertex_array.h"
-#include "guava2d/pixmap.h"
-#include "guava2d/texture_manager.h"
-#include "guava2d/rgb.h"
+#include <guava2d/pixmap.h>
+#include <guava2d/texture_manager.h>
+#include <guava2d/rgb.h>
 
-#include "program_registry.h"
+#include "render.h"
 #include "common.h"
 #include "background.h"
 
@@ -15,29 +14,11 @@ enum {
 };
 
 static g2d::texture *gradient_texture = 0;
-static g2d::vertex_array_texuv gradient_verts(4);
 
 void
 background_draw_gradient()
 {
-	glDisable(GL_BLEND);
-
-	gradient_texture->bind();
-
-	program_texture_decal& prog = get_program_instance<program_texture_decal>();
-	prog.use();
-	prog.set_proj_modelview_matrix(get_ortho_projection());
-	prog.set_texture(0);
-
-	gradient_verts.draw(GL_TRIANGLE_STRIP);
-}
-
-void
-background_initialize()
-{
-	gradient_texture =
-		new g2d::texture(new g2d::pixmap(GRADIENT_TEXTURE_WIDTH, GRADIENT_TEXTURE_HEIGHT, g2d::pixmap::RGB), 1);
-	g2d::texture_manager::get_instance().put("gradient-texture", gradient_texture);
+	render::set_blend_mode(blend_mode::NO_BLEND);
 
 	const float du = 1./GRADIENT_TEXTURE_WIDTH;
 	const float u0 = du;
@@ -47,10 +28,19 @@ background_initialize()
 	const float v0 = dv;
 	const float v1 = 1. - dv;
 
-	gradient_verts << 0, 0, u0, v0;
-	gradient_verts << 0, window_height, u0, v1;
-	gradient_verts << window_width, 0, u1, v0;
-	gradient_verts << window_width, window_height, u1, v1;
+	render::set_color({ 1.f, 1.f, 1.f, 1.f });
+	render::draw_quad(gradient_texture,
+		{ { 0, 0 }, { 0, window_height }, { window_width, window_height }, { window_width, 0 } },
+		{ { u0, v0 }, { u0, v1 }, { u1, v1 }, { u1, v0 } },
+		-100);
+}
+
+void
+background_initialize()
+{
+	gradient_texture =
+		new g2d::texture(new g2d::pixmap(GRADIENT_TEXTURE_WIDTH, GRADIENT_TEXTURE_HEIGHT, g2d::pixmap::RGB), 1);
+	g2d::texture_manager::get_instance().put("gradient-texture", gradient_texture);
 }
 
 void

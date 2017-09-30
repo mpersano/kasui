@@ -32,7 +32,7 @@ public:
 	{ pos_ = p; }
 
 	bool update(uint32_t dt);
-	void draw(const g2d::mat4& mat) const;
+	void draw() const;
 
 	bool close();
 
