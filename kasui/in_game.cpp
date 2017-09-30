@@ -62,7 +62,7 @@ struct game_animation
 
 	virtual ~game_animation() { delete action; }
 
-	virtual void draw(const g2d::mat4& proj_modelview) const = 0;
+	virtual void draw() const = 0;
 	virtual bool update(uint32_t dt);
 
 	abstract_action *action;
@@ -73,14 +73,15 @@ struct glyph_animation : game_animation
 	glyph_animation(const g2d::font *font, float glyph_spacing, const wchar_t *message, float x_base, float y_base, const gradient *g);
 	virtual ~glyph_animation();
 
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 	struct glyph_state {
 		glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center);
 
-		void draw(const g2d::mat4& proj_modelview, const program_wrapper& prog) const;
+		void draw() const;
 
-		g2d::vertex_array_texuv_alpha gv;
+		g2d::vec2 p0, p1, p2, p3;
+		g2d::vec2 t0, t1, t2, t3;
 		const g2d::texture *texture;
 		float x_center, y_center;
 		float flip; // in radians
@@ -111,7 +112,7 @@ struct abunai_animation : game_animation
 {
 	abunai_animation();
 
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 	float x, alpha;
 	g2d::sprite *abunai_bb_;
@@ -121,7 +122,7 @@ struct game_over_animation_base : glyph_animation
 {
 	game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str, const gradient *g);
 
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 	float billboard_x, overlay_alpha;
 	g2d::sprite *game_over_bb_;
@@ -141,7 +142,7 @@ struct countdown_digit : game_animation
 {
 	countdown_digit(const g2d::glyph_info *gi, float x_center, float y_center);
 
-	void draw(const g2d::mat4& proj_modelview) const;
+	void draw() const;
 
 	const g2d::texture *texture;
 	g2d::vertex_array_texuv gv;
@@ -195,7 +196,7 @@ glyph_animation::~glyph_animation()
 }
 
 void
-glyph_animation::draw(const g2d::mat4& proj_modelview) const
+glyph_animation::draw() const
 {
 	const g2d::rgb& top_color = *gradient_->from;
 	const g2d::rgb& bottom_color = *gradient_->to;
@@ -206,41 +207,40 @@ glyph_animation::draw(const g2d::mat4& proj_modelview) const
 	g2d::rgb top_color_outline = .5*top_color_text;
 	g2d::rgb bottom_color_outline = .5*bottom_color_text;
 
-	const g2d::mat4 mat =
-		proj_modelview*
-		g2d::mat4::translation(x_base, y_base, 0)*
-		g2d::mat4::scale(scale, scale, 0);
+	render::push_matrix();
+	render::translate(x_base, y_base);
+	render::scale(scale, scale);
 
+#ifdef FIX_ME
 	program_intro_text& prog = get_program_instance<program_intro_text>();
 	prog.use();
 	prog.set_texture(0);
+#endif
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	std::for_each(
-		glyph_states.begin(),
-		glyph_states.end(),
-		[&] (const glyph_state *p) {
-			const float a = alpha*p->glyph_alpha;
+	for (auto p : glyph_states) {
+		const float a = alpha*p->glyph_alpha;
 
-			prog.set_top_color_text(g2d::rgba(top_color_text, a));
-			prog.set_bottom_color_text(g2d::rgba(bottom_color_text, a));
-			prog.set_top_color_outline(g2d::rgba(top_color_outline, a));
-			prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, a));
+#ifdef FIX_ME
+		prog.set_top_color_text(g2d::rgba(top_color_text, a));
+		prog.set_bottom_color_text(g2d::rgba(bottom_color_text, a));
+		prog.set_top_color_outline(g2d::rgba(top_color_outline, a));
+		prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, a));
+#endif
 
-			p->draw(mat, prog);
-		});
+		render::set_color({ 1.f, 1.f, 1.f, a });
+		p->draw();
+	}
+
+	render::pop_matrix();
 }
 
 glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center)
-: gv(4)
-, texture(gi->texture_)
+: texture(gi->texture_)
 , x_center(x_center)
 , y_center(y_center)
 {
-	g2d::vec2 p0, p1, p2, p3;
-
 	if (flip) {
 		const float dx = .5*gi->height;
 		const float dy = .5*gi->width;
@@ -259,33 +259,29 @@ glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, 
 		p3 = g2d::vec2(-dx, -dy);
 	}
 
-	const g2d::vec2& t0 = gi->texuv[0];
-	const g2d::vec2& t1 = gi->texuv[1];
-	const g2d::vec2& t2 = gi->texuv[2];
-	const g2d::vec2& t3 = gi->texuv[3];
-
-	gv << p0.x, p0.y, t0.x, t0.y, 0;
-	gv << p1.x, p1.y, t1.x, t1.y, 0;
-	gv << p3.x, p3.y, t3.x, t3.y, 1;
-	gv << p2.x, p2.y, t2.x, t2.y, 1;
+	t0 = gi->texuv[0];
+	t1 = gi->texuv[1];
+	t2 = gi->texuv[2];
+	t3 = gi->texuv[3];
 }
 
 void
-glyph_animation::glyph_state::draw(const g2d::mat4& proj_modelview, const program_wrapper& prog) const
+glyph_animation::glyph_state::draw() const
 {
 	const float c = sin(flip);
 	const float scale = 1./(1. + z);
 
-	const g2d::mat4 mat =
-		proj_modelview*
-		g2d::mat4::translation(x_center, y_center, 0)*
-		g2d::mat4::scale(c*scale, scale, 0);
+	render::push_matrix();
+	render::translate(x_center, y_center);
+	render::scale(c*scale, scale);
 
-	texture->bind();
+	render::draw_quad(
+		texture,
+		{ { p0.x, p0.y }, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y } },
+		{ { t0.x, t0.y }, { t1.x, t1.y }, { t2.x, t2.y }, { t3.x, t3.y } },
+		100);
 
-	prog.set_proj_modelview_matrix(mat);
-
-	gv.draw(GL_TRIANGLE_STRIP);
+	render::pop_matrix();
 }
 
 #define GLYPH_ANIMATION_SPACING 1.
@@ -384,8 +380,9 @@ abunai_animation::abunai_animation()
 }
 
 void
-abunai_animation::draw(const g2d::mat4& proj_modelview) const
+abunai_animation::draw() const
 {
+#ifdef FIX_ME
 	// draw fade out overlay
 
 	static g2d::vertex_array_flat gv(4);
@@ -421,6 +418,7 @@ abunai_animation::draw(const g2d::mat4& proj_modelview) const
 
 	abunai_bb_->draw(0, 0);
 	}
+#endif
 }
 
 game_over_animation_base::game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str, const gradient *g)
@@ -463,8 +461,9 @@ game_over_animation_base::game_over_animation_base(const g2d::font *font, float 
 }
 
 void
-game_over_animation_base::draw(const g2d::mat4& proj_modelview) const
+game_over_animation_base::draw() const
 {
+#ifdef FIX_ME
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -507,6 +506,7 @@ game_over_animation_base::draw(const g2d::mat4& proj_modelview) const
 	// draw characters
 
 	glyph_animation::draw(proj_modelview);
+#endif
 }
 
 time_up_animation::time_up_animation(const gradient *g)
@@ -558,8 +558,9 @@ countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, floa
 }
 
 void
-countdown_digit::draw(const g2d::mat4& proj_modelview) const
+countdown_digit::draw() const
 {
+#ifdef FIX_ME
 	const float scale = 1./(1. + z);
 
 	const g2d::mat4 mat =
@@ -579,6 +580,7 @@ countdown_digit::draw(const g2d::mat4& proj_modelview) const
 	texture->bind();
 
 	gv.draw(GL_TRIANGLE_STRIP);
+#endif
 }
 
 class in_game_state_impl : public world_event_listener
@@ -1070,10 +1072,8 @@ in_game_state_impl::redraw() const
 	world_.draw();
 	render::pop_matrix();
 
-#ifdef FIX_ME
 	if (cur_game_animation_)
-		cur_game_animation_->draw(ortho);
-#endif
+		cur_game_animation_->draw();
 }
 
 void
