@@ -34,9 +34,9 @@ private:
 g2d::vec2
 vertical_menu::get_item_position(int item_index) const
 {
-	const float total_height = num_items*ITEM_HEIGHT;
+	const float total_height = item_list.size()*ITEM_HEIGHT;
 
-	const menu_item *item = get_item_at(item_index);
+	const auto& item = item_list[item_index];
 
 	const float base_y = .5*(window_height + total_height) - .5*ITEM_HEIGHT;
 	const float base_x = .5*(window_width - ITEM_WIDTH);

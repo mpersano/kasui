@@ -1,6 +1,9 @@
 #ifndef MENU_H_
 #define MENU_H_
 
+#include <vector>
+#include <memory>
+
 #include "guava2d/vec2.h"
 #include "guava2d/vertex_array.h"
 #include "guava2d/sprite.h"
@@ -27,7 +30,6 @@ struct menu_item
 	menu_item(int sound)
 	: sound(sound)
 	, is_active(false)
-	, next(0)
 	{ }
 
 	virtual ~menu_item() { }
@@ -61,8 +63,6 @@ struct menu_item
 
 	bool is_active;
 	uint32_t active_t;
-
-	menu_item *next;
 };
 
 template <typename F, typename G>
@@ -253,10 +253,7 @@ protected:
 
 	void activate_selected_item();
 
-	const menu_item *get_item_at(int n) const;
-
-	int num_items;
-	menu_item *item_list;
+	std::vector<std::unique_ptr<menu_item>> item_list;
 	uint32_t state_t;
 	menu_item *cur_selected_item;
 

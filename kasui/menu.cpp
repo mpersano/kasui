@@ -40,29 +40,16 @@ menu_item::on_activation()
 
 menu::~menu()
 {
-	menu_item *p = item_list;
-
-	while (p) {
-		menu_item *next = p->next;
-		delete p;
-		p = next;
-	}
 }
 
 menu::menu()
-: num_items(0)
-, item_list(0)
-, cur_selected_item(0)
+: cur_selected_item(0)
 { }
 
 void
 menu::append_item(menu_item *item)
 {
-	menu_item **p;
-	for (p = &item_list; *p; p = &(*p)->next)
-		;
-	*p = item;
-	++num_items;
+	item_list.emplace_back(item);
 }
 
 void
@@ -72,17 +59,15 @@ menu::draw() const
 
 	const float alpha = get_cur_alpha();
 
-	int index = 0;
+	for (size_t i = 0; i < item_list.size(); ++i) {
+		const g2d::vec2 pos = get_item_position(i);
 
-	for (menu_item *p = item_list; p; p = p->next) {
-		const g2d::vec2 pos = get_item_position(index);
+		const auto p = item_list[i].get();
 
 		render::push_matrix();
 		render::translate(pos.x, pos.y);
 		p->draw(p == cur_selected_item, alpha);
 		render::pop_matrix();
-
-		++index;
 	}
 }
 
@@ -91,7 +76,7 @@ menu::update(uint32_t dt)
 {
 	state_t += dt;
 
-	for (menu_item *p = item_list; p; p = p->next)
+	for (auto& p : item_list)
 		p->update(dt);
 
 	switch (cur_state) {
@@ -131,7 +116,7 @@ menu::reset()
 
 	cur_selected_item = 0;
 
-	for (menu_item *p = item_list; p; p = p->next)
+	for (auto& p : item_list)
 		p->reset();
 }
 
@@ -145,14 +130,14 @@ menu::on_touch_down(float x, float y)
 
 	int index = 0;
 
-	for (menu_item *p = item_list; p; p = p->next) {
+	for (auto& p : item_list) {
 		if (p->is_enabled()) {
 			g2d::vec2 pos = get_item_position(index);
 
 			const rect rc = p->get_rect();
 
 			if (x >= pos.x && x < pos.x + rc.width && y >= pos.y && y < pos.y + rc.height) {
-				cur_selected_item = p;
+				cur_selected_item = p.get();
 				break;
 			}
 		}
@@ -172,9 +157,9 @@ void
 menu::on_back_key()
 {
 	if (cur_state == MENU_IDLE) {
-		for (menu_item *p = item_list; p; p = p->next) {
+		for (auto& p : item_list) {
 			if (p->is_back_item()) {
-				cur_selected_item = p;
+				cur_selected_item = p.get();
 				activate_selected_item();
 			}
 		}
@@ -221,19 +206,6 @@ menu::get_cur_alpha() const
 	}
 
 	return alpha;
-}
-
-const menu_item *
-menu::get_item_at(int n) const
-{
-	const menu_item *p = item_list;
-
-	while (n && p) {
-		p = p->next;
-		--n;
-	}
-
-	return p;
 }
 
 void
