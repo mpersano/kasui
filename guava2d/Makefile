@@ -17,13 +17,11 @@ CXXFILES = \
 	panic.cpp \
 	xwchar.cpp \
 	file.cpp \
-	sprite.cpp \
-	sprite_manager.cpp \
 	draw_queue.cpp \
 	program.cpp \
 	shader.cpp
 
-CXXFLAGS = `pkg-config --cflags zlib libpng glew` -Wall -g -O2 -std=c++0x
+CXXFLAGS = `pkg-config --cflags zlib libpng glew` -Wall -g -O2 -std=c++14
 
 ifdef WINDOZE
 CXXFLAGS += -DGLEW_STATIC

@@ -4,10 +4,10 @@
 #include "guava2d/g2dgl.h"
 #include "guava2d/font_manager.h"
 #include "guava2d/texture_manager.h"
-#include "guava2d/sprite_manager.h"
 #include "guava2d/draw_queue.h"
 #include "guava2d/rgb.h"
 
+#include "sprite_manager.h"
 #include "render.h"
 #include "common.h"
 #include "options.h"

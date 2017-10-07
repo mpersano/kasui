@@ -16,9 +16,9 @@
 #include "guava2d/vertex_array.h"
 #include "guava2d/program.h"
 #include "guava2d/font_manager.h"
-#include "guava2d/sprite_manager.h"
 #include "guava2d/rgb.h"
 
+#include "sprite_manager.h"
 #include "render.h"
 #include "main_menu.h"
 #include "hiscore_input.h"

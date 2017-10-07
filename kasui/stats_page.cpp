@@ -6,11 +6,11 @@
 #include "guava2d/rgb.h"
 #include "guava2d/draw_queue.h"
 #include "guava2d/font_manager.h"
-#include "guava2d/sprite_manager.h"
 #include "guava2d/texture_manager.h"
 #include "guava2d/xwchar.h"
 #include "guava2d/vec3.h"
 
+#include "sprite_manager.h"
 #include "common.h"
 #include "theme.h"
 #include "background.h"

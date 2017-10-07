@@ -78,7 +78,9 @@ CXXFILES = \
 	http_request.cpp \
 	leaderboard_page.cpp \
 	render.cpp \
-	program_manager.cpp
+	program_manager.cpp \
+	sprite.cpp \
+	sprite_manager.cpp
 
 TARGET = demo
 

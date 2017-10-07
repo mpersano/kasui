@@ -1,6 +1,6 @@
 #include "guava2d/g2dgl.h"
-#include "guava2d/sprite_manager.h"
 
+#include "sprite_manager.h"
 #include "render.h"
 #include "common.h"
 #include "program_registry.h"
@@ -36,7 +36,7 @@ pause_button::draw(float alpha) const
 	render::translate(x_base, y_base);
 
 	render::set_color({ 1.f, 1.f, 1.f, alpha*(is_selected ? 1.f : .5f)});
-	render::draw_sprite(is_selected ? sprite_selected_ : sprite_unselected_, 0, 0, 10);
+	(is_selected ? sprite_selected_ : sprite_unselected_)->draw(0, 0, 10);
 
 	render::pop_matrix();
 }

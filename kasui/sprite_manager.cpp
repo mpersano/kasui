@@ -1,6 +1,7 @@
 #include "panic.h"
-#include "file.h"
-#include "texture_manager.h"
+#include "guava2d/file.h"
+#include "guava2d/texture_manager.h"
+
 #include "sprite_manager.h"
 
 namespace g2d {

@@ -1,6 +1,6 @@
 #include "guava2d/texture_manager.h"
-#include "guava2d/sprite_manager.h"
 
+#include "sprite_manager.h"
 #include "render.h"
 
 #include "common.h"
@@ -127,7 +127,7 @@ foreground_billboard::draw() const
 	render::translate(x, y);
 	render::scale(scale, scale);
 	render::set_color({ 1.f, 1.f, 1.f, alpha });
-	render::draw_sprite(bb, 0, 0, -10);
+	bb->draw(0, 0, -10);
 
 	render::pop_matrix();
 }

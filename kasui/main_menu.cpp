@@ -6,8 +6,8 @@
 #include "guava2d/g2dgl.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
-#include "guava2d/sprite_manager.h"
 
+#include "sprite_manager.h"
 #include "render.h"
 
 #include "program_registry.h"

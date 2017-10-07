@@ -10,7 +10,7 @@ class sprite
 public:
 	sprite(const g2d::texture *texture, int left, int top, int width, int height, int left_margin, int right_margin, int top_margin, int bottom_margin);
 
-	void draw(float x, float y) const;
+	void draw(float x, float y, int layer) const;
 
 	const g2d::texture *get_texture() const
 	{ return texture_; }
@@ -27,7 +27,7 @@ public:
 	int get_height() const
 	{ return height_ + top_margin_ + bottom_margin_; }
 
-// private:
+private:
 	int left_, top_;
 	int width_, height_;
 	int left_margin_, right_margin_;

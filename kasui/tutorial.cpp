@@ -6,10 +6,10 @@
 #include <guava2d/font_manager.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/draw_queue.h>
-#include <guava2d/sprite.h>
-#include <guava2d/sprite_manager.h>
 #include <guava2d/xwchar.h>
 
+#include "sprite.h"
+#include "sprite_manager.h"
 #include "panic.h"
 #include "utf8.h"
 #include "program_registry.h"
@@ -495,7 +495,9 @@ tutorial_state_impl::redraw() const
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef FIX_ME
 		finger_->draw(0, 0);
+#endif
 	}
 
 	pause_button_.draw(1);

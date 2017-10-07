@@ -7,7 +7,6 @@
 #include <guava2d/texture.h>
 #include <guava2d/program.h>
 #include <guava2d/rgb.h>
-#include <guava2d/sprite.h> // XXX remove this eventually
 
 #include <cassert>
 #include <algorithm>
@@ -477,29 +476,6 @@ void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texco
 void draw_quad(const quad& verts, int layer)
 {
     g_sprite_batch.add_quad(verts, layer);
-}
-
-void draw_sprite(const g2d::sprite *sprite, float x, float y, int layer)
-{
-    // TODO eventually move this to g2d::sprite itself
-
-    const auto x0 = x + sprite->left_margin_;
-    const auto x1 = x0 + sprite->width_;
-
-    const auto y0 = y + sprite->bottom_margin_;
-    const auto y1 = y0 + sprite->height_;
-
-    const auto u0 = sprite->u0_;
-    const auto u1 = sprite->u1_;
-
-    const auto v0 = sprite->v0_;
-    const auto v1 = sprite->v1_;
-
-    g_sprite_batch.add_quad(
-            sprite->texture_,
-            { { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
-            { { u0, v1 }, { u1, v1 }, { u1, v0 }, { u0, v0 } },
-            layer);
 }
 
 }

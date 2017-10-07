@@ -1,5 +1,5 @@
-#include "texture.h"
-#include "vertex_array.h"
+#include "guava2d/texture.h"
+#include "render.h"
 #include "sprite.h"
 
 namespace g2d {
@@ -31,22 +31,25 @@ sprite::sprite(const g2d::texture *texture, int left, int top, int width, int he
 }
 
 void
-sprite::draw(float x, float y) const
+sprite::draw(float x, float y, int layer) const
 {
-	texture_->bind();
+    const auto x0 = x + left_margin_;
+    const auto x1 = x0 + width_;
 
-	x += left_margin_;
-	y += bottom_margin_;
+    const auto y0 = y + bottom_margin_;
+    const auto y1 = y0 + height_;
 
-	static g2d::vertex_array_texuv va(4);
+    const auto u0 = u0_;
+    const auto u1 = u1_;
 
-	va.reset();
-	va << x, y, u0_, v1_;
-	va << x + width_, y, u1_, v1_;
-	va << x, y + height_, u0_, v0_;
-	va << x + width_, y + height_, u1_, v0_;
+    const auto v0 = v0_;
+    const auto v1 = v1_;
 
-	va.draw(GL_TRIANGLE_STRIP);
+    render::draw_quad(
+            texture_,
+            { { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+            { { u0, v1 }, { u1, v1 }, { u1, v0 }, { u0, v0 } },
+            layer);
 }
 
 }

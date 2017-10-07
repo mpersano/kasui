@@ -6,8 +6,8 @@
 
 #include "guava2d/vec2.h"
 #include "guava2d/vertex_array.h"
-#include "guava2d/sprite.h"
 
+#include "sprite.h"
 #include "render.h"
 
 #include "common.h"
@@ -86,7 +86,7 @@ struct action_menu_item : menu_item
 	void draw(bool is_selected, float alpha) const
 	{
 		render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
-		render::draw_sprite(is_selected ? inactive_sprite : active_sprite, 0., 0., 50);
+		(is_selected ? inactive_sprite : active_sprite)->draw(0., 0., 50);
 	}
 
 	const g2d::sprite *get_sprite(bool active) const
@@ -157,7 +157,7 @@ struct toggle_menu_item : menu_item
 		else
 			s = is_selected ? inactive_sprite_false : active_sprite_false;
 
-		render::draw_sprite(s, 0., 0., 50);
+		s->draw(0., 0., 50);
 	}
 
 	void on_selection()

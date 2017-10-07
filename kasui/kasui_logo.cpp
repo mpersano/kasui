@@ -1,9 +1,7 @@
 #include "guava2d/vertex_array.h"
-#include "guava2d/sprite_manager.h"
 
+#include "sprite_manager.h"
 #include "render.h"
-
-#include "program_registry.h"
 #include "common.h"
 #include "action.h"
 #include "tween.h"
@@ -107,19 +105,19 @@ kasui_logo::draw() const
 
 	// background
 
-	render::draw_sprite(bg, 0, 0, -15);
+	bg->draw(0, 0, -15);
 
 	// ka
 
 	render::push_matrix();
 	render::scale(1, ka_scale);
-	render::draw_sprite(ka, 0, 0, -10);
+	ka->draw(0, 0, -10);
 	render::pop_matrix();
 
 	// sui
 
 	render::scale(1, sui_scale);
-	render::draw_sprite(sui, 0, 0, -10);
+	sui->draw(0, 0, -10);
 
 	render::pop_matrix();
 }
