@@ -55,7 +55,7 @@ sprite_manager::add_sprite_sheet(const char *source)
 		sprintf(texture_path, "%s.%03d.png", source, sheet_index);
 
 		sprite *sp = new sprite(texture_manager::get_instance().load(texture_path), left, top, width, height, left_margin, right_margin, top_margin, bottom_margin);
-		sprite_dict_.insert(dict_value_type(sprite_name, sp));
+		sprite_dict_.insert({ sprite_name, sp });
 	}
 }
 
