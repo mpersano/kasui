@@ -8,6 +8,7 @@
 #include "guava2d/draw_queue.h"
 #include "guava2d/rgb.h"
 
+#include "render.h"
 #include "common.h"
 #include "options.h"
 #include "program_registry.h"
@@ -81,7 +82,7 @@ private:
 	};
 	void set_cur_state(state s);
 
-	void draw_frame(const g2d::mat4& proj_modelview, float alpha) const;
+	void draw_frame(float alpha) const;
 
 	vertical_menu root_menu_, options_menu_;
 	menu *cur_menu_;
@@ -210,98 +211,48 @@ in_game_menu_impl::set_cur_menu(menu *p)
 }
 
 void
-in_game_menu_impl::draw_frame(const g2d::mat4& proj_modelview, float alpha) const
+in_game_menu_impl::draw_frame(float alpha) const
 {
 	alpha *= 1.5;
 	if (alpha > 1)
 		alpha = 1;
 
-	const int a = alpha*192;
+	const float a = alpha*.75;
 
 	const float y0 = .5*(window_height - FRAME_HEIGHT);
 	const float y1 = .5*(window_height + FRAME_HEIGHT);
 
-	static g2d::vertex_array_color gv;
-	gv.reset();
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
 	// top/bottom
 
+	render::set_color({ 0.f, 0.f, 0.f, a });
+
 	// bottom (black)
 
-	gv << 0, 0, 0, 0, 0, a;
-	gv << window_width, 0, 0, 0, 0, a;
-	gv << window_width, y0, 0, 0, 0, a;
-
-	gv << window_width, y0, 0, 0, 0, a;
-	gv << 0, y0, 0, 0, 0, a;
-	gv << 0, 0, 0, 0, 0, a;
+	render::draw_quad(
+		{ { 0, 0 }, { window_width, 0 }, { window_width, y0 }, { 0, y0 } },
+		20);
 
 	// top (black)
 
-	gv << 0, y1, 0, 0, 0, a;
-	gv << window_width, y1, 0, 0, 0, a;
-	gv << window_width, window_height, 0, 0, 0, a;
-
-	gv << window_width, window_height, 0, 0, 0, a;
-	gv << 0, window_height, 0, 0, 0, a;
-	gv << 0, y1, 0, 0, 0, a;
+	render::draw_quad(
+		{ { 0, y1 }, { window_width, y1 }, { window_width, window_height }, { 0, window_height } },
+		20);
 
 	// center (white)
 
-#if 0
-	enum { NUM_SEGMENTS = 32, };
+	render::set_color({ .75f, .75f, .75f, a });
 
-	const float dy = (y1 - y0)/NUM_SEGMENTS;
-	float y = y0;
-
-	for (int i = 0; i < NUM_SEGMENTS; i++) {
-		const int r = 190;
-		const int g = 190;
-		const int b = 190;
-
-		// const int a = alpha*(i%2 == 0 ? 64 : 80);
-		const int a = alpha*(i%2 == 0 ? 192 : 222);
-
-		gv << 0, y, r, g, b, a;
-		gv << window_width, y, r, g, b, a;
-		gv << window_width, y + dy, r, g, b, a;
-
-		gv << window_width, y + dy, r, g, b, a;
-		gv << 0, y + dy, r, g, b, a;
-		gv << 0, y, r, g, b, a;
-
-		y += dy;
-	}
-#else
-	const int r = 190;
-	const int g = 190;
-	const int b = 190;
-
-	gv << 0, y0, r, g, b, a;
-	gv << window_width, y0, r, g, b, a;
-	gv << window_width, y1, r, g, b, a;
-
-	gv << window_width, y1, r, g, b, a;
-	gv << 0, y1, r, g, b, a;
-	gv << 0, y0, r, g, b, a;
-#endif
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	program_color& prog = get_program_instance<program_color>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-
-	gv.draw(GL_TRIANGLES);
+	render::draw_quad(
+		{ { 0, y0 }, { window_width, y0 }, { window_width, y1 }, { 0, y1 } },
+		20);
 }
 
 void
 in_game_menu_impl::redraw() const
 {
 	get_prev_state()->redraw();
-
-	const g2d::mat4 ortho = get_ortho_projection();
 
 	float alpha;
 
@@ -319,11 +270,9 @@ in_game_menu_impl::redraw() const
 			break;
 	}
 
-	draw_frame(ortho, alpha);
+	draw_frame(alpha);
 
-#if 0
-	cur_menu_->draw(ortho);
-#endif
+	cur_menu_->draw();
 
 	if (cur_state_ == STATE_FADE_TO_JUKUGO_STATS)
 		draw_fade_overlay(1. - cur_menu_->get_cur_alpha());
