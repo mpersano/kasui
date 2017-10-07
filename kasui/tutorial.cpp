@@ -499,7 +499,7 @@ tutorial_state_impl::redraw() const
 		finger_->draw(0, 0);
 	}
 
-	pause_button_.draw(get_ortho_projection(), 1);
+	pause_button_.draw(1);
 }
 
 void

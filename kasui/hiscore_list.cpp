@@ -99,7 +99,7 @@ hiscore_list_impl::redraw() const
 
 	leaderboard_.draw(mat*g2d::mat4::translation(x_offset, 0, 0), alpha);
 
-	pause_button_.draw(mat, alpha);
+	pause_button_.draw(alpha);
 }
 
 void

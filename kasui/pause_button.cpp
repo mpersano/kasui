@@ -1,6 +1,7 @@
 #include "guava2d/g2dgl.h"
 #include "guava2d/sprite_manager.h"
 
+#include "render.h"
 #include "common.h"
 #include "program_registry.h"
 #include "pause_button.h"
@@ -23,18 +24,17 @@ pause_button::reset()
 }
 
 void
-pause_button::draw(const g2d::mat4& mat, float alpha) const
+pause_button::draw(float alpha) const
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	program_texture_uniform_alpha& prog = get_program_instance<program_texture_uniform_alpha>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat*g2d::mat4::translation(x_base, y_base, 0));
-	prog.set_texture(0);
-	prog.set_alpha(alpha*(is_selected ? 1. : .5));
+	render::push_matrix();
+	render::translate(x_base, y_base);
 
-	(is_selected ? sprite_selected_ : sprite_unselected_)->draw(0, 0);
+	render::set_color({ 1.f, 1.f, 1.f, alpha*(is_selected ? 1.f : .5f)});
+	render::draw_sprite(is_selected ? sprite_selected_ : sprite_unselected_, 0, 0, 10);
+
+	render::pop_matrix();
 }
 
 bool

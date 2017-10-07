@@ -1,5 +1,4 @@
-#ifndef PAUSE_BUTTON_H_
-#define PAUSE_BUTTON_H_
+#pragma once
 
 namespace g2d {
 class sprite;
@@ -12,7 +11,7 @@ public:
 	pause_button(float x, float y, void (*on_activation_fn)(void *), void *extra);
 
 	void reset();
-	void draw(const g2d::mat4& mat, float alpha) const;
+	void draw(float alpha) const;
 
 	bool on_touch_down(float x, float y);
 	bool on_touch_up();
@@ -30,5 +29,3 @@ private:
 
 	bool is_selected;
 };
-
-#endif // PAUSE_BUTTON_H_

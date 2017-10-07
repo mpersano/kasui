@@ -638,7 +638,7 @@ stats_state_impl::redraw() const
 			break;
 	}
 
-	pause_button_.draw(get_ortho_projection(), pause_alpha);
+	pause_button_.draw(pause_alpha);
 }
 
 void

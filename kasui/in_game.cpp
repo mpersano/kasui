@@ -1061,9 +1061,11 @@ in_game_state_impl::redraw() const
 
 	const g2d::mat4 ortho = get_ortho_projection();
 	const g2d::mat4 grid_mv = ortho*g2d::mat4::translation(grid_base_x, grid_base_y, 0);
+#endif
 
-	pause_button_.draw(ortho, 1);
+	pause_button_.draw(1);
 
+#ifdef FIX_ME
 	draw_hud(ortho);
 #endif
 
