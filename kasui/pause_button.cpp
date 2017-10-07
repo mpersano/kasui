@@ -6,11 +6,9 @@
 #include "program_registry.h"
 #include "pause_button.h"
 
-pause_button::pause_button(float x, float y, void (*on_activation_fn)(void *), void *extra)
+pause_button::pause_button(float x, float y)
 : x_base(x)
 , y_base(y)
-, on_activation_fn(on_activation_fn)
-, extra(extra)
 , sprite_unselected_(g2d::sprite_manager::get_instance().get_sprite("pause-0.png"))
 , sprite_selected_(g2d::sprite_manager::get_instance().get_sprite("pause-1.png"))
 {
@@ -21,6 +19,12 @@ void
 pause_button::reset()
 {
 	is_selected = false;
+}
+
+void
+pause_button::set_callback(std::function<void(void)> callback)
+{
+	callback_ = callback;
 }
 
 void
@@ -49,7 +53,8 @@ pause_button::on_touch_up()
 	if (!is_selected) {
 		return false;
 	} else {
-		on_activation_fn(extra);
+		if (callback_)
+			callback_();
 		is_selected = false;
 		return true;
 	}

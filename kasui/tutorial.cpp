@@ -59,9 +59,6 @@ public:
 	void update_world(int tics);
 
 private:
-	static void on_pause_button_static(void *extra);
-	void on_pause_button();
-
 	void load_script(); // XXX: move this somewhere else later
 
 	world world_;
@@ -287,8 +284,10 @@ tutorial_state_impl::tutorial_state_impl()
 : world_(8, 6, window_height - text_box::HEIGHT - 40)
 , text_box_(window_width)
 , finger_(g2d::sprite_manager::get_instance().get_sprite("finger.png"))
-, pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE, on_pause_button_static, this)
+, pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
 {
+	pause_button_.set_callback([this] { on_back_key(); });
+
 	// world_.initialize_grid(2);
 
 	grid_base_x_ = .5*(window_width - world_.get_width());
@@ -666,12 +665,6 @@ tutorial_state_impl::on_back_key()
 	main_menu->fade_in();
 
 	pop_state();
-}
-
-void
-tutorial_state_impl::on_pause_button_static(void *extra)
-{
-	reinterpret_cast<tutorial_state_impl *>(extra)->on_back_key();
 }
 
 void

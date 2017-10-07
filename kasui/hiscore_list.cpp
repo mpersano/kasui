@@ -24,9 +24,6 @@ public:
 	void on_menu_key();
 
 private:
-	static void on_pause_button_static(void *extra);
-	void on_pause_button();
-
 	leaderboard_page& leaderboard_;
 	bool touch_is_down_;
 	float last_touch_y_;
@@ -41,8 +38,10 @@ private:
 
 hiscore_list_impl::hiscore_list_impl()
 : leaderboard_(get_net_leaderboard())
-, pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE, on_pause_button_static, this)
-{ }
+, pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
+{
+	pause_button_.set_callback([this] { on_back_key(); });
+}
 
 hiscore_list_impl::~hiscore_list_impl()
 { }
@@ -187,12 +186,6 @@ hiscore_list_impl::on_back_key()
 void
 hiscore_list_impl::on_menu_key()
 { }
-
-void
-hiscore_list_impl::on_pause_button_static(void *extra)
-{
-	reinterpret_cast<hiscore_list_impl *>(extra)->on_back_key();
-}
 
 hiscore_list_state::hiscore_list_state()
 : impl_(new hiscore_list_impl)

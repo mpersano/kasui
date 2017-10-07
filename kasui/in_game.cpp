@@ -606,8 +606,6 @@ public:
 	void  set_enable_hints(bool enable);
 
 private:
-	static void on_pause_button_static(void *extra);
-
 	void update_hud_text();
 	void draw_hud(const g2d::mat4& mat) const;
 	float get_level_transition_alpha() const;
@@ -665,9 +663,11 @@ private:
 in_game_state_impl::in_game_state_impl()
 : world_(GRID_ROWS, GRID_COLS, window_height - 120)
 , cur_game_animation_(0)
-, pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE, on_pause_button_static, this)
+, pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
 , touch_is_down_(false)
 {
+	pause_button_.set_callback([this] { on_back_key(); });
+
 	world_.set_event_listener(this);
 
 	grid_base_x = .5*(window_width - world_.get_width());
@@ -699,12 +699,6 @@ in_game_state_impl::get_level_transition_alpha() const
 	}
 
 	return 1.;
-}
-
-void
-in_game_state_impl::on_pause_button_static(void *extra)
-{
-	reinterpret_cast<in_game_state_impl *>(extra)->on_back_key();
 }
 
 void

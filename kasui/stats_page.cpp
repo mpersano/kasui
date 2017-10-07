@@ -141,8 +141,6 @@ public:
 	void on_menu_key();
 
 private:
-	static void on_pause_button_static(void *extra);
-
 	void draw_pages(float x_offset) const;
 	void draw_page(const stats_page *page, float x_offset) const;
 	int get_next_level() const;
@@ -562,8 +560,10 @@ stats_page::on_drag(float dy)
 }
 
 stats_state_impl::stats_state_impl()
-: pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE, on_pause_button_static, this)
+: pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
 {
+	pause_button_.set_callback([this] { on_back_key(); });
+
 	for (int i = 0; i < NUM_LEVELS; i++)
 		level_stats_[i] = new stats_page(i, window_height - stats_page::TITLE_HEIGHT);
 
@@ -824,12 +824,6 @@ stats_state_impl::on_back_key()
 		cur_state_ = OUTRO;
 		state_tics_ = 0;
 	}
-}
-
-void
-stats_state_impl::on_pause_button_static(void *extra)
-{
-	reinterpret_cast<stats_state_impl *>(extra)->on_back_key();
 }
 
 void
