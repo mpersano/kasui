@@ -23,7 +23,7 @@ LIBS += \
   -lswscale -lavutil -lbz2
 endif
 
-CXXFLAGS = `pkg-config --cflags zlib libpng sdl glew gl` -Wall -O2 -g -I.. -std=c++0x
+CXXFLAGS = `pkg-config --cflags zlib libpng sdl glew gl` -Wall -O2 -g -I.. -std=c++14
 ifdef WINDOZE
 CXXFLAGS += -U__STRICT_ANSI__ -DGLEW_STATIC
 endif
