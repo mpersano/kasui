@@ -18,6 +18,7 @@
 #include "guava2d/font_manager.h"
 #include "guava2d/rgb.h"
 
+#include "program_manager.h"
 #include "sprite_manager.h"
 #include "render.h"
 #include "main_menu.h"
@@ -71,14 +72,13 @@ struct game_animation
 struct glyph_animation : game_animation
 {
 	glyph_animation(const g2d::font *font, float glyph_spacing, const wchar_t *message, float x_base, float y_base, const gradient *g);
-	virtual ~glyph_animation();
 
 	void draw() const;
 
 	struct glyph_state {
 		glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center);
 
-		void draw() const;
+		void draw(const g2d::program *program, float a) const;
 
 		g2d::vec2 p0, p1, p2, p3;
 		g2d::vec2 t0, t1, t2, t3;
@@ -89,13 +89,14 @@ struct glyph_animation : game_animation
 		float glyph_alpha;
 	};
 
-	std::vector <glyph_state *> glyph_states;
+	std::vector <glyph_state> glyph_states;
 
 	float alpha;
 	float scale;
 	float x_base;
 	float y_base;
 	const gradient *gradient_;
+	const g2d::program *program_;
 };
 
 struct level_intro_animation : glyph_animation
@@ -165,6 +166,7 @@ glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, con
 , x_base(x_base)
 , y_base(y_base)
 , gradient_(g)
+, program_(load_program("shaders/sprite.vert", "shaders/intro_text.frag"))
 {
 	int num_glyphs = xwcslen(message);
 
@@ -182,17 +184,9 @@ glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, con
 
 	for (int i = 0; i < num_glyphs; i++) {
 		const wchar_t ch = message[i];
-		glyph_states.push_back(new glyph_state(font->find_glyph(ch), ch == L'〜', 0, y));
+		glyph_states.emplace_back(font->find_glyph(ch), ch == L'〜', 0, y);
 		y -= char_height;
 	}
-}
-
-glyph_animation::~glyph_animation()
-{
-	std::for_each(
-		glyph_states.begin(),
-		glyph_states.end(),
-		[] (glyph_state *p) { delete p; });
 }
 
 void
@@ -207,30 +201,21 @@ glyph_animation::draw() const
 	g2d::rgb top_color_outline = .5*top_color_text;
 	g2d::rgb bottom_color_outline = .5*bottom_color_text;
 
+	program_->use();
+	program_->set_uniform_f("top_color_text", top_color_text.r, top_color_text.g, top_color_text.b);
+	program_->set_uniform_f("bottom_color_text", bottom_color_text.r, bottom_color_text.g, bottom_color_text.b);
+	program_->set_uniform_f("top_color_outline", top_color_outline.r, top_color_outline.g, top_color_outline.b);
+	program_->set_uniform_f("bottom_color_outline", bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b);
+
 	render::push_matrix();
 	render::translate(x_base, y_base);
 	render::scale(scale, scale);
 
-#ifdef FIX_ME
-	program_intro_text& prog = get_program_instance<program_intro_text>();
-	prog.use();
-	prog.set_texture(0);
-#endif
-
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	for (auto p : glyph_states) {
-		const float a = alpha*p->glyph_alpha;
-
-#ifdef FIX_ME
-		prog.set_top_color_text(g2d::rgba(top_color_text, a));
-		prog.set_bottom_color_text(g2d::rgba(bottom_color_text, a));
-		prog.set_top_color_outline(g2d::rgba(top_color_outline, a));
-		prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, a));
-#endif
-
-		render::set_color({ 1.f, 1.f, 1.f, a });
-		p->draw();
+	for (const auto& p : glyph_states) {
+		const float a = alpha*p.glyph_alpha;
+		p.draw(program_, a);
 	}
 
 	render::pop_matrix();
@@ -266,7 +251,7 @@ glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, 
 }
 
 void
-glyph_animation::glyph_state::draw() const
+glyph_animation::glyph_state::draw(const g2d::program *program, float alpha) const
 {
 	const float c = sin(flip);
 	const float scale = 1./(1. + z);
@@ -276,9 +261,11 @@ glyph_animation::glyph_state::draw() const
 	render::scale(c*scale, scale);
 
 	render::draw_quad(
+		program,
 		texture,
 		{ { p0.x, p0.y }, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y } },
 		{ { t0.x, t0.y }, { t1.x, t1.y }, { t2.x, t2.y }, { t3.x, t3.y } },
+		{ { 0.f, 1.f, 1.f, alpha }, { 0.f, 1.f, 1.f, alpha }, { 1.f, 1.f, 1.f, alpha }, { 1.f, 1.f, 1.f, alpha } },
 		100);
 
 	render::pop_matrix();
@@ -297,7 +284,7 @@ level_intro_animation::level_intro_animation(const gradient *g)
 		p->add(
 		  (new sequential_action_group)
 		    ->add(new delay_action(i*15*MS_PER_TIC))
-		    ->add(new property_change_action<out_bounce_tween<float> >(&glyph_states[i]->flip, 0, .5*M_PI, 30*MS_PER_TIC)));
+		    ->add(new property_change_action<out_bounce_tween<float> >(&glyph_states[i].flip, 0, .5*M_PI, 30*MS_PER_TIC)));
 	}
 
 	// bump
@@ -315,14 +302,11 @@ level_intro_animation::level_intro_animation(const gradient *g)
 
 	action = p;
 
-	std::for_each(
-		glyph_states.begin(),
-		glyph_states.end(),
-		[] (glyph_state *p) {
-			p->flip = 0;
-			p->z = 0;
-			p->glyph_alpha = 1;
-		});
+	for (auto& p : glyph_states) {
+		p.flip = 0;
+		p.z = 0;
+		p.glyph_alpha = 1;
+	}
 }
 
 level_completed_animation::level_completed_animation(const gradient *g)
@@ -336,8 +320,8 @@ level_completed_animation::level_completed_animation(const gradient *g)
 		    ->add(new delay_action(i*15*MS_PER_TIC))
 		    ->add(
 		      (new parallel_action_group)
-		        ->add(new property_change_action<out_bounce_tween<float> >(&glyph_states[i]->z, -.7, 0, 40*MS_PER_TIC))
-		        ->add(new property_change_action<quadratic_tween<float> >(&glyph_states[i]->glyph_alpha, 0, 1, 20*MS_PER_TIC))));
+		        ->add(new property_change_action<out_bounce_tween<float> >(&glyph_states[i].z, -.7, 0, 40*MS_PER_TIC))
+		        ->add(new property_change_action<quadratic_tween<float> >(&glyph_states[i].glyph_alpha, 0, 1, 20*MS_PER_TIC))));
 	}
 
 	const int FADE_TICS = 10*MS_PER_TIC;
@@ -349,14 +333,11 @@ level_completed_animation::level_completed_animation(const gradient *g)
 
 	action = p;
 
-	std::for_each(
-		glyph_states.begin(),
-		glyph_states.end(),
-		[] (glyph_state *p) {
-			p->flip = .5*M_PI;
-			p->glyph_alpha = 0;
-			p->z = 2;
-		});
+	for (auto& p : glyph_states) {
+		p.flip = .5*M_PI;
+		p.glyph_alpha = 0;
+		p.z = 2;
+	}
 }
 
 abunai_animation::abunai_animation()
@@ -437,7 +418,7 @@ game_over_animation_base::game_over_animation_base(const g2d::font *font, float 
 		p->add(
 		  (new sequential_action_group)
 		    ->add(new delay_action((30 + i*15)*MS_PER_TIC))
-		    ->add(new property_change_action<out_bounce_tween<float> >(&glyph_states[i]->flip, 0, .5*M_PI, 30*MS_PER_TIC)));
+		    ->add(new property_change_action<out_bounce_tween<float> >(&glyph_states[i].flip, 0, .5*M_PI, 30*MS_PER_TIC)));
 	}
 
 	// billboard
@@ -450,14 +431,11 @@ game_over_animation_base::game_over_animation_base(const g2d::font *font, float 
 
 	action = p;
 
-	std::for_each(
-		glyph_states.begin(),
-		glyph_states.end(),
-		[] (glyph_state *p) {
-			p->flip = 0;
-			p->z = 0;
-			p->glyph_alpha = 1;
-		});
+	for (auto& p : glyph_states) {
+		p.flip = 0;
+		p.z = 0;
+		p.glyph_alpha = 1;
+	}
 }
 
 void

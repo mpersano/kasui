@@ -14,12 +14,17 @@ class sprite;
 
 enum class blend_mode { NO_BLEND, ALPHA_BLEND, ADDITIVE_BLEND };
 
+namespace render {
+
 struct quad
 {
     g2d::vec2 v00, v01, v10, v11;
 };
 
-namespace render {
+struct vert_colors
+{
+    g2d::rgba c00, c01, c10, c11;
+};
 
 void init();
 
@@ -39,7 +44,12 @@ void set_blend_mode(blend_mode mode);
 void set_color(const g2d::rgba& color);
 
 void draw_quad(const quad& verts, int layer);
+void draw_quad(const quad& verts, const vert_colors& colors, int layer);
+
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
+void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
+
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
+void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
 
 }

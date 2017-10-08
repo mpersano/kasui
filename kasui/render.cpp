@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <stack>
 
+namespace render {
+
 namespace {
 
 void gl_set_blend_mode(blend_mode mode)
@@ -55,9 +57,8 @@ public:
     void set_blend_mode(blend_mode mode);
     void set_color(const g2d::rgba& color);
 
+    void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
-    void add_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
-    void add_quad(const quad& verts, int layer);
 
 private:
     struct sprite
@@ -67,8 +68,8 @@ private:
         const g2d::texture *texture;
         quad verts;
         quad texcoords;
+        vert_colors colors;
         blend_mode blend;
-        g2d::rgba color;
     };
 
     void load_programs();
@@ -174,7 +175,7 @@ void sprite_batch::set_color(const g2d::rgba& color)
     color_ = color;
 }
 
-void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
+void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer)
 {
     if (sprite_queue_size_ == SPRITE_QUEUE_CAPACITY)
         flush_queue();
@@ -193,31 +194,12 @@ void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *tex
 
     s.layer = layer;
     s.blend = blend_mode_;
-    s.color = color_;
+    s.colors = colors;
 }
 
-void sprite_batch::add_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
+void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
 {
-    add_quad(nullptr, texture, verts, texcoords, layer);
-}
-
-void sprite_batch::add_quad(const quad& verts, int layer)
-{
-    if (sprite_queue_size_ == SPRITE_QUEUE_CAPACITY)
-        flush_queue();
-
-    auto& s = sprite_queue_[sprite_queue_size_++];
-
-    s.texture = nullptr;
-
-    s.verts.v00 = matrix_*verts.v00;
-    s.verts.v01 = matrix_*verts.v01;
-    s.verts.v10 = matrix_*verts.v10;
-    s.verts.v11 = matrix_*verts.v11;
-
-    s.layer = layer;
-    s.blend = blend_mode_;
-    s.color = color_;
+    add_quad(program, texture, verts, texcoords, { color_, color_, color_, color_ }, layer);
 }
 
 void sprite_batch::load_programs()
@@ -333,13 +315,13 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
-        add_vertex(p->verts.v00, p->texcoords.v00, p->color);
-        add_vertex(p->verts.v01, p->texcoords.v01, p->color);
-        add_vertex(p->verts.v10, p->texcoords.v10, p->color);
-        add_vertex(p->verts.v11, p->texcoords.v11, p->color);
+        add_vertex(p->verts.v00, p->texcoords.v00, p->colors.c00);
+        add_vertex(p->verts.v01, p->texcoords.v01, p->colors.c01);
+        add_vertex(p->verts.v10, p->texcoords.v10, p->colors.c10);
+        add_vertex(p->verts.v11, p->texcoords.v11, p->colors.c11);
     }
 
-    // TODO vao
+    // TODO VAO
 
     GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), &data[0]));
     GL_CHECK(glEnableVertexAttribArray(0));
@@ -382,10 +364,10 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
-        add_vertex(p->verts.v00, p->color);
-        add_vertex(p->verts.v01, p->color);
-        add_vertex(p->verts.v10, p->color);
-        add_vertex(p->verts.v11, p->color);
+        add_vertex(p->verts.v00, p->colors.c00);
+        add_vertex(p->verts.v01, p->colors.c01);
+        add_vertex(p->verts.v10, p->colors.c10);
+        add_vertex(p->verts.v11, p->colors.c11);
     }
 
     // TODO vao
@@ -404,9 +386,7 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
     GL_CHECK(glDisableVertexAttribArray(0));
 }
 
-}
-
-namespace render {
+} // anonymous namespace
 
 void init()
 {
@@ -470,12 +450,27 @@ void draw_quad(const g2d::program *program, const g2d::texture *texture, const q
 
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
 {
-    g_sprite_batch.add_quad(texture, verts, texcoords, layer);
+    g_sprite_batch.add_quad(nullptr, texture, verts, texcoords, layer);
 }
 
 void draw_quad(const quad& verts, int layer)
 {
-    g_sprite_batch.add_quad(verts, layer);
+    g_sprite_batch.add_quad(nullptr, nullptr, verts, {}, layer);
+}
+
+void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer)
+{
+    g_sprite_batch.add_quad(program, texture, verts, texcoords, colors, layer);
+}
+
+void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer)
+{
+    g_sprite_batch.add_quad(nullptr, texture, verts, texcoords, colors, layer);
+}
+
+void draw_quad(const quad& verts, const vert_colors& colors, int layer)
+{
+    g_sprite_batch.add_quad(nullptr, nullptr, verts, {}, colors, layer);
 }
 
 }
