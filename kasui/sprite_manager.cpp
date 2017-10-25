@@ -1,4 +1,7 @@
+#include <unordered_map>
+
 #include "panic.h"
+#include "noncopyable.h"
 #include "guava2d/file.h"
 #include "guava2d/texture_manager.h"
 
@@ -6,18 +9,21 @@
 
 namespace g2d {
 
-sprite_manager::sprite_manager()
-{ }
+namespace {
 
-sprite_manager &
-sprite_manager::get_instance()
+class sprite_manager : private noncopyable
 {
-	static sprite_manager sm;
-	return sm;
-}
+public:
+	const sprite *get_sprite(const std::string& name);
 
-sprite *
-sprite_manager::get_sprite(const char *name)
+	void load_sprite_sheet(const std::string& path);
+
+private:
+	std::unordered_map<std::string, sprite *> sprite_dict_;
+} g_sprite_manager;
+
+const sprite *
+sprite_manager::get_sprite(const std::string& name)
 {
 	auto it = sprite_dict_.find(name);
 
@@ -28,10 +34,10 @@ sprite_manager::get_sprite(const char *name)
 }
 
 void
-sprite_manager::add_sprite_sheet(const char *source)
+sprite_manager::load_sprite_sheet(const std::string& source)
 {
 	char path[512];
-	sprintf(path, "%s.spr", source);
+	sprintf(path, "%s.spr", source.c_str());
 
 	file_input_stream file(path);
 
@@ -52,11 +58,23 @@ sprite_manager::add_sprite_sheet(const char *source)
 		int height = file.read_uint16();
 
 		char texture_path[80];
-		sprintf(texture_path, "%s.%03d.png", source, sheet_index);
+		sprintf(texture_path, "%s.%03d.png", source.c_str(), sheet_index);
 
-		sprite *sp = new sprite(texture_manager::get_instance().load(texture_path), left, top, width, height, left_margin, right_margin, top_margin, bottom_margin);
+		auto sp = new sprite(texture_manager::get_instance().load(texture_path), left, top, width, height, left_margin, right_margin, top_margin, bottom_margin);
 		sprite_dict_.insert({ sprite_name, sp });
 	}
+}
+
+}
+
+void load_sprite_sheet(const std::string& path)
+{
+	g_sprite_manager.load_sprite_sheet(path);
+}
+
+const sprite *get_sprite(const std::string& name)
+{
+	g_sprite_manager.get_sprite(name);
 }
 
 }

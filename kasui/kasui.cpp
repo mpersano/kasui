@@ -311,7 +311,7 @@ preload_resources()
 
 	// sprites
 
-	g2d::sprite_manager::get_instance().add_sprite_sheet("sprites/sprites");
+	g2d::load_sprite_sheet("sprites/sprites");
 }
 
 static uint32_t

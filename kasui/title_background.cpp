@@ -73,7 +73,7 @@ struct foreground_billboard : title_widget
 };
 
 foreground_billboard::foreground_billboard()
-: bb(g2d::sprite_manager::get_instance().get_sprite("haru-wo-bg.png"))
+: bb(g2d::get_sprite("haru-wo-bg.png"))
 {
 	const int w = bb->get_width();
 	const int h = bb->get_height();

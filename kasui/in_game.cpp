@@ -116,7 +116,7 @@ struct abunai_animation : game_animation
 	void draw() const;
 
 	float x, alpha;
-	g2d::sprite *abunai_bb_;
+	const g2d::sprite *abunai_bb_;
 };
 
 struct game_over_animation_base : glyph_animation
@@ -126,7 +126,7 @@ struct game_over_animation_base : glyph_animation
 	void draw() const;
 
 	float billboard_x, overlay_alpha;
-	g2d::sprite *game_over_bb_;
+	const g2d::sprite *game_over_bb_;
 };
 
 struct time_up_animation : game_over_animation_base
@@ -343,7 +343,7 @@ level_completed_animation::level_completed_animation(const gradient *g)
 abunai_animation::abunai_animation()
 : x(window_width)
 , alpha(0)
-, abunai_bb_(g2d::sprite_manager::get_instance().get_sprite("abunai.png"))
+, abunai_bb_(g2d::get_sprite("abunai.png"))
 {
 	const float w = abunai_bb_->get_width();
 	
@@ -406,7 +406,7 @@ game_over_animation_base::game_over_animation_base(const g2d::font *font, float 
 : glyph_animation(font, spacing, str, .2*window_width, .5*window_height, g)
 , billboard_x(window_width)
 , overlay_alpha(0)
-, game_over_bb_(g2d::sprite_manager::get_instance().get_sprite("h-oh.png"))
+, game_over_bb_(g2d::get_sprite("h-oh.png"))
 {
 	parallel_action_group *p = new parallel_action_group;
 

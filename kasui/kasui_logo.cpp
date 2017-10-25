@@ -8,9 +8,9 @@
 #include "kasui_logo.h"
 
 kasui_logo::kasui_logo()
-: bg(g2d::sprite_manager::get_instance().get_sprite("logo-bg.png"))
-, ka(g2d::sprite_manager::get_instance().get_sprite("logo-ka.png"))
-, sui(g2d::sprite_manager::get_instance().get_sprite("logo-sui.png"))
+: bg(g2d::get_sprite("logo-bg.png"))
+, ka(g2d::get_sprite("logo-ka.png"))
+, sui(g2d::get_sprite("logo-sui.png"))
 , ka_scale(1)
 , sui_scale(1)
 , ka_mix(0)

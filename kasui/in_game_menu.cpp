@@ -24,20 +24,18 @@ namespace {
 class vertical_menu : public menu
 {
 private:
-	enum {
-		ITEM_WIDTH = 280,
-		ITEM_HEIGHT = 80,
-	};
+	static constexpr int ITEM_WIDTH = 280;
+	static constexpr int ITEM_HEIGHT = 80;
 
-	g2d::vec2 get_item_position(int item_index) const;
+	g2d::vec2 get_item_position(int item_index) const override;
 };
 
 g2d::vec2
 vertical_menu::get_item_position(int item_index) const
 {
-	const float total_height = item_list.size()*ITEM_HEIGHT;
+	const float total_height = item_list_.size()*ITEM_HEIGHT;
 
-	const auto& item = item_list[item_index];
+	const auto& item = item_list_[item_index];
 
 	const float base_y = .5*(window_height + total_height) - .5*ITEM_HEIGHT;
 	const float base_x = .5*(window_width - ITEM_WIDTH);
@@ -87,16 +85,12 @@ private:
 	vertical_menu root_menu_, options_menu_;
 	menu *cur_menu_;
 	bool touch_is_down_;
-	
-	enum {
-		FRAME_HEIGHT = 340,
-		FADE_IN_TICS = 10*MS_PER_TIC,
-	};
+
+	static constexpr int FRAME_HEIGHT = 340;
+	static constexpr int FADE_IN_TICS = 10*MS_PER_TIC;
 
 	state cur_state_;
 	int state_tics_;
-
-	g2d::vertex_array_color frame_va_;
 };
 
 in_game_menu_impl::in_game_menu_impl()
@@ -110,27 +104,25 @@ in_game_menu_impl::in_game_menu_impl()
 void
 in_game_menu_impl::create_root_menu()
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
-
 	root_menu_.append_action_item(
 		SOUND_MENU_VALIDATE,
-		sm.get_sprite("resume-0.png"),
-		sm.get_sprite("resume-1.png"),
+		"resume-0.png",
+		"resume-1.png",
 		[this] { set_cur_state(STATE_FADE_OUT); },
-		[] { pop_state(); },
+		pop_state,
 		true);
 
 	root_menu_.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("options-0.png"),
-		sm.get_sprite("options-1.png"),
-		[] { },
+		"options-0.png",
+		"options-1.png",
+		{},
 		[this] { set_cur_menu(&options_menu_); });
 
 	root_menu_.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("stats-0.png"),
-		sm.get_sprite("stats-1.png"),
+		"stats-0.png",
+		"stats-1.png",
 		[this] { set_cur_state(STATE_FADE_TO_JUKUGO_STATS); },
 		[] {
 			// i'm going to regret this some day i know it
@@ -141,8 +133,8 @@ in_game_menu_impl::create_root_menu()
 
 	root_menu_.append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("quit-0.png"),
-		sm.get_sprite("quit-1.png"),
+		"quit-0.png",
+		"quit-1.png",
 		[this] { set_cur_state(STATE_FADE_OUT); },
 		[] {
 			pop_state();
@@ -155,13 +147,11 @@ in_game_menu_impl::create_root_menu()
 void
 in_game_menu_impl::create_options_menu()
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
-
 	options_menu_.append_toggle_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("hints-on-0.png"), sm.get_sprite("hints-on-1.png"),
-		sm.get_sprite("hints-off-0.png"), sm.get_sprite("hints-off-1.png"),
-		&cur_options->enable_hints,
+		"hints-on-0.png", "hints-on-1.png",
+		"hints-off-0.png", "hints-off-1.png",
+		cur_options->enable_hints,
 		[] (int enable_hints) {
 			extern ::state *get_in_game_state();
 			static_cast<in_game_state *>(get_in_game_state())->set_enable_hints(enable_hints);
@@ -169,9 +159,9 @@ in_game_menu_impl::create_options_menu()
 
 	options_menu_.append_toggle_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("sound-on-0.png"), sm.get_sprite("sound-on-1.png"),
-		sm.get_sprite("sound-off-0.png"), sm.get_sprite("sound-off-1.png"),
-		&cur_options->enable_sound,
+		"sound-on-0.png", "sound-on-1.png",
+		"sound-off-0.png", "sound-off-1.png",
+		cur_options->enable_sound,
 		[] (int enable_sound) {
 			if (!enable_sound)
 				stop_all_sounds();
@@ -181,8 +171,8 @@ in_game_menu_impl::create_options_menu()
 
 	options_menu_.append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("back-0.png"), sm.get_sprite("back-1.png"),
-		[] { },
+		"back-0.png", "back-1.png",
+		{},
 		[this] { set_cur_menu(&root_menu_); },
 		true);
 }

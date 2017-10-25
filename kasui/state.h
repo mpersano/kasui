@@ -7,7 +7,7 @@
 class state
 {
 public:
-	virtual ~state() { }
+	virtual ~state() = default;
 
 	virtual void reset() = 0;
 

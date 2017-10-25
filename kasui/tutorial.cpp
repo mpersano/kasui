@@ -88,7 +88,7 @@ private:
 		int tics;
 	} finger_animation_;
 
-	g2d::sprite *finger_;
+	const g2d::sprite *finger_;
 
 	pause_button pause_button_;
 };
@@ -283,7 +283,7 @@ private:
 tutorial_state_impl::tutorial_state_impl()
 : world_(8, 6, window_height - text_box::HEIGHT - 40)
 , text_box_(window_width)
-, finger_(g2d::sprite_manager::get_instance().get_sprite("finger.png"))
+, finger_(g2d::get_sprite("finger.png"))
 , pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
 {
 	pause_button_.set_callback([this] { on_back_key(); });

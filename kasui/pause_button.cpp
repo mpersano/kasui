@@ -9,8 +9,8 @@
 pause_button::pause_button(float x, float y)
 : x_base(x)
 , y_base(y)
-, sprite_unselected_(g2d::sprite_manager::get_instance().get_sprite("pause-0.png"))
-, sprite_selected_(g2d::sprite_manager::get_instance().get_sprite("pause-1.png"))
+, sprite_unselected_(g2d::get_sprite("pause-0.png"))
+, sprite_selected_(g2d::get_sprite("pause-1.png"))
 {
 	reset();
 }

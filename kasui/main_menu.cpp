@@ -10,7 +10,6 @@
 #include "sprite_manager.h"
 #include "render.h"
 
-#include "program_registry.h"
 #include "options.h"
 #include "common.h"
 #include "tween.h"
@@ -25,22 +24,21 @@ static bool touch_is_down;
 
 extern void on_rate_me_clicked();
 
-enum {
-	NUM_BUTTON_COLS = 3,
-	NUM_BUTTON_ROWS = (NUM_LEVELS + NUM_BUTTON_COLS - 1)/NUM_BUTTON_COLS,
+namespace {
 
-	FADE_IN_T = 10*MS_PER_TIC,
-};
+constexpr int NUM_BUTTON_COLS = 3;
+constexpr int NUM_BUTTON_ROWS = (NUM_LEVELS + NUM_BUTTON_COLS - 1)/NUM_BUTTON_COLS;
+constexpr int FADE_IN_T = 10*MS_PER_TIC;
+
+}
 
 class vertical_menu : public menu
 {
 private:
-	enum {
-		ITEM_WIDTH = 280,
-		ITEM_HEIGHT = 80,
-	};
+	static constexpr int ITEM_WIDTH = 280;
+	static constexpr int ITEM_HEIGHT = 80;
 
-	g2d::vec2 get_item_position(int item_index) const;
+	g2d::vec2 get_item_position(int item_index) const override;
 };
 
 class level_selection_menu : public menu
@@ -49,15 +47,12 @@ public:
 	level_selection_menu(main_menu_impl *parent);
 
 private:
-	enum {
-		ITEM_WIDTH = 200,
-		ITEM_HEIGHT = 200,
+	static constexpr int ITEM_WIDTH = 200;
+	static constexpr int ITEM_HEIGHT = 200;
+	static constexpr int BACK_BUTTON_WIDTH = 180;
+	static constexpr int BACK_BUTTON_HEIGHT = 80;
 
-		BACK_BUTTON_WIDTH = 180,
-		BACK_BUTTON_HEIGHT = 80,
-	};
-
-	g2d::vec2 get_item_position(int item_index) const;
+	g2d::vec2 get_item_position(int item_index) const override;
 
 	main_menu_impl *parent;
 };
@@ -188,9 +183,9 @@ main_menu_impl::fade_in()
 g2d::vec2
 vertical_menu::get_item_position(int item_index) const
 {
-	const float total_height = item_list.size()*ITEM_HEIGHT;
+	const float total_height = item_list_.size()*ITEM_HEIGHT;
 
-	const auto& item = item_list[item_index];
+	const auto& item = item_list_[item_index];
 
 	const float base_y = .5*(window_height + total_height) - .5*ITEM_HEIGHT;
 	const float base_x = window_width - ITEM_WIDTH;
@@ -202,7 +197,7 @@ vertical_menu::get_item_position(int item_index) const
 
 	float x = base_x + x_offset - 32.*sinf(item->get_active_t()*M_PI);
 
-	return g2d::vec2(x, y);
+	return { x, y };
 }
 
 static const char *
@@ -213,43 +208,39 @@ level_sprite_name(int id)
 	return buf;
 }
 
-template <typename F, typename G>
-struct level_menu_item : action_menu_item<F, G>
+class level_menu_item : public action_menu_item
 {
-	level_menu_item(int level_id, F on_activated, G on_selected)
-	: action_menu_item<F, G>(
+public:
+	level_menu_item(int level_id, ActionFn on_activated, ActionFn on_selected)
+	: action_menu_item(
 		SOUND_MENU_VALIDATE,
-		g2d::sprite_manager::get_instance().get_sprite(level_sprite_name(level_id*2)),
-		g2d::sprite_manager::get_instance().get_sprite(level_sprite_name(level_id*2 + 1)),
+		level_sprite_name(level_id*2),
+		level_sprite_name(level_id*2 + 1),
 		on_activated,
 		on_selected,
 		false)
-	, level_id(level_id)
+	, level_id_(level_id)
 	{ }
 
-	bool is_enabled() const
-	{ return practice_mode || level_id <= cur_options->max_unlocked_level; }
+	bool is_enabled() const override
+	{ return practice_mode || level_id_ <= cur_options->max_unlocked_level; }
 
-	int level_id;
+private:
+	int level_id_;
 };
 
 level_selection_menu::level_selection_menu(main_menu_impl *parent)
 : parent(parent)
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
-
 	for (int i = 0; i < NUM_LEVELS; i++) {
 		auto on_activated = [this] { this->parent->set_state_outro(); };
 		auto on_selected = [=] { start_in_game(i); };
-		append_item(
-			new level_menu_item<
-				decltype(on_activated), decltype(on_selected)>
-				(i, on_activated, on_selected));
+		append_item(new level_menu_item(i, on_activated, on_selected));
 	}
 
 	append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("back-sm-0.png"), sm.get_sprite("back-sm-1.png"),
+		"back-sm-0.png", "back-sm-1.png",
 		[this] { this->parent->show_background(); },
 		[this] { this->parent->show_game_mode_menu(); },
 		true);
@@ -269,31 +260,20 @@ level_selection_menu::get_item_position(int item_index) const
 		const int r = item_index/NUM_BUTTON_COLS;
 		const int c = item_index%NUM_BUTTON_COLS;
 
-		return g2d::vec2(x_origin + c*ITEM_WIDTH + x_offset,
-			y_origin - (r + 1)*ITEM_HEIGHT);
+		return { x_origin + c*ITEM_WIDTH + x_offset, y_origin - (r + 1)*ITEM_HEIGHT };
 	} else {
 		const float x_origin = window_width - BACK_BUTTON_WIDTH;
 
-		return g2d::vec2(x_origin + x_offset,
-			y_origin - NUM_BUTTON_ROWS*ITEM_HEIGHT - 2*BACK_BUTTON_HEIGHT);
+		return { x_origin + x_offset, y_origin - NUM_BUTTON_ROWS*ITEM_HEIGHT - 2*BACK_BUTTON_HEIGHT };
 	}
 }
 
 namespace {
 
-template <typename F, typename G>
-class action_item_no_fade : public action_menu_item<F, G>
+class action_item_no_fade : public action_menu_item
 {
 public:
-	action_item_no_fade(
-		int sound,
-		const g2d::sprite *active_sprite,
-		const g2d::sprite *inactive_sprite,
-		F on_activation_fn,
-		G on_action_fn,
-		bool is_back)
-	: action_menu_item<F, G>(sound, active_sprite, inactive_sprite, on_activation_fn, on_action_fn, is_back)
-	{ }
+	using action_menu_item::action_menu_item;
 
 	bool fade_menu_when_selected() const
 	{ return false; }
@@ -304,75 +284,67 @@ public:
 void
 main_menu_impl::create_main_menu()
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
-
 	main_menu.append_action_item(
 		SOUND_MENU_VALIDATE,
-		sm.get_sprite("start-0.png"),
-		sm.get_sprite("start-1.png"),
-		[] { },
+		"start-0.png",
+		"start-1.png",
+		{},
 		[this] { set_cur_menu(&game_mode_menu); });
 
 	main_menu.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("options-0.png"),
-		sm.get_sprite("options-1.png"),
-		[] { },
+		"options-0.png",
+		"options-1.png",
+		{},
 		[this] { set_cur_menu(&options_menu); });
 
 	main_menu.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("more-0.png"),
-		sm.get_sprite("more-1.png"),
-		[] { },
+		"more-0.png",
+		"more-1.png",
+		{},
 		[this] { set_cur_menu(&more_menu); });
 
 	main_menu.append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("quit-0.png"),
-		sm.get_sprite("quit-1.png"),
+		"quit-0.png",
+		"quit-1.png",
 		[this] { cur_state = STATE_OUTRO; },
-		[] { quit(); },
+		quit,
 		true);
 }
 
 void
 main_menu_impl::create_more_menu()
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
-
 	more_menu.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("stats-0.png"),
-		sm.get_sprite("stats-1.png"),
+		"stats-0.png",
+		"stats-1.png",
 		[this] { hide_background(); },
 		[] { start_stats_page(); });
 
 	more_menu.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("credits-0.png"),
-		sm.get_sprite("credits-1.png"),
+		"credits-0.png",
+		"credits-1.png",
 		[this] { background.fg_billboard->hide(); start_sound(SOUND_LEVEL_INTRO, false); },
 		[this] { start_credits(); });
 
-	{
-	auto dummy = [] { };
-
 	more_menu.append_item(
-		new action_item_no_fade<decltype(dummy), void(*)()>(
+		new action_item_no_fade(
 			SOUND_MENU_SELECT,
-			sm.get_sprite("rate-me-0.png"),
-			sm.get_sprite("rate-me-1.png"),
-			dummy,
+			"rate-me-0.png",
+			"rate-me-1.png",
+			{},
 			on_rate_me_clicked,
 			false));
-	}
 
 	more_menu.append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("back-0.png"),
-		sm.get_sprite("back-1.png"),
-		[] { },
+		"back-0.png",
+		"back-1.png",
+		{},
 		[this] { show_root_menu(); },
 		true);
 }
@@ -380,20 +352,18 @@ main_menu_impl::create_more_menu()
 void
 main_menu_impl::create_options_menu()
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
+	options_menu.append_toggle_item(
+		SOUND_MENU_SELECT,
+		"hints-on-0.png", "hints-on-1.png",
+		"hints-off-0.png", "hints-off-1.png",
+		cur_options->enable_hints,
+		{});
 
 	options_menu.append_toggle_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("hints-on-0.png"), sm.get_sprite("hints-on-1.png"),
-		sm.get_sprite("hints-off-0.png"), sm.get_sprite("hints-off-1.png"),
-		&cur_options->enable_hints,
-		[] (int) { });
-
-	options_menu.append_toggle_item(
-		SOUND_MENU_SELECT,
-		sm.get_sprite("sound-on-0.png"), sm.get_sprite("sound-on-1.png"),
-		sm.get_sprite("sound-off-0.png"), sm.get_sprite("sound-off-1.png"),
-		&cur_options->enable_sound,
+		"sound-on-0.png", "sound-on-1.png",
+		"sound-off-0.png", "sound-off-1.png",
+		cur_options->enable_sound,
 		[] (int enable_sound) {
 			if (!enable_sound)
 				stop_all_sounds();
@@ -403,8 +373,8 @@ main_menu_impl::create_options_menu()
 
 	options_menu.append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("back-0.png"), sm.get_sprite("back-1.png"),
-		[] { },
+		"back-0.png", "back-1.png",
+		{},
 		[this] { show_root_menu(); },
 		true);
 }
@@ -412,37 +382,35 @@ main_menu_impl::create_options_menu()
 void
 main_menu_impl::create_game_mode_menu()
 {
-	g2d::sprite_manager& sm = g2d::sprite_manager::get_instance();
-
 	game_mode_menu.append_action_item(
 		SOUND_MENU_VALIDATE,
-		sm.get_sprite("challenge-0.png"), sm.get_sprite("challenge-1.png"),
+		"challenge-0.png", "challenge-1.png",
 		[this] { hide_background(); },
 		[this] { practice_mode = false; set_cur_menu(&level_menu); });
 
 	game_mode_menu.append_action_item(
 		SOUND_MENU_VALIDATE,
-		sm.get_sprite("practice-0.png"), sm.get_sprite("practice-1.png"),
+		"practice-0.png", "practice-1.png",
 		[this] { hide_background(); },
 		[this] { practice_mode = true; set_cur_menu(&level_menu); });
 
 	game_mode_menu.append_action_item(
 		SOUND_MENU_VALIDATE,
-		sm.get_sprite("tutorial-0.png"), sm.get_sprite("tutorial-1.png"),
+		"tutorial-0.png", "tutorial-1.png",
 		[this] { set_state_outro(); },
-		[] { start_tutorial(); });
+		start_tutorial);
 
 	game_mode_menu.append_action_item(
 		SOUND_MENU_SELECT,
-		sm.get_sprite("top-scores-0.png"),
-		sm.get_sprite("top-scores-1.png"),
+		"top-scores-0.png",
+		"top-scores-1.png",
 		[this] { hide_background(); },
 		[this] { start_hiscore_list(); });
 
 	game_mode_menu.append_action_item(
 		SOUND_MENU_BACK,
-		sm.get_sprite("back-0.png"), sm.get_sprite("back-1.png"),
-		[] { },
+		"back-0.png", "back-1.png",
+		{},
 		[this] { show_root_menu(); },
 		true);
 }

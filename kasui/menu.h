@@ -1,275 +1,163 @@
-#ifndef MENU_H_
-#define MENU_H_
+#pragma once
 
+#include <string>
 #include <vector>
 #include <memory>
 
-#include "guava2d/vec2.h"
-#include "guava2d/vertex_array.h"
+#include <guava2d/vec2.h>
 
+#include "sprite_manager.h"
 #include "sprite.h"
 #include "render.h"
 
 #include "common.h"
 
-namespace g2d {
-class texture;
-}
-
 struct rect
 {
-	rect(float width, float height)
-	: width(width), height(height)
-	{ }
-
 	float width, height;
 };
 
-struct menu_item
+class menu_item
 {
-	menu_item(int sound)
-	: sound(sound)
-	, is_active(false)
-	{ }
-
-	virtual ~menu_item() { }
+public:
+	menu_item(int sound);
+	virtual ~menu_item() = default;
 
 	virtual void draw(bool is_selected, float alpha) const = 0;
-
 	virtual void on_activation();
-
 	virtual void on_selection() = 0;
-
 	virtual bool fade_menu_when_selected() const = 0;
-
 	virtual bool is_back_item() const = 0;
-
-	virtual bool is_enabled() const
-	{
-		return true;
-	}
-
+	virtual bool is_enabled() const { return true; }
 	virtual rect get_rect() const = 0;
 
 	void reset();
-
 	void update(uint32_t dt);
-
 	float get_active_t() const;
 
-	int sound;
+	int get_sound() const
+	{ return sound_; }
 
-	enum { ACTIVE_T = 10*MS_PER_TIC, };
+private:
+	static constexpr int ACTIVE_T = 10*MS_PER_TIC;
 
-	bool is_active;
-	uint32_t active_t;
+	int sound_;
+	bool is_active_ = false;
+	uint32_t active_t_;
 };
 
-template <typename F, typename G>
-struct action_menu_item : menu_item
+class action_menu_item : public menu_item
 {
+public:
+	using ActionFn = std::function<void()>;
+
 	action_menu_item(
 		int sound,
-		const g2d::sprite *active_sprite,
-		const g2d::sprite *inactive_sprite,
-		F on_activation_fn,
-		G on_action_fn,
-		bool is_back)
-	: menu_item(sound)
-	, active_sprite(active_sprite)
-	, inactive_sprite(inactive_sprite)
-	, on_activation_fn(on_activation_fn)
-	, on_action_fn(on_action_fn)
-	, is_back(is_back)
-	{ }
+		const std::string& active_sprite,
+		const std::string& inactive_sprite,
+		ActionFn on_activation_fn,
+		ActionFn on_action_fn,
+		bool is_back);
 
-	void draw(bool is_selected, float alpha) const
-	{
-		render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
-		(is_selected ? inactive_sprite : active_sprite)->draw(0., 0., 50);
-	}
+	void draw(bool is_selected, float alpha) const override;
+	void on_activation() override;
+	void on_selection() override;
+	bool fade_menu_when_selected() const override;
+	bool is_back_item() const override;
+	rect get_rect() const override;
 
-	const g2d::sprite *get_sprite(bool active) const
-	{
-		return active ? active_sprite : inactive_sprite;
-	}
-
-	void on_activation()
-	{
-		menu_item::on_activation();
-		on_activation_fn();
-	}
-
-	void on_selection()
-	{
-		on_action_fn();
-	}
-
-	bool fade_menu_when_selected() const
-	{
-		return true;
-	}
-
-	bool is_back_item() const
-	{
-		return is_back;
-	}
-
-	rect get_rect() const
-	{
-		return rect(active_sprite->get_width(), active_sprite->get_height());
-	}
-
-	const g2d::sprite *active_sprite;
-	const g2d::sprite *inactive_sprite;
-	F on_activation_fn;
-	G on_action_fn;
-	bool is_back;
+private:
+	const g2d::sprite *active_sprite_;
+	const g2d::sprite *inactive_sprite_;
+	ActionFn on_activation_fn_;
+	ActionFn on_action_fn_;
+	bool is_back_;
 };
 
-template <typename T, typename F>
-struct toggle_menu_item : menu_item
+class toggle_menu_item : public menu_item
 {
+public:
+	using ToggleFn = std::function<void(int)>;
+
 	toggle_menu_item(
 		int sound,
-		const g2d::sprite *active_sprite_true,
-		const g2d::sprite *inactive_sprite_true,
-		const g2d::sprite *active_sprite_false,
-		const g2d::sprite *inactive_sprite_false,
-		T *value_ptr,
-		F on_toggle_fn)
-	: menu_item(sound)
-	, active_sprite_true(active_sprite_true)
-	, inactive_sprite_true(inactive_sprite_true)
-	, active_sprite_false(active_sprite_false)
-	, inactive_sprite_false(inactive_sprite_false)
-	, value_ptr(value_ptr)
-	, on_toggle_fn(on_toggle_fn)
-	{ }
+		const std::string& active_sprite_true,
+		const std::string& inactive_sprite_true,
+		const std::string& active_sprite_false,
+		const std::string& inactive_sprite_false,
+		int& value_ptr,
+		ToggleFn on_toggle_fn);
 
-	void draw(bool is_selected, float alpha) const
-	{
-		render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
+	void draw(bool is_selected, float alpha) const override;
+	void on_selection() override;
+	bool fade_menu_when_selected() const;
+	bool is_back_item() const override;
+	rect get_rect() const override;
 
-		const g2d::sprite *s;
-		if (*value_ptr)
-			s = is_selected ? inactive_sprite_true : active_sprite_true;
-		else
-			s = is_selected ? inactive_sprite_false : active_sprite_false;
-
-		s->draw(0., 0., 50);
-	}
-
-	void on_selection()
-	{
-		*value_ptr = !*value_ptr;
-
-		if (on_toggle_fn)
-			on_toggle_fn(*value_ptr);
-	}
-
-	bool fade_menu_when_selected() const
-	{ return false; }
-
-	bool is_back_item() const
-	{ return false; }
-
-	rect get_rect() const
-	{
-		return rect(active_sprite_true->get_width(), active_sprite_true->get_height());
-	}
-
-	const g2d::sprite *active_sprite_true, *inactive_sprite_true;
-	const g2d::sprite *active_sprite_false, *inactive_sprite_false;
-	T *value_ptr;
-	F on_toggle_fn;
+private:
+	const g2d::sprite *active_sprite_true_, *inactive_sprite_true_;
+	const g2d::sprite *active_sprite_false_, *inactive_sprite_false_;
+	int& value_ptr_;
+	ToggleFn on_toggle_fn_;
 };
 
 class menu
 {
 public:
 	menu();
-	virtual ~menu();
+	virtual ~menu() = default;
 
-	template <typename F, typename G>
 	void append_action_item(
 		int sound,
-		const g2d::sprite *active_sprite,
-		const g2d::sprite *inactive_sprite,
-		F on_activation_fn,
-		G on_action_fn,
-		bool is_back = false)
-	{
-		append_item(
-			new action_menu_item<F, G>(
-				sound,
-				active_sprite,
-				inactive_sprite,
-				on_activation_fn,
-				on_action_fn,
-				is_back));
-	}
+		const std::string& active_sprite,
+		const std::string& inactive_sprite,
+		action_menu_item::ActionFn on_activation_fn,
+		action_menu_item::ActionFn on_action_fn,
+		bool is_back = false);
 
-	template <typename T, typename F>
 	void append_toggle_item(
 		int sound,
-		const g2d::sprite *active_sprite_true,
-		const g2d::sprite *inactive_sprite_true,
-		const g2d::sprite *active_sprite_false,
-		const g2d::sprite *inactive_sprite_false,
-		T *value_ptr,
-		F on_toggle_fn)
-	{
-		append_item(
-			new toggle_menu_item<T, F>(
-				sound,
-				active_sprite_true, inactive_sprite_true,
-				active_sprite_false, inactive_sprite_false,
-				value_ptr,
-				on_toggle_fn));
-	}
+		const std::string& active_sprite_true,
+		const std::string& inactive_sprite_true,
+		const std::string& active_sprite_false,
+		const std::string& inactive_sprite_false,
+		int& value_ptr,
+		toggle_menu_item::ToggleFn on_toggle_fn);
 
-	virtual void draw() const;
-	virtual void update(uint32_t dt);
-	virtual void reset();
+	void draw() const;
+	void update(uint32_t dt);
+	void reset();
 
 	void on_touch_down(float x, float y);
 	void on_touch_up();
 	void on_back_key();
 
 	bool is_in_intro() const
-	{ return cur_state == MENU_INTRO; }
+	{ return cur_state_ == MENU_INTRO; }
 
 	bool is_in_outro() const
-	{ return cur_state == MENU_OUTRO; }
+	{ return cur_state_ == MENU_OUTRO; }
 
 	float get_cur_alpha() const;
 
 	void append_item(menu_item *item);
 
 protected:
-	menu(const menu&); // disable copy ctor
-	menu& operator=(const menu&); // disable assignment
-
 	void activate_selected_item();
 
-	std::vector<std::unique_ptr<menu_item>> item_list;
-	uint32_t state_t;
-	menu_item *cur_selected_item;
+	std::vector<std::unique_ptr<menu_item>> item_list_;
+	uint32_t state_t_;
+	menu_item *cur_selected_item_;
 
-	enum {
-		INTRO_T = 15*MS_PER_TIC,
-		OUTRO_T = 15*MS_PER_TIC,
-	};
+	static constexpr int INTRO_T = 15*MS_PER_TIC;
+	static constexpr int OUTRO_T = 15*MS_PER_TIC;
 
 	enum state {
 		MENU_INTRO,
 		MENU_IDLE,
 		MENU_OUTRO,
 		MENU_INACTIVE,
-	};
-
-	state cur_state;
+	} cur_state_;
 
 	void set_cur_state(state next_state);
 
@@ -278,5 +166,3 @@ protected:
 
 void
 menu_initialize();
-
-#endif // MENU_H_

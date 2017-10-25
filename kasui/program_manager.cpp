@@ -1,3 +1,4 @@
+#include "noncopyable.h"
 #include "program_manager.h"
 
 #include <map>
@@ -5,7 +6,8 @@
 
 namespace {
 
-class program_manager {
+class program_manager : private noncopyable
+{
 public:
     const g2d::program *get(const std::string& vert_source, const std::string& frag_source);
 
