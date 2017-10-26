@@ -138,15 +138,15 @@ main_menu_impl::show_root_menu()
 void
 main_menu_impl::show_background()
 {
-	background.fg_billboard->show();
-	background.logo->show();
+	background.show_billboard();
+	background.show_logo();
 }
 
 void
 main_menu_impl::hide_background()
 {
-	background.fg_billboard->hide();
-	background.logo->hide();
+	background.hide_billboard();
+	background.hide_logo();
 }
 
 void
@@ -328,7 +328,7 @@ main_menu_impl::create_more_menu()
 		SOUND_MENU_SELECT,
 		"credits-0.png",
 		"credits-1.png",
-		[this] { background.fg_billboard->hide(); start_sound(SOUND_LEVEL_INTRO, false); },
+		[this] { background.hide_billboard(); start_sound(SOUND_LEVEL_INTRO, false); },
 		[this] { start_credits(); });
 
 	more_menu.append_item(

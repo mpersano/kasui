@@ -1,58 +1,80 @@
-#include "guava2d/texture_manager.h"
+#include <guava2d/texture_manager.h>
 
 #include "sprite_manager.h"
 #include "render.h"
-
 #include "common.h"
-#include "program_registry.h"
+#include "action.h"
 #include "tween.h"
 #include "title_background.h"
 
-title_widget::title_widget()
-: cur_state(INSIDE)
-, state_t(0)
+class title_background::widget
+{
+public:
+	widget();
+
+	virtual void update(uint32_t dt);
+	virtual void reset();
+	virtual void draw() const = 0;
+
+	enum state {
+		OUTSIDE,
+		ENTERING,
+		INSIDE,
+		LEAVING
+	};
+
+	void set_state(state next_state);
+	void show();
+	void hide();
+
+protected:
+	static constexpr int ENTER_T = 30*MS_PER_TIC;
+	static constexpr int LEAVE_T = 20*MS_PER_TIC;
+
+	state cur_state_;
+	uint32_t state_t_;
+};
+
+title_background::widget::widget()
+	: cur_state_(INSIDE)
+	, state_t_(0)
 { }
 
-void
-title_widget::reset()
+void title_background::widget::reset()
 {
 	set_state(ENTERING);
 }
 
-void
-title_widget::show()
+void title_background::widget::show()
 {
-	if (cur_state != INSIDE && cur_state != ENTERING)
+	if (cur_state_ != INSIDE && cur_state_ != ENTERING)
 		set_state(ENTERING);
 }
 
-void
-title_widget::hide()
+void title_background::widget::hide()
 {
-	if (cur_state != OUTSIDE && cur_state != LEAVING)
+	if (cur_state_ != OUTSIDE && cur_state_ != LEAVING)
 		set_state(LEAVING);
 }
 
-void
-title_widget::set_state(state next_state)
+void title_background::widget::set_state(state next_state)
 {
-	cur_state = next_state;
-	state_t = 0;
+	cur_state_ = next_state;
+	state_t_ = 0;
 }
 
-void
-title_widget::update(uint32_t dt)
+void title_background::widget::update(uint32_t dt)
 {
-	state_t += dt;
+	state_t_ += dt;
 
-	switch (cur_state) {
+	switch (cur_state_) {
 		case ENTERING:
-			if (state_t >= ENTER_T)
+			if (state_t_ >= ENTER_T)
 				set_state(INSIDE);
 			break;
 
 		case LEAVING:
-			if (state_t >= LEAVE_T)
+			if (state_t_ >= LEAVE_T)
 				set_state(OUTSIDE);
 			break;
 
@@ -61,45 +83,177 @@ title_widget::update(uint32_t dt)
 	}
 }
 
-struct foreground_billboard : title_widget
+namespace {
+
+class kasui_logo : public title_background::widget
 {
+public:
+	kasui_logo();
+
+	void reset() override;
+	void update(uint32_t dt) override;
+	void draw() const override;
+
+private:
+	const g2d::sprite *bg_, *ka_, *sui_;
+	float ka_scale_, sui_scale_;
+	float ka_mix_, sui_mix_;
+
+	abstract_action *action_;
+};
+
+kasui_logo::kasui_logo()
+	: bg_(g2d::get_sprite("logo-bg.png"))
+	, ka_(g2d::get_sprite("logo-ka.png"))
+	, sui_(g2d::get_sprite("logo-sui.png"))
+	, ka_scale_(1)
+	, sui_scale_(1)
+	, ka_mix_(0)
+	, sui_mix_(0)
+{
+	constexpr float max_scale = 1.15;
+
+	action_ =
+	  (new parallel_action_group)
+	    ->add((new sequential_action_group)
+		->add(new property_change_action<in_back_tween<float> >(&ka_scale_, 1, max_scale, 12*MS_PER_TIC))
+		->add(new property_change_action<out_bounce_tween<float> >(&ka_scale_, max_scale, 1, 12*MS_PER_TIC))
+		->add(new delay_action(80*MS_PER_TIC)))
+	    ->add(new property_change_action<linear_tween<float> >(&ka_mix_, 1, 0, 20*MS_PER_TIC))
+	    ->add((new sequential_action_group)
+		->add(new delay_action(30*MS_PER_TIC))
+		->add(new property_change_action<in_back_tween<float> >(&sui_scale_, 1, max_scale, 12*MS_PER_TIC))
+		->add(new property_change_action<out_bounce_tween<float> >(&sui_scale_, max_scale, 1, 12*MS_PER_TIC)))
+	    ->add((new sequential_action_group)
+		->add(new delay_action(30*MS_PER_TIC))
+		->add(new property_change_action<linear_tween<float> >(&sui_mix_, 1, 0, 20*MS_PER_TIC)));
+}
+
+void kasui_logo::reset()
+{
+	widget::reset();
+
+	ka_scale_ = sui_scale_ = 1;
+	ka_mix_ = sui_mix_ = 0;
+	action_->reset();
+}
+
+void kasui_logo::update(uint32_t dt)
+{
+	widget::update(dt);
+
+	action_->step(dt);
+
+	if (action_->done())
+		action_->reset();
+}
+
+void kasui_logo::draw() const
+{
+	if (cur_state_ == OUTSIDE)
+		return;
+
+	constexpr float logo_y_from = 1., logo_y_to = 0.;
+	float sy, alpha;
+
+	switch (cur_state_) {
+		case ENTERING:
+			{
+			const float t = static_cast<float>(state_t_)/ENTER_T;
+			sy = out_bounce_tween<float>()(logo_y_from, logo_y_to, t);
+			alpha = t;
+			}
+			break;
+
+		case LEAVING:
+			{
+			const float t = static_cast<float>(state_t_)/LEAVE_T;
+			sy = in_back_tween<float>()(logo_y_to, logo_y_from, t);
+			alpha = 1. - t;
+			}
+			break;
+
+		case INSIDE:
+			sy = logo_y_to;
+			alpha = 1;
+			break;
+
+		default:
+			assert(0);
+	}
+
+	const float w = bg_->get_width();
+	const float h = bg_->get_height();
+
+	const float x = .5*(window_width - w);
+	const float y = window_height - h + sy*h;
+
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
+
+	render::push_matrix();
+	render::translate(x, y);
+
+	// background
+
+	bg_->draw(0, 0, -15);
+
+	// ka
+
+	render::push_matrix();
+	render::scale(1, ka_scale_);
+	ka_->draw(0, 0, -10);
+	render::pop_matrix();
+
+	// sui
+
+	render::scale(1, sui_scale_);
+	sui_->draw(0, 0, -10);
+
+	render::pop_matrix();
+}
+
+class foreground_billboard : public title_background::widget
+{
+public:
 	foreground_billboard();
 
 	void draw() const override;
 
-	const g2d::sprite *bb;
-	float y;
-	float scale;
+private:
+	const g2d::sprite *bb_;
+	float y_;
+	float scale_;
 };
 
 foreground_billboard::foreground_billboard()
-: bb(g2d::get_sprite("haru-wo-bg.png"))
+	: bb_(g2d::get_sprite("haru-wo-bg.png"))
 {
-	const int w = bb->get_width();
-	const int h = bb->get_height();
+	const int w = bb_->get_width();
+	const int h = bb_->get_height();
 
 	float scaled_height = window_width*h/w;
 
-	y = .5*(window_height - scaled_height);
-	if (y > 0)
-		y = 0;
+	y_ = .5*(window_height - scaled_height);
+	if (y_ > 0)
+		y_ = 0;
 
-	scale = static_cast<float>(h)/scaled_height;
+	scale_ = static_cast<float>(h)/scaled_height;
 }
 
-void
-foreground_billboard::draw() const
+void foreground_billboard::draw() const
 {
-	if (cur_state == OUTSIDE)
+	if (cur_state_ == OUTSIDE)
 		return;
 
 	static const float x_from = -window_width, x_to = 0;
 	float x, alpha;
 
-	switch (cur_state) {
+	switch (cur_state_) {
 		case ENTERING:
 			{
-			const float t = static_cast<float>(state_t)/ENTER_T;
+			const float t = static_cast<float>(state_t_)/ENTER_T;
 			x = in_cos_tween<float>()(x_from, x_to, t);
 			alpha = t;
 			}
@@ -107,7 +261,7 @@ foreground_billboard::draw() const
 
 		case LEAVING:
 			{
-			const float t = static_cast<float>(state_t)/LEAVE_T;
+			const float t = static_cast<float>(state_t_)/LEAVE_T;
 			x = in_back_tween<float>()(x_to, x_from, t);
 			alpha = 1. - t;
 			}
@@ -124,46 +278,43 @@ foreground_billboard::draw() const
 
 	render::push_matrix();
 
-	render::translate(x, y);
-	render::scale(scale, scale);
+	render::translate(x, y_);
+	render::scale(scale_, scale_);
 	render::set_color({ 1.f, 1.f, 1.f, alpha });
-	bb->draw(0, 0, -10);
+	bb_->draw(0, 0, -10);
 
 	render::pop_matrix();
 }
 
+} // anonymous namespace
+
 title_background::title_background()
-: fg_billboard(new foreground_billboard)
-, logo(new kasui_logo)
-, bg_texture(g2d::texture_manager::get_instance().load("images/haru-bg.png"))
+	: billboard_(new foreground_billboard)
+	, logo_(new kasui_logo)
+	, bg_texture_(g2d::texture_manager::get_instance().load("images/haru-bg.png"))
 {
 }
 
 title_background::~title_background()
 {
-	delete fg_billboard;
-	delete logo;
 }
 
-void
-title_background::reset()
+void title_background::reset()
 {
-	sakura.reset();
+	sakura_.reset();
 
-	fg_billboard->reset();
-	logo->reset();
+	billboard_->reset();
+	logo_->reset();
 }
 
-void
-title_background::update(uint32_t dt)
+void title_background::update(uint32_t dt)
 {
-	sakura.update(dt);
-	fg_billboard->update(dt);
-	logo->update(dt);
+	sakura_.update(dt);
+	billboard_->update(dt);
+	logo_->update(dt);
 }
 
-void
-title_background::draw() const
+void title_background::draw() const
 {
 	render::set_blend_mode(blend_mode::NO_BLEND);
 
@@ -171,29 +322,48 @@ title_background::draw() const
 
 	render::set_color({ 1.f, 1.f, 1.f, 1.f });
 
-	const int w = bg_texture->get_pixmap_width();
-	const int h = bg_texture->get_pixmap_height();
+	const int w = bg_texture_->get_pixmap_width();
+	const int h = bg_texture_->get_pixmap_height();
 
 	float scaled_height = window_width*h/w;
 	if (scaled_height < window_height)
 		scaled_height = window_height;
 
-	const float dv = bg_texture->get_v_scale();
-	const float du = bg_texture->get_u_scale();
+	const float dv = bg_texture_->get_v_scale();
+	const float du = bg_texture_->get_u_scale();
 
 	const float y1 = .5*(window_height - scaled_height);
 	const float y0 = y1 + scaled_height;
 
-	render::draw_quad(bg_texture,
+	render::draw_quad(bg_texture_,
 		{ { 0, y0 }, { 0, y1 }, { window_width, y1 }, { window_width, y0 } },
 		{ { 0, 0 }, { 0, dv }, { du, dv }, { du, 0 } },
 		-20);
 
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	fg_billboard->draw();
+	billboard_->draw();
+	logo_->draw();
 
-	logo->draw();
+	sakura_.draw();
+}
 
-	sakura.draw();
+void title_background::show_billboard()
+{
+	billboard_->show();
+}
+
+void title_background::hide_billboard()
+{
+	billboard_->hide();
+}
+
+void title_background::show_logo()
+{
+	logo_->show();
+}
+
+void title_background::hide_logo()
+{
+	logo_->hide();
 }

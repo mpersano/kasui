@@ -1,5 +1,4 @@
-#ifndef SAKURA_H_
-#define SAKURA_H_
+#pragma once
 
 #include "guava2d/vec2.h"
 #include "guava2d/vertex_array.h"
@@ -23,18 +22,18 @@ namespace g2d {
 class texture;
 }
 
-struct sakura_fubuki
+class sakura_fubuki
 {
+public:
 	sakura_fubuki();
 
 	void reset();
 	void draw() const;
 	void update(uint32_t dt);
 
-	enum { NUM_PETALS = 20 };
-	sakura_petal petals[NUM_PETALS];
+private:
+	static constexpr int NUM_PETALS = 20;
+	sakura_petal petals_[NUM_PETALS];
 
-	const g2d::texture *petal_texture;
+	const g2d::texture *petal_texture_;
 };
-
-#endif // SAKURA_H_

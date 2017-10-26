@@ -1,45 +1,45 @@
-#include "guava2d/texture_manager.h"
+#include <guava2d/texture_manager.h>
 
 #include "render.h"
 
-#include "program_registry.h"
 #include "common.h"
 #include "sakura.h"
 
-enum {
-	FADE_TTL = 30*MS_PER_TIC,
-};
+namespace {
 
-static const int MIN_TTL = 150*MS_PER_TIC;
-static const int MAX_TTL = 300*MS_PER_TIC;
+constexpr int FADE_TTL = 30*MS_PER_TIC;
 
-static const float MIN_SIZE = 40;
-static const float MAX_SIZE = 60;
+constexpr int MIN_TTL = 150*MS_PER_TIC;
+constexpr int MAX_TTL = 300*MS_PER_TIC;
 
-static const float MIN_DELTA_ANGLE = .01;
-static const float MAX_DELTA_ANGLE = .05;
+constexpr float MIN_SIZE = 40;
+constexpr float MAX_SIZE = 60;
 
-static const float SPEED_FUZZ = .4;
+constexpr float MIN_DELTA_ANGLE = .01;
+constexpr float MAX_DELTA_ANGLE = .05;
 
-static const float MIN_PHI = .025, MAX_PHI = .05;
-static const float MIN_PHASE = 0, MAX_PHASE = M_PI;
-static const float MIN_RADIUS = 30, MAX_RADIUS = 60;
+constexpr float SPEED_FUZZ = .4;
 
-static const float MIN_SPEED = 2.;
-static const float MAX_SPEED = 4.;
+constexpr float MIN_PHI = .025, MAX_PHI = .05;
+constexpr float MIN_PHASE = 0, MAX_PHASE = M_PI;
+constexpr float MIN_RADIUS = 30, MAX_RADIUS = 60;
 
-static const float MIN_ALPHA = .3;
-static const float MAX_ALPHA = .6;
+constexpr float MIN_SPEED = 2.;
+constexpr float MAX_SPEED = 4.;
 
-void
-sakura_petal::reset(bool from_start)
+constexpr float MIN_ALPHA = .3;
+constexpr float MAX_ALPHA = .6;
+
+} // anonymous namespace
+
+void sakura_petal::reset(bool from_start)
 {
 	size = frand(MIN_SIZE, MAX_SIZE);
 
 	pos.x = frand(.5*window_width, 1.5*window_width);
 	pos.y = window_height + size;
 
-	const float f = 1.f/MS_PER_TIC;
+	constexpr float f = 1.f/MS_PER_TIC;
 
 	dir = g2d::vec2(-1, -2) + g2d::vec2(frand(-SPEED_FUZZ, SPEED_FUZZ), frand(-SPEED_FUZZ, SPEED_FUZZ));
 	dir.set_length(f*frand(MIN_SPEED, MAX_SPEED));
@@ -113,21 +113,21 @@ sakura_petal::update(uint32_t dt)
 }
 
 sakura_fubuki::sakura_fubuki()
-: petal_texture(g2d::texture_manager::get_instance().load("images/petal.png"))
+	: petal_texture_(g2d::texture_manager::get_instance().load("images/petal.png"))
 { }
 
 void
 sakura_fubuki::update(uint32_t dt)
 {
-	for (sakura_petal *p = petals; p != &petals[NUM_PETALS]; p++)
-		p->update(dt);
+	for (auto& p : petals_)
+		p.update(dt);
 }
 
 void
 sakura_fubuki::reset()
 {
-	for (sakura_petal *p = petals; p != &petals[NUM_PETALS]; p++)
-		p->reset(false);
+	for (auto& p : petals_)
+		p.reset(false);
 }
 
 void
@@ -135,8 +135,6 @@ sakura_fubuki::draw() const
 {
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	for (const sakura_petal *p = petals; p != &petals[NUM_PETALS]; p++)
-		p->draw(petal_texture);
-
-	petal_texture->bind();
+	for (const auto& p : petals_)
+		p.draw(petal_texture_);
 }

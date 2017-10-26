@@ -1,27 +1,32 @@
-#ifndef TITLE_BACKGROUND_H_
-#define TITLE_BACKGROUND_H_
+#pragma once
 
-#include "guava2d/vertex_array.h"
+#include <memory>
 
-#include "kasui_logo.h"
 #include "sakura.h"
-#include "title_widget.h"
 
-struct title_background
+class title_background
 {
+public:
 	title_background();
-	virtual ~title_background();
+	~title_background();
 
 	void reset();
 	void update(uint32_t dt);
 	void draw() const;
 
-	title_widget *fg_billboard;
-	title_widget *logo;
+	void show_billboard();
+	void hide_billboard();
 
-	const g2d::texture *bg_texture;
+	void show_logo();
+	void hide_logo();
 
-	sakura_fubuki sakura;
+	class widget;
+
+private:
+	std::unique_ptr<widget> billboard_;
+	std::unique_ptr<widget> logo_;
+
+	const g2d::texture *bg_texture_;
+
+	sakura_fubuki sakura_;
 };
-
-#endif // TITLE_BACKGROUND_H_

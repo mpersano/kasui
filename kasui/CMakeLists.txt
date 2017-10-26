@@ -31,7 +31,6 @@ set(KASUI_SOURCES
     jukugo_info_sprite.cpp
     kanji_info.cpp
     kasui.cpp
-    kasui_logo.cpp
     leaderboard_page.cpp
     line_splitter.cpp
     main.cpp
