@@ -22,17 +22,7 @@
 #include "credits.h"
 #include "main_menu.h"
 
-static bool touch_is_down;
-
 extern void on_rate_me_clicked();
-
-namespace {
-
-constexpr int NUM_BUTTON_COLS = 3;
-constexpr int NUM_BUTTON_ROWS = (NUM_LEVELS + NUM_BUTTON_COLS - 1)/NUM_BUTTON_COLS;
-constexpr int FADE_IN_T = 10*MS_PER_TIC;
-
-}
 
 class vertical_menu : public menu
 {
@@ -49,6 +39,9 @@ public:
 	level_selection_menu(main_menu_impl *parent);
 
 private:
+	static constexpr int NUM_BUTTON_COLS = 3;
+	static constexpr int NUM_BUTTON_ROWS = (NUM_LEVELS + NUM_BUTTON_COLS - 1)/NUM_BUTTON_COLS;
+
 	static constexpr int ITEM_WIDTH = 200;
 	static constexpr int ITEM_HEIGHT = 200;
 	static constexpr int BACK_BUTTON_WIDTH = 180;
@@ -98,6 +91,8 @@ private:
 	vertical_menu game_mode_menu_;
 	level_selection_menu level_menu_;
 
+	static constexpr int FADE_IN_T = 10*MS_PER_TIC;
+
 	menu *cur_menu_;
 
 	enum class state {
@@ -107,6 +102,7 @@ private:
 	} cur_state_;
 
 	uint32_t state_t_;
+	bool touch_is_down_ = false;
 };
 
 main_menu_impl::main_menu_impl()
@@ -381,19 +377,19 @@ void main_menu_impl::update(uint32_t dt)
 
 void main_menu_impl::on_touch_down(float x, float y)
 {
-	touch_is_down = true;
+	touch_is_down_ = true;
 	cur_menu_->on_touch_down(x, y);
 }
 
 void main_menu_impl::on_touch_up()
 {
-	touch_is_down = false;
+	touch_is_down_ = false;
 	cur_menu_->on_touch_up();
 }
 
 void main_menu_impl::on_touch_move(float x, float y)
 {
-	if (touch_is_down)
+	if (touch_is_down_)
 		cur_menu_->on_touch_down(x, y);
 }
 

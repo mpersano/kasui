@@ -37,6 +37,7 @@ void push_matrix();
 void pop_matrix();
 
 void translate(float x, float y);
+void translate(const g2d::vec2& v);
 void scale(float sx, float sy);
 void rotate(float a);
 
