@@ -1,7 +1,6 @@
 #pragma once
 
-#include "guava2d/vec2.h"
-#include "guava2d/vertex_array.h"
+#include <guava2d/vec2.h>
 
 struct sakura_petal
 {

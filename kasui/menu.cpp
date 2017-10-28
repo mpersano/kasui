@@ -1,5 +1,4 @@
 #include <cstdio>
-#include <cassert>
 
 #include <guava2d/vec2.h>
 
@@ -89,8 +88,7 @@ bool action_menu_item::is_back_item() const
 
 rect action_menu_item::get_rect() const
 {
-	return { static_cast<float>(active_sprite_->get_width()),
-			 static_cast<float>(active_sprite_->get_height()) };
+	return { active_sprite_->get_width(), active_sprite_->get_height() };
 }
 
 toggle_menu_item::toggle_menu_item(
@@ -143,14 +141,10 @@ bool toggle_menu_item::is_back_item() const
 
 rect toggle_menu_item::get_rect() const
 {
-	return { static_cast<float>(active_sprite_true_->get_width()),
-		 static_cast<float>(active_sprite_true_->get_height()) };
+	return { active_sprite_true_->get_width(), active_sprite_true_->get_height() };
 }
 
-menu::menu()
-: cur_selected_item_(nullptr)
-{ }
-
+menu::menu() = default;
 
 void menu::append_action_item(
 	int sound,
@@ -222,25 +216,22 @@ menu::update(uint32_t dt)
 		p->update(dt);
 
 	switch (cur_state_) {
-		case MENU_INTRO:
+		case state::INTRO:
 			if (state_t_ >= INTRO_T)
-				set_cur_state(MENU_IDLE);
+				set_cur_state(state::IDLE);
 			break;
 
-		case MENU_OUTRO:
+		case state::OUTRO:
 			if (state_t_ >= OUTRO_T) {
 				if (cur_selected_item_)
 					cur_selected_item_->on_selection();
-				set_cur_state(MENU_INACTIVE);
+				set_cur_state(state::INACTIVE);
 			}
 			break;
 
-		case MENU_IDLE:
-		case MENU_INACTIVE:
+		case state::IDLE:
+		case state::INACTIVE:
 			break;
-
-		default:
-			assert(0);
 	}
 }
 
@@ -254,8 +245,7 @@ menu::set_cur_state(state next_state)
 void
 menu::reset()
 {
-	set_cur_state(MENU_INTRO);
-
+	set_cur_state(state::INTRO);
 	cur_selected_item_ = nullptr;
 
 	for (auto& p : item_list_)
@@ -265,7 +255,7 @@ menu::reset()
 void
 menu::on_touch_down(float x, float y)
 {
-	if (cur_state_ != MENU_IDLE)
+	if (cur_state_ != state::IDLE)
 		return;
 
 	cur_selected_item_ = nullptr;
@@ -292,14 +282,14 @@ menu::on_touch_down(float x, float y)
 void
 menu::on_touch_up()
 {
-	if (cur_state_ == MENU_IDLE && cur_selected_item_)
+	if (cur_state_ == state::IDLE && cur_selected_item_)
 		activate_selected_item();
 }
 
 void
 menu::on_back_key()
 {
-	if (cur_state_ == MENU_IDLE) {
+	if (cur_state_ == state::IDLE) {
 		for (auto& p : item_list_) {
 			if (p->is_back_item()) {
 				cur_selected_item_ = p.get();
@@ -317,7 +307,7 @@ menu::activate_selected_item()
 	cur_selected_item_->on_activation();
 
 	if (cur_selected_item_->fade_menu_when_selected())
-		set_cur_state(MENU_OUTRO);
+		set_cur_state(state::OUTRO);
 	else
 		cur_selected_item_->on_selection();
 }
@@ -328,29 +318,22 @@ menu::get_cur_alpha() const
 	float alpha;
 
 	switch (cur_state_) {
-		case MENU_INTRO:
+		case state::INTRO:
 			alpha = static_cast<float>(state_t_)/INTRO_T;
 			break;
 
-		case MENU_OUTRO:
+		case state::OUTRO:
 			alpha = 1. - static_cast<float>(state_t_)/OUTRO_T;
 			break;
 
-		case MENU_IDLE:
+		case state::IDLE:
 			alpha = 1.;
 			break;
 
-		case MENU_INACTIVE:
+		case state::INACTIVE:
 			alpha = 0;
 			break;
-
-		default:
-			assert(0);
 	}
 
 	return alpha;
 }
-
-void
-menu_initialize()
-{ }

@@ -10,13 +10,13 @@
 class title_background::widget
 {
 public:
-	widget();
+	virtual ~widget() = default;
 
 	virtual void update(uint32_t dt);
 	virtual void reset();
 	virtual void draw() const = 0;
 
-	enum state {
+	enum class state {
 		OUTSIDE,
 		ENTERING,
 		INSIDE,
@@ -31,30 +31,25 @@ protected:
 	static constexpr int ENTER_T = 30*MS_PER_TIC;
 	static constexpr int LEAVE_T = 20*MS_PER_TIC;
 
-	state cur_state_;
-	uint32_t state_t_;
+	state cur_state_ = state::INSIDE;
+	uint32_t state_t_ = 0;
 };
-
-title_background::widget::widget()
-	: cur_state_(INSIDE)
-	, state_t_(0)
-{ }
 
 void title_background::widget::reset()
 {
-	set_state(ENTERING);
+	set_state(state::ENTERING);
 }
 
 void title_background::widget::show()
 {
-	if (cur_state_ != INSIDE && cur_state_ != ENTERING)
-		set_state(ENTERING);
+	if (cur_state_ != state::INSIDE && cur_state_ != state::ENTERING)
+		set_state(state::ENTERING);
 }
 
 void title_background::widget::hide()
 {
-	if (cur_state_ != OUTSIDE && cur_state_ != LEAVING)
-		set_state(LEAVING);
+	if (cur_state_ != state::OUTSIDE && cur_state_ != state::LEAVING)
+		set_state(state::LEAVING);
 }
 
 void title_background::widget::set_state(state next_state)
@@ -68,14 +63,14 @@ void title_background::widget::update(uint32_t dt)
 	state_t_ += dt;
 
 	switch (cur_state_) {
-		case ENTERING:
+		case state::ENTERING:
 			if (state_t_ >= ENTER_T)
-				set_state(INSIDE);
+				set_state(state::INSIDE);
 			break;
 
-		case LEAVING:
+		case state::LEAVING:
 			if (state_t_ >= LEAVE_T)
-				set_state(OUTSIDE);
+				set_state(state::OUTSIDE);
 			break;
 
 		default:
@@ -98,8 +93,7 @@ private:
 	const g2d::sprite *bg_, *ka_, *sui_;
 	float ka_scale_, sui_scale_;
 	float ka_mix_, sui_mix_;
-
-	abstract_action *action_;
+	std::unique_ptr<abstract_action> action_;
 };
 
 kasui_logo::kasui_logo()
@@ -113,20 +107,20 @@ kasui_logo::kasui_logo()
 {
 	constexpr float max_scale = 1.15;
 
-	action_ =
+	action_.reset(
 	  (new parallel_action_group)
 	    ->add((new sequential_action_group)
-		->add(new property_change_action<in_back_tween<float> >(&ka_scale_, 1, max_scale, 12*MS_PER_TIC))
-		->add(new property_change_action<out_bounce_tween<float> >(&ka_scale_, max_scale, 1, 12*MS_PER_TIC))
+		->add(new property_change_action<in_back_tween<float>>(&ka_scale_, 1, max_scale, 12*MS_PER_TIC))
+		->add(new property_change_action<out_bounce_tween<float>>(&ka_scale_, max_scale, 1, 12*MS_PER_TIC))
 		->add(new delay_action(80*MS_PER_TIC)))
-	    ->add(new property_change_action<linear_tween<float> >(&ka_mix_, 1, 0, 20*MS_PER_TIC))
+	    ->add(new property_change_action<linear_tween<float>>(&ka_mix_, 1, 0, 20*MS_PER_TIC))
 	    ->add((new sequential_action_group)
 		->add(new delay_action(30*MS_PER_TIC))
-		->add(new property_change_action<in_back_tween<float> >(&sui_scale_, 1, max_scale, 12*MS_PER_TIC))
-		->add(new property_change_action<out_bounce_tween<float> >(&sui_scale_, max_scale, 1, 12*MS_PER_TIC)))
+		->add(new property_change_action<in_back_tween<float>>(&sui_scale_, 1, max_scale, 12*MS_PER_TIC))
+		->add(new property_change_action<out_bounce_tween<float>>(&sui_scale_, max_scale, 1, 12*MS_PER_TIC)))
 	    ->add((new sequential_action_group)
 		->add(new delay_action(30*MS_PER_TIC))
-		->add(new property_change_action<linear_tween<float> >(&sui_mix_, 1, 0, 20*MS_PER_TIC)));
+		->add(new property_change_action<linear_tween<float>>(&sui_mix_, 1, 0, 20*MS_PER_TIC))));
 }
 
 void kasui_logo::reset()
@@ -150,36 +144,31 @@ void kasui_logo::update(uint32_t dt)
 
 void kasui_logo::draw() const
 {
-	if (cur_state_ == OUTSIDE)
+	if (cur_state_ == state::OUTSIDE)
 		return;
 
 	constexpr float logo_y_from = 1., logo_y_to = 0.;
 	float sy, alpha;
 
 	switch (cur_state_) {
-		case ENTERING:
-			{
+		case state::ENTERING: {
 			const float t = static_cast<float>(state_t_)/ENTER_T;
 			sy = out_bounce_tween<float>()(logo_y_from, logo_y_to, t);
 			alpha = t;
-			}
 			break;
+			}
 
-		case LEAVING:
-			{
+		case state::LEAVING: {
 			const float t = static_cast<float>(state_t_)/LEAVE_T;
 			sy = in_back_tween<float>()(logo_y_to, logo_y_from, t);
 			alpha = 1. - t;
-			}
 			break;
+			}
 
-		case INSIDE:
+		case state::INSIDE:
 			sy = logo_y_to;
 			alpha = 1;
 			break;
-
-		default:
-			assert(0);
 	}
 
 	const float w = bg_->get_width();
@@ -244,36 +233,31 @@ foreground_billboard::foreground_billboard()
 
 void foreground_billboard::draw() const
 {
-	if (cur_state_ == OUTSIDE)
+	if (cur_state_ == state::OUTSIDE)
 		return;
 
 	static const float x_from = -window_width, x_to = 0;
 	float x, alpha;
 
 	switch (cur_state_) {
-		case ENTERING:
-			{
+		case state::ENTERING: {
 			const float t = static_cast<float>(state_t_)/ENTER_T;
 			x = in_cos_tween<float>()(x_from, x_to, t);
 			alpha = t;
-			}
 			break;
+			}
 
-		case LEAVING:
-			{
+		case state::LEAVING: {
 			const float t = static_cast<float>(state_t_)/LEAVE_T;
 			x = in_back_tween<float>()(x_to, x_from, t);
 			alpha = 1. - t;
-			}
 			break;
+			}
 
-		case INSIDE:
+		case state::INSIDE:
 			x = x_to;
 			alpha = 1;
 			break;
-
-		default:
-			assert(0);
 	}
 
 	render::push_matrix();
@@ -295,9 +279,7 @@ title_background::title_background()
 {
 }
 
-title_background::~title_background()
-{
-}
+title_background::~title_background() = default;
 
 void title_background::reset()
 {
@@ -317,17 +299,22 @@ void title_background::update(uint32_t dt)
 void title_background::draw() const
 {
 	render::set_blend_mode(blend_mode::NO_BLEND);
+	draw_background_quad();
 
-	// bg_billboard
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	billboard_->draw();
+	logo_->draw();
+	sakura_.draw();
+}
 
+void title_background::draw_background_quad() const
+{
 	render::set_color({ 1.f, 1.f, 1.f, 1.f });
 
 	const int w = bg_texture_->get_pixmap_width();
 	const int h = bg_texture_->get_pixmap_height();
 
-	float scaled_height = window_width*h/w;
-	if (scaled_height < window_height)
-		scaled_height = window_height;
+	const float scaled_height = std::max(window_width*h/w, window_height);
 
 	const float dv = bg_texture_->get_v_scale();
 	const float du = bg_texture_->get_u_scale();
@@ -339,13 +326,6 @@ void title_background::draw() const
 		{ { 0, y0 }, { 0, y1 }, { window_width, y1 }, { window_width, y0 } },
 		{ { 0, 0 }, { 0, dv }, { du, dv }, { du, 0 } },
 		-20);
-
-	render::set_blend_mode(blend_mode::ALPHA_BLEND);
-
-	billboard_->draw();
-	logo_->draw();
-
-	sakura_.draw();
 }
 
 void title_background::show_billboard()

@@ -6,6 +6,7 @@
 
 #include <guava2d/vec2.h>
 
+#include "noncopyable.h"
 #include "sprite_manager.h"
 #include "sprite.h"
 #include "render.h"
@@ -14,7 +15,7 @@
 
 struct rect
 {
-	float width, height;
+	int width, height;
 };
 
 class menu_item
@@ -101,7 +102,7 @@ private:
 	ToggleFn on_toggle_fn_;
 };
 
-class menu
+class menu : private noncopyable
 {
 public:
 	menu();
@@ -133,36 +134,35 @@ public:
 	void on_back_key();
 
 	bool is_in_intro() const
-	{ return cur_state_ == MENU_INTRO; }
+	{ return cur_state_ == state::INTRO; }
 
 	bool is_in_outro() const
-	{ return cur_state_ == MENU_OUTRO; }
+	{ return cur_state_ == state::OUTRO; }
 
 	float get_cur_alpha() const;
 
 	void append_item(menu_item *item);
 
-protected:
+private:
 	void activate_selected_item();
 
-	std::vector<std::unique_ptr<menu_item>> item_list_;
-	uint32_t state_t_;
-	menu_item *cur_selected_item_;
+	uint32_t state_t_ = 0;
+	menu_item *cur_selected_item_ = nullptr;
 
 	static constexpr int INTRO_T = 15*MS_PER_TIC;
 	static constexpr int OUTRO_T = 15*MS_PER_TIC;
 
-	enum state {
-		MENU_INTRO,
-		MENU_IDLE,
-		MENU_OUTRO,
-		MENU_INACTIVE,
-	} cur_state_;
+	enum class state {
+		INTRO,
+		IDLE,
+		OUTRO,
+		INACTIVE,
+	} cur_state_ = state::INTRO;
 
 	void set_cur_state(state next_state);
 
 	virtual g2d::vec2 get_item_position(int item_index) const = 0;
-};
 
-void
-menu_initialize();
+protected:
+	std::vector<std::unique_ptr<menu_item>> item_list_;
+};

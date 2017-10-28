@@ -431,7 +431,6 @@ kasui_impl::initialize(int width, int height)
 	get_credits_state();
 	get_tutorial_state();
 
-	menu_initialize();
 	themes_initialize();
 
 	start_main_menu();

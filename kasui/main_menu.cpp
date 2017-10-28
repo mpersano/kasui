@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#include <sstream>
+
 #include "guava2d/g2dgl.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
@@ -53,8 +55,6 @@ private:
 	static constexpr int BACK_BUTTON_HEIGHT = 80;
 
 	g2d::vec2 get_item_position(int item_index) const override;
-
-	main_menu_impl *parent;
 };
 
 class main_menu_impl
@@ -119,8 +119,7 @@ main_menu_impl::main_menu_impl()
 	create_game_mode_menu();
 }
 
-main_menu_impl::~main_menu_impl()
-{ }
+main_menu_impl::~main_menu_impl() = default;
 
 void
 main_menu_impl::set_cur_menu(menu *p)
@@ -200,49 +199,44 @@ vertical_menu::get_item_position(int item_index) const
 	return { x, y };
 }
 
-static const char *
-level_sprite_name(int id)
-{
-	static char buf[80];
-	sprintf(buf, "level-%d.png", id);
-	return buf;
-}
-
 class level_menu_item : public action_menu_item
 {
 public:
-	level_menu_item(int level_id, ActionFn on_activated, ActionFn on_selected)
-	: action_menu_item(
-		SOUND_MENU_VALIDATE,
-		level_sprite_name(level_id*2),
-		level_sprite_name(level_id*2 + 1),
-		on_activated,
-		on_selected,
-		false)
-	, level_id_(level_id)
+	level_menu_item(main_menu_impl *parent, int level_id)
+		: action_menu_item(
+			SOUND_MENU_VALIDATE,
+			level_sprite_name(level_id*2),
+			level_sprite_name(level_id*2 + 1),
+			[parent] { parent->set_state_outro(); },
+			[level_id] { start_in_game(level_id); },
+			false)
+		, level_id_(level_id)
 	{ }
 
 	bool is_enabled() const override
 	{ return practice_mode || level_id_ <= cur_options->max_unlocked_level; }
 
 private:
+	static std::string level_sprite_name(int id)
+	{
+		std::stringstream ss;
+		ss << "level-" << id << ".png";
+		return ss.str();
+	}
+
 	int level_id_;
 };
 
 level_selection_menu::level_selection_menu(main_menu_impl *parent)
-: parent(parent)
 {
-	for (int i = 0; i < NUM_LEVELS; i++) {
-		auto on_activated = [this] { this->parent->set_state_outro(); };
-		auto on_selected = [=] { start_in_game(i); };
-		append_item(new level_menu_item(i, on_activated, on_selected));
-	}
+	for (int i = 0; i < NUM_LEVELS; i++)
+		append_item(new level_menu_item(parent, i));
 
 	append_action_item(
 		SOUND_MENU_BACK,
 		"back-sm-0.png", "back-sm-1.png",
-		[this] { this->parent->show_background(); },
-		[this] { this->parent->show_game_mode_menu(); },
+		[parent] { parent->show_background(); },
+		[parent] { parent->show_game_mode_menu(); },
 		true);
 }
 
@@ -275,7 +269,7 @@ class action_item_no_fade : public action_menu_item
 public:
 	using action_menu_item::action_menu_item;
 
-	bool fade_menu_when_selected() const
+	bool fade_menu_when_selected() const override
 	{ return false; }
 };
 
@@ -322,14 +316,14 @@ main_menu_impl::create_more_menu()
 		"stats-0.png",
 		"stats-1.png",
 		[this] { hide_background(); },
-		[] { start_stats_page(); });
+		start_stats_page);
 
 	more_menu.append_action_item(
 		SOUND_MENU_SELECT,
 		"credits-0.png",
 		"credits-1.png",
 		[this] { background.hide_billboard(); start_sound(SOUND_LEVEL_INTRO, false); },
-		[this] { start_credits(); });
+		start_credits);
 
 	more_menu.append_item(
 		new action_item_no_fade(

@@ -23,6 +23,8 @@ public:
 	class widget;
 
 private:
+	void draw_background_quad() const;
+
 	std::unique_ptr<widget> billboard_;
 	std::unique_ptr<widget> logo_;
 

@@ -69,11 +69,10 @@ void sakura_petal::reset(bool from_start)
 	}
 }
 
-void
-sakura_petal::draw(const g2d::texture *texture) const
+void sakura_petal::draw(const g2d::texture *texture) const
 {
-	float a = cosf(phi_0*tics + phase_0);
-	float b = cosf(phi_1*tics + phase_1);
+	const float a = cosf(phi_0*tics + phase_0);
+	const float b = cosf(phi_1*tics + phase_1);
 
 	const g2d::vec2 p = pos + g2d::vec2(a*radius_0, b*radius_1);
 
@@ -88,11 +87,7 @@ sakura_petal::draw(const g2d::texture *texture) const
 	const g2d::vec2 p2 = p - up + right;
 	const g2d::vec2 p3 = p - up - right;
 
-	float w;
-	if (tics > ttl - FADE_TTL)
-		w = 1. - static_cast<float>(tics - (ttl - FADE_TTL))/FADE_TTL;
-	else
-		w = 1;
+	const float w = tics > ttl - FADE_TTL ? 1. - static_cast<float>(tics - (ttl - FADE_TTL))/FADE_TTL : 1;
 
 	render::set_color({ 1.f, 1.f, 1.f, w*alpha });
 
@@ -102,8 +97,7 @@ sakura_petal::draw(const g2d::texture *texture) const
 		-1);
 }
 
-void
-sakura_petal::update(uint32_t dt)
+void sakura_petal::update(uint32_t dt)
 {
 	pos += dt*dir;
 	angle += dt*delta_angle;
@@ -116,22 +110,19 @@ sakura_fubuki::sakura_fubuki()
 	: petal_texture_(g2d::texture_manager::get_instance().load("images/petal.png"))
 { }
 
-void
-sakura_fubuki::update(uint32_t dt)
+void sakura_fubuki::update(uint32_t dt)
 {
 	for (auto& p : petals_)
 		p.update(dt);
 }
 
-void
-sakura_fubuki::reset()
+void sakura_fubuki::reset()
 {
 	for (auto& p : petals_)
 		p.reset(false);
 }
 
-void
-sakura_fubuki::draw() const
+void sakura_fubuki::draw() const
 {
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
