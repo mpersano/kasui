@@ -7,15 +7,14 @@
 #include "line_splitter.h"
 
 line_splitter::line_splitter(const g2d::font *font, const wchar_t *str)
-: font_(font)
-, str_(str)
+	: font_(font)
+	, str_(str)
 { }
 
-wchar_t *
-line_splitter::next_line(int max_size)
+std::wstring line_splitter::next_line(int max_size)
 {
 	if (!*str_)
-		return 0;
+		return {};
 
 	const wchar_t *line_end = 0;
 
@@ -33,9 +32,9 @@ line_splitter::next_line(int max_size)
 
 	size_t result_len = line_end - str_;
 
-	wchar_t *result = new wchar_t[result_len + 1];
-	memcpy(result, str_, result_len*sizeof *result);
-	result[result_len] = L'\0';
+	std::wstring result;
+	result.reserve(result_len);
+	result.append(str_, str_ + result_len);
 
 	str_ = *line_end ? line_end + 1 : line_end;
 

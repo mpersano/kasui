@@ -1,6 +1,8 @@
 #pragma once
 
-#include <map>
+#include <vector>
+#include <string>
+#include <memory>
 
 #include "action.h"
 #include "world.h"
@@ -17,36 +19,29 @@ class jukugo_info_sprite : public sprite
 {
 public:
 	jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g);
-	~jukugo_info_sprite();
 
-	bool update(uint32_t dt);
-	void draw() const;
+	bool update(uint32_t dt) override;
+	void draw() const override;
 
 private:
-	void initialize_quads(const jukugo *jukugo_info);
+	void draw_line(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str) const;
 
-	void initialize_string_quads(
-		const g2d::font *font,
-		float x, float y,
-		float shade_top, float shade_bottom,
-		const wchar_t *str);
+	const jukugo *jukugo_;
 
-	void draw_quads() const;
+	float x_base_, y_base_;
 
-	typedef g2d::indexed_vertex_array<
-			GLushort,
-			g2d::vertex::attrib<GLfloat, 2>,
-			g2d::vertex::attrib<GLfloat, 2>,
-			g2d::vertex::attrib<GLfloat, 1> > vertex_array;
+	float flip_ = 0;
+	float alpha_ = 0;
+	float z_ = 0;
+	std::unique_ptr<abstract_action> action_;
 
-	typedef std::map<const g2d::texture *, vertex_array> map_type;
-	typedef map_type::value_type map_value_type;
-
-	map_type quads_;
-
-	float x_base, y_base;
-
-	float flip, alpha, z;
-	abstract_action *action;
 	const gradient *gradient_;
+
+	const g2d::font *kanji_font_;
+	const g2d::font *furigana_font_;
+	const g2d::font *eigo_font_;
+
+	g2d::vec2 pos_kanji_;
+	g2d::vec2 pos_furigana_;
+	std::vector<std::pair<g2d::vec2, std::wstring>> eigo_lines_;
 };

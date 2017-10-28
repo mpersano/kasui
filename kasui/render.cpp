@@ -266,7 +266,7 @@ void sprite_batch::flush_queue()
     for (int i = 1; i < sprite_queue_size_; ++i) {
         const auto p = sorted_sprites[i];
 
-        if (p->blend != cur_blend_mode || p->texture != cur_texture) {
+        if (p->blend != cur_blend_mode || p->texture != cur_texture || p->program != cur_program) {
             render_sprites(i);
 
             batch_start = i;

@@ -12,7 +12,7 @@ class line_splitter
 public:
 	line_splitter(const g2d::font *font, const wchar_t *str);
 
-	wchar_t *next_line(int size);
+	std::wstring next_line(int size);
 
 private:
 	const g2d::font *font_;

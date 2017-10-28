@@ -100,8 +100,7 @@ protected:
 class sprite
 {
 public:
-	sprite() { }
-	virtual ~sprite() { }
+	virtual ~sprite() = default;
 
 	virtual bool update(uint32_t dt) = 0;
 	virtual void draw() const = 0;

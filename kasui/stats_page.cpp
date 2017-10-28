@@ -311,6 +311,7 @@ jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
 
 	int num_lines = 0;
 
+#ifdef FIX_ME
 	{
 	line_splitter ls(micro_font, meaning_buf);
 
@@ -321,6 +322,7 @@ jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
 		delete[] line;
 	}
 	}
+#endif
 
 	height_ = std::max(MIN_HEIGHT, 14 + num_lines*LINE_HEIGHT);
 
@@ -330,6 +332,7 @@ jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
 
 	text_.push_matrix().translate(30, -.5*height_ - 16).render_text(medium_font, L"%s", jukugo->kanji).pop_matrix();
 
+#ifdef FIX_ME
 	line_splitter ls(micro_font, meaning_buf);
 
 	wchar_t *line;
@@ -340,6 +343,7 @@ jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
 		delete[] line;
 		y -= LINE_HEIGHT;
 	}
+#endif
 
 	reset_contents();
 }
