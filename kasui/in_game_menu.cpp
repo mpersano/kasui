@@ -104,77 +104,54 @@ in_game_menu_impl::in_game_menu_impl()
 void
 in_game_menu_impl::create_root_menu()
 {
-	root_menu_.append_action_item(
-		SOUND_MENU_VALIDATE,
-		"resume-0.png",
-		"resume-1.png",
-		[this] { set_cur_state(STATE_FADE_OUT); },
-		pop_state,
-		true);
+	root_menu_.append_action_item(SOUND_MENU_VALIDATE, "resume-0.png", "resume-1.png")
+		.set_on_clicked([this] { set_cur_state(STATE_FADE_OUT); })
+		.set_action(pop_state)
+		.set_is_back(true);
 
-	root_menu_.append_action_item(
-		SOUND_MENU_SELECT,
-		"options-0.png",
-		"options-1.png",
-		{},
-		[this] { set_cur_menu(&options_menu_); });
+	root_menu_.append_action_item(SOUND_MENU_SELECT, "options-0.png", "options-1.png")
+		.set_action([this] { set_cur_menu(&options_menu_); });
 
-	root_menu_.append_action_item(
-		SOUND_MENU_SELECT,
-		"stats-0.png",
-		"stats-1.png",
-		[this] { set_cur_state(STATE_FADE_TO_JUKUGO_STATS); },
-		[] {
+	root_menu_.append_action_item(SOUND_MENU_SELECT, "stats-0.png", "stats-1.png")
+		.set_on_clicked([this] { set_cur_state(STATE_FADE_TO_JUKUGO_STATS); })
+		.set_action([] {
 			// i'm going to regret this some day i know it
 			extern ::state *get_main_menu_state();
 			static_cast<main_menu_state *>(get_main_menu_state())->unfade();
 			start_stats_page();
 		});
 
-	root_menu_.append_action_item(
-		SOUND_MENU_BACK,
-		"quit-0.png",
-		"quit-1.png",
-		[this] { set_cur_state(STATE_FADE_OUT); },
-		[] {
+	root_menu_.append_action_item(SOUND_MENU_BACK, "quit-0.png", "quit-1.png")
+		.set_on_clicked([this] { set_cur_state(STATE_FADE_OUT); })
+		.set_action([] {
 			pop_state();
 			pop_state();
 			get_cur_state()->reset();
-		},
-		false);
+		});
 }
 
 void
 in_game_menu_impl::create_options_menu()
 {
-	options_menu_.append_toggle_item(
-		SOUND_MENU_SELECT,
-		"hints-on-0.png", "hints-on-1.png",
-		"hints-off-0.png", "hints-off-1.png",
-		cur_options->enable_hints,
-		[] (int enable_hints) {
+	options_menu_.append_toggle_item(SOUND_MENU_SELECT, cur_options->enable_hints,
+		"hints-on-0.png", "hints-on-1.png", "hints-off-0.png", "hints-off-1.png")
+		.set_on_toggle([] (int enable_hints) {
 			extern ::state *get_in_game_state();
 			static_cast<in_game_state *>(get_in_game_state())->set_enable_hints(enable_hints);
 		});
 
-	options_menu_.append_toggle_item(
-		SOUND_MENU_SELECT,
-		"sound-on-0.png", "sound-on-1.png",
-		"sound-off-0.png", "sound-off-1.png",
-		cur_options->enable_sound,
-		[] (int enable_sound) {
+	options_menu_.append_toggle_item(SOUND_MENU_SELECT, cur_options->enable_sound,
+		"sound-on-0.png", "sound-on-1.png", "sound-off-0.png", "sound-off-1.png")
+		.set_on_toggle([] (int enable_sound) {
 			if (!enable_sound)
 				stop_all_sounds();
 			else
 				start_sound(SOUND_MENU_SELECT, false);
 		});
 
-	options_menu_.append_action_item(
-		SOUND_MENU_BACK,
-		"back-0.png", "back-1.png",
-		{},
-		[this] { set_cur_menu(&root_menu_); },
-		true);
+	options_menu_.append_action_item(SOUND_MENU_BACK, "back-0.png", "back-1.png")
+		.set_action([this] { set_cur_menu(&root_menu_); })
+		.set_is_back(true);
 }
 
 void

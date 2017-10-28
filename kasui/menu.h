@@ -21,13 +21,12 @@ struct rect
 class menu_item
 {
 public:
-	menu_item(int sound);
+	menu_item(int sound, bool fade_menu_when_selected);
 	virtual ~menu_item() = default;
 
 	virtual void draw(bool is_selected, float alpha) const = 0;
-	virtual void on_activation();
-	virtual void on_selection() = 0;
-	virtual bool fade_menu_when_selected() const = 0;
+	virtual void on_clicked();
+	virtual void action() = 0;
 	virtual bool is_back_item() const = 0;
 	virtual bool is_enabled() const { return true; }
 	virtual rect get_rect() const = 0;
@@ -39,67 +38,89 @@ public:
 	int get_sound() const
 	{ return sound_; }
 
+	bool fade_menu_when_selected() const
+	{ return fade_menu_when_selected_; }
+
+	void set_fade_menu_when_selected(bool b)
+	{ fade_menu_when_selected_ = b; }
+
 private:
 	static constexpr int ACTIVE_T = 10*MS_PER_TIC;
 
 	int sound_;
 	bool is_active_ = false;
 	uint32_t active_t_;
+	bool fade_menu_when_selected_;
 };
 
 class action_menu_item : public menu_item
 {
 public:
-	using ActionFn = std::function<void()>;
+	using ActionCallback = std::function<void()>;
 
-	action_menu_item(
-		int sound,
-		const std::string& active_sprite,
-		const std::string& inactive_sprite,
-		ActionFn on_activation_fn,
-		ActionFn on_action_fn,
-		bool is_back);
+	action_menu_item(int sound, const std::string& active_sprite, const std::string& inactive_sprite);
 
 	void draw(bool is_selected, float alpha) const override;
-	void on_activation() override;
-	void on_selection() override;
-	bool fade_menu_when_selected() const override;
+	void on_clicked() override;
+	void action() override;
 	bool is_back_item() const override;
 	rect get_rect() const override;
+
+	action_menu_item& set_on_clicked(ActionCallback f)
+	{
+		on_clicked_ = f;
+		return *this;
+	}
+
+	action_menu_item& set_action(ActionCallback f)
+	{
+		action_ = f;
+		return *this;
+	}
+
+	action_menu_item& set_is_back(bool b)
+	{
+		is_back_ = b;
+		return *this;
+	}
 
 private:
 	const g2d::sprite *active_sprite_;
 	const g2d::sprite *inactive_sprite_;
-	ActionFn on_activation_fn_;
-	ActionFn on_action_fn_;
-	bool is_back_;
+	ActionCallback on_clicked_;
+	ActionCallback action_;
+	bool is_back_ = false;
 };
 
 class toggle_menu_item : public menu_item
 {
 public:
-	using ToggleFn = std::function<void(int)>;
+	using ToggleCallback = std::function<void(int)>;
 
 	toggle_menu_item(
 		int sound,
+		int& value,
 		const std::string& active_sprite_true,
 		const std::string& inactive_sprite_true,
 		const std::string& active_sprite_false,
-		const std::string& inactive_sprite_false,
-		int& value_ptr,
-		ToggleFn on_toggle_fn);
+		const std::string& inactive_sprite_false);
 
 	void draw(bool is_selected, float alpha) const override;
-	void on_selection() override;
-	bool fade_menu_when_selected() const;
+	void action() override;
 	bool is_back_item() const override;
 	rect get_rect() const override;
 
+	toggle_menu_item& set_on_toggle(ToggleCallback f)
+	{
+		on_toggle_ = f;
+		return *this;
+	}
+
 private:
+	int& value_;
 	const g2d::sprite *active_sprite_true_, *inactive_sprite_true_;
 	const g2d::sprite *active_sprite_false_, *inactive_sprite_false_;
-	int& value_ptr_;
-	ToggleFn on_toggle_fn_;
+	ToggleCallback on_toggle_;
 };
 
 class menu : private noncopyable
@@ -108,22 +129,18 @@ public:
 	menu();
 	virtual ~menu() = default;
 
-	void append_action_item(
+	action_menu_item& append_action_item(
 		int sound,
 		const std::string& active_sprite,
-		const std::string& inactive_sprite,
-		action_menu_item::ActionFn on_activation_fn,
-		action_menu_item::ActionFn on_action_fn,
-		bool is_back = false);
+		const std::string& inactive_sprite);
 
-	void append_toggle_item(
+	toggle_menu_item& append_toggle_item(
 		int sound,
+		int& value,
 		const std::string& active_sprite_true,
 		const std::string& inactive_sprite_true,
 		const std::string& active_sprite_false,
-		const std::string& inactive_sprite_false,
-		int& value_ptr,
-		toggle_menu_item::ToggleFn on_toggle_fn);
+		const std::string& inactive_sprite_false);
 
 	void draw() const;
 	void update(uint32_t dt);
