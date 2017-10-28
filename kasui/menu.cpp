@@ -13,14 +13,18 @@ menu_item::menu_item(int sound, bool fade_menu_when_selected)
 {
 }
 
-void
-menu_item::reset()
+void menu_item::draw(bool is_selected, float alpha) const
+{
+	render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
+	get_sprite(is_selected)->draw(0., 0., 50);
+}
+
+void menu_item::reset()
 {
 	is_active_ = false;
 }
 
-void
-menu_item::update(uint32_t dt)
+void menu_item::update(uint32_t dt)
 {
 	if (is_active_) {
 		active_t_ += dt;
@@ -29,14 +33,12 @@ menu_item::update(uint32_t dt)
 	}
 }
 
-float
-menu_item::get_active_t() const
+float menu_item::get_active_t() const
 {
 	return is_active_ ? static_cast<float>(active_t_)/ACTIVE_T : 0;
 }
 
-void
-menu_item::on_clicked()
+void menu_item::on_clicked()
 {
 	is_active_ = true;
 	active_t_ = 0;
@@ -49,10 +51,9 @@ action_menu_item::action_menu_item(int sound, const std::string& active_sprite, 
 {
 }
 
-void action_menu_item::draw(bool is_selected, float alpha) const
+const g2d::sprite *action_menu_item::get_sprite(bool is_selected) const
 {
-	render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
-	(is_selected ? inactive_sprite_ : active_sprite_)->draw(0., 0., 50);
+	return is_selected ? inactive_sprite_ : active_sprite_;
 }
 
 void action_menu_item::on_clicked()
@@ -94,17 +95,12 @@ toggle_menu_item::toggle_menu_item(
 {
 }
 
-void toggle_menu_item::draw(bool is_selected, float alpha) const
+const g2d::sprite *toggle_menu_item::get_sprite(bool is_selected) const
 {
-	render::set_color({ 1.f, 1.f, 1.f, is_enabled() ? alpha : alpha*.4f });
-
-	const g2d::sprite *s;
 	if (value_)
-		s = is_selected ? inactive_sprite_true_ : active_sprite_true_;
+		return is_selected ? inactive_sprite_true_ : active_sprite_true_;
 	else
-		s = is_selected ? inactive_sprite_false_ : active_sprite_false_;
-
-	s->draw(0., 0., 50);
+		return is_selected ? inactive_sprite_false_ : active_sprite_false_;
 }
 
 void toggle_menu_item::action()
@@ -128,7 +124,7 @@ menu::menu() = default;
 
 action_menu_item& menu::append_action_item(int sound, const std::string& active_sprite, const std::string& inactive_sprite)
 {
-	item_list_.emplace_back(new action_menu_item( sound, active_sprite, inactive_sprite));
+	append_item(new action_menu_item(sound, active_sprite, inactive_sprite));
 	return *static_cast<action_menu_item *>(item_list_.back().get());
 }
 
@@ -136,20 +132,18 @@ toggle_menu_item& menu::append_toggle_item(int sound, int& value,
 	const std::string& active_sprite_true, const std::string& inactive_sprite_true,
 	const std::string& active_sprite_false, const std::string& inactive_sprite_false)
 {
-	item_list_.emplace_back(new toggle_menu_item(sound, value,
-					active_sprite_true, inactive_sprite_true,
-					active_sprite_false, inactive_sprite_false));
+	append_item(new toggle_menu_item(sound, value,
+				active_sprite_true, inactive_sprite_true,
+				active_sprite_false, inactive_sprite_false));
 	return *static_cast<toggle_menu_item *>(item_list_.back().get());
 }
 
-void
-menu::append_item(menu_item *item)
+void menu::append_item(menu_item *item)
 {
 	item_list_.emplace_back(item);
 }
 
-void
-menu::draw() const
+void menu::draw() const
 {
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
@@ -165,8 +159,7 @@ menu::draw() const
 	}
 }
 
-void
-menu::update(uint32_t dt)
+void menu::update(uint32_t dt)
 {
 	state_t_ += dt;
 
@@ -193,15 +186,13 @@ menu::update(uint32_t dt)
 	}
 }
 
-void
-menu::set_cur_state(state next_state)
+void menu::set_cur_state(state next_state)
 {
 	cur_state_ = next_state;
 	state_t_ = 0;
 }
 
-void
-menu::reset()
+void menu::reset()
 {
 	set_cur_state(state::INTRO);
 	cur_selected_item_ = nullptr;
@@ -210,8 +201,7 @@ menu::reset()
 		p->reset();
 }
 
-void
-menu::on_touch_down(float x, float y)
+void menu::on_touch_down(float x, float y)
 {
 	if (cur_state_ != state::IDLE)
 		return;
@@ -237,8 +227,7 @@ menu::on_touch_down(float x, float y)
 	}
 }
 
-void
-menu::on_touch_up()
+void menu::on_touch_up()
 {
 	if (cur_state_ != state::IDLE)
 		return;
@@ -246,8 +235,7 @@ menu::on_touch_up()
 	activate_selected_item();
 }
 
-void
-menu::on_back_key()
+void menu::on_back_key()
 {
 	if (cur_state_ != state::IDLE)
 		return;
@@ -260,8 +248,7 @@ menu::on_back_key()
 	}
 }
 
-void
-menu::activate_selected_item()
+void menu::activate_selected_item()
 {
 	if (!cur_selected_item_)
 		return;
@@ -276,8 +263,7 @@ menu::activate_selected_item()
 		cur_selected_item_->action();
 }
 
-float
-menu::get_cur_alpha() const
+float menu::get_cur_alpha() const
 {
 	switch (cur_state_) {
 		case state::INTRO:

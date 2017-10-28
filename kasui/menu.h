@@ -24,13 +24,14 @@ public:
 	menu_item(int sound, bool fade_menu_when_selected);
 	virtual ~menu_item() = default;
 
-	virtual void draw(bool is_selected, float alpha) const = 0;
 	virtual void on_clicked();
 	virtual void action() = 0;
 	virtual bool is_back_item() const = 0;
 	virtual bool is_enabled() const { return true; }
 	virtual rect get_rect() const = 0;
+	virtual const g2d::sprite *get_sprite(bool is_selected) const = 0;
 
+	void draw(bool is_selected, float alpha) const;
 	void reset();
 	void update(uint32_t dt);
 	float get_active_t() const;
@@ -60,7 +61,7 @@ public:
 
 	action_menu_item(int sound, const std::string& active_sprite, const std::string& inactive_sprite);
 
-	void draw(bool is_selected, float alpha) const override;
+	const g2d::sprite *get_sprite(bool is_selected) const override;
 	void on_clicked() override;
 	void action() override;
 	bool is_back_item() const override;
@@ -105,7 +106,7 @@ public:
 		const std::string& active_sprite_false,
 		const std::string& inactive_sprite_false);
 
-	void draw(bool is_selected, float alpha) const override;
+	const g2d::sprite *get_sprite(bool is_selected) const override;
 	void action() override;
 	bool is_back_item() const override;
 	rect get_rect() const override;
@@ -142,6 +143,8 @@ public:
 		const std::string& active_sprite_false,
 		const std::string& inactive_sprite_false);
 
+	void append_item(menu_item *item);
+
 	void draw() const;
 	void update(uint32_t dt);
 	void reset();
@@ -157,8 +160,6 @@ public:
 	{ return cur_state_ == state::OUTRO; }
 
 	float get_cur_alpha() const;
-
-	void append_item(menu_item *item);
 
 private:
 	void activate_selected_item();
