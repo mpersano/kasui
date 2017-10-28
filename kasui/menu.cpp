@@ -136,9 +136,9 @@ toggle_menu_item& menu::append_toggle_item(int sound, int& value,
 	const std::string& active_sprite_true, const std::string& inactive_sprite_true,
 	const std::string& active_sprite_false, const std::string& inactive_sprite_false)
 {
-	append_item(new toggle_menu_item(sound, value,
-			active_sprite_true, inactive_sprite_true,
-			active_sprite_false, inactive_sprite_false));
+	item_list_.emplace_back(new toggle_menu_item(sound, value,
+					active_sprite_true, inactive_sprite_true,
+					active_sprite_false, inactive_sprite_false));
 	return *static_cast<toggle_menu_item *>(item_list_.back().get());
 }
 
@@ -156,12 +156,10 @@ menu::draw() const
 	const float alpha = get_cur_alpha();
 
 	for (size_t i = 0; i < item_list_.size(); ++i) {
-		const g2d::vec2 pos = get_item_position(i);
-
 		const auto p = item_list_[i].get();
 
 		render::push_matrix();
-		render::translate(pos.x, pos.y);
+		render::translate(get_item_position(i));
 		p->draw(p == cur_selected_item_, alpha);
 		render::pop_matrix();
 	}
@@ -255,7 +253,7 @@ menu::on_back_key()
 		return;
 
 	auto it = std::find_if(std::begin(item_list_), std::end(item_list_),
-			       [](std::unique_ptr<menu_item>& p) { return p->is_back_item(); });
+			       [](auto& p) { return p->is_back_item(); });
 	if (it != std::end(item_list_)) {
 		cur_selected_item_ = it->get();
 		activate_selected_item();
@@ -281,25 +279,17 @@ menu::activate_selected_item()
 float
 menu::get_cur_alpha() const
 {
-	float alpha;
-
 	switch (cur_state_) {
 		case state::INTRO:
-			alpha = static_cast<float>(state_t_)/INTRO_T;
-			break;
+			return static_cast<float>(state_t_)/INTRO_T;
 
 		case state::OUTRO:
-			alpha = 1. - static_cast<float>(state_t_)/OUTRO_T;
-			break;
+			return 1. - static_cast<float>(state_t_)/OUTRO_T;
 
 		case state::IDLE:
-			alpha = 1.;
-			break;
+			return 1.;
 
 		case state::INACTIVE:
-			alpha = 0;
-			break;
+			return 0;
 	}
-
-	return alpha;
 }

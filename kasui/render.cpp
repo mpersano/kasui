@@ -423,6 +423,11 @@ void translate(float x, float y)
     g_sprite_batch.translate(x, y);
 }
 
+void translate(const g2d::vec2& v)
+{
+    g_sprite_batch.translate(v.x, v.y);
+}
+
 void scale(float sx, float sy)
 {
     g_sprite_batch.scale(sx, sy);
