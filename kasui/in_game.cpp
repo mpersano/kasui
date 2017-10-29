@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 #include <wchar.h>
 #include <stdlib.h>
@@ -20,6 +21,7 @@
 
 #include "program_manager.h"
 #include "sprite_manager.h"
+#include "draw_text.h"
 #include "render.h"
 #include "main_menu.h"
 #include "hiscore_input.h"
@@ -584,8 +586,7 @@ public:
 	void  set_enable_hints(bool enable);
 
 private:
-	void update_hud_text();
-	void draw_hud(const g2d::mat4& mat) const;
+	void draw_hud() const;
 	float get_level_transition_alpha() const;
 
 	enum game_state {
@@ -610,8 +611,6 @@ private:
 	game_animation *cur_game_animation_;
 	pause_button pause_button_;
 	timer_display timer_display_;
-
-	g2d::draw_queue hud_text_alpha_, hud_text_no_alpha_;
 	score_display score_display_;
 
 	bool abunai_shown_;
@@ -695,72 +694,6 @@ in_game_state_impl::set_cur_game_animation(game_animation *p)
 }
 
 void
-in_game_state_impl::update_hud_text()
-{
-	const float grid_width = world_.get_width();
-	const float grid_height = world_.get_height();
-
-	const g2d::font *tiny_font = g2d::font_manager::get_instance().load("fonts/tiny");
-	const g2d::font *medium_font = g2d::font_manager::get_instance().load("fonts/medium");
-
-	program_text& text_prog = get_program_instance<program_text>();
-	program_text_outline& text_outline_prog = get_program_instance<program_text_outline>();
-
-	// no alpha
-
-	hud_text_no_alpha_.reset();
-
-	hud_text_no_alpha_
-		.text_program(text_prog.get_raw())
-		.text_outline_program(text_outline_prog.get_raw())
-		.enable_text_outline()
-
-		// Score
-		.push_matrix()
-		.translate(grid_base_x + grid_width - 6, grid_base_y + grid_height + 60).scale(.7)
-		.align_right().render_text(tiny_font, L"Score")
-		.pop_matrix()
-
-		// Level
-		.push_matrix()
-		.translate(grid_base_x, grid_base_y - 28)
-		.align_left().render_text(tiny_font, L"Level %d", cur_level + 1)
-		.pop_matrix();
-
-	// alpha
-
-	hud_text_alpha_.reset();
-
-	hud_text_alpha_
-		.text_program(text_prog.get_raw())
-		.text_outline_program(text_outline_prog.get_raw())
-		.enable_text_outline()
-
-		// jukugo left label
-		.push_matrix()
-		.translate(grid_base_x + grid_width - 8, grid_base_y - 28)
-		.align_right();
-
-	if (!practice_mode)
-		hud_text_alpha_.render_text(tiny_font, L"Left:%02d", world_.get_jukugo_left());
-	else
-		hud_text_alpha_.render_text(tiny_font, L"practice");
-
-		hud_text_alpha_.pop_matrix();
-
-	hud_text_alpha_
-		// "Next"
-		.push_matrix()
-		.translate(grid_base_x, grid_base_y + grid_height + 60).scale(.7)
-		.align_left().render_text(tiny_font, L"Next")
-		.pop_matrix()
-
-		// next jukugo
-		.translate(grid_base_x, grid_base_y + grid_height + 16).scale(.8)
-		.render_text(medium_font, next_falling_blocks_);
-}
-
-void
 in_game_state_impl::reset_level()
 {
 	theme_ = themes[cur_level % NUM_THEMES];
@@ -769,8 +702,6 @@ in_game_state_impl::reset_level()
 	world_.set_level(cur_level, practice_mode, cur_options->enable_hints);
 
 	timer_display_.reset(cur_settings.game.level_secs*1000);
-
-	update_hud_text();
 
 #if 1
 	set_state(STATE_LEVEL_INTRO);
@@ -966,10 +897,11 @@ in_game_state_impl::update(uint32_t dt)
 }
 
 void
-in_game_state_impl::draw_hud(const g2d::mat4& mat) const
+in_game_state_impl::draw_hud() const
 {
 	const float alpha = get_level_transition_alpha();
 
+#if 0
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -995,14 +927,75 @@ in_game_state_impl::draw_hud(const g2d::mat4& mat) const
 	text_outline_prog.set_color(g2d::rgba(.125, .125, .125, alpha));
 
 	hud_text_alpha_.draw();
+#endif
+
+	const float grid_width = world_.get_width();
+	const float grid_height = world_.get_height();
+
+	const g2d::font *tiny_font = g2d::font_manager::get_instance().load("fonts/tiny");
+	const g2d::font *medium_font = g2d::font_manager::get_instance().load("fonts/medium");
+
+	// no alpha
+
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	render::set_color({ 1.f, 1.f, 1.f, 1.f });
+
+	render::push_matrix();
+	render::translate(grid_base_x + grid_width - 6, grid_base_y + grid_height + 60);
+	render::scale(.7f, .7f);
+	draw_text(tiny_font, {}, text_align::RIGHT, L"Score");
+	render::pop_matrix();
+
+	render::push_matrix();
+	render::translate(grid_base_x, grid_base_y - 28);
+	{
+		std::wstringstream ss;
+		ss << L"Level " << cur_level + 1;
+		draw_text(tiny_font, {}, ss.str().c_str());
+	}
+	render::pop_matrix();
+
+	// alpha
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
+
+	// jukugo left label
+	render::push_matrix();
+	render::translate(grid_base_x + grid_width - 8, grid_base_y - 28);
+
+	if (!practice_mode) {
+		std::wstringstream ss;
+		ss << L"Left:" << world_.get_jukugo_left();
+		draw_text(tiny_font, {}, text_align::RIGHT, ss.str().c_str());
+	} else {
+		draw_text(tiny_font, {}, text_align::RIGHT, L"practice");
+	}
+
+	render::pop_matrix();
+
+	// "Next"
+	render::push_matrix();
+	render::translate(grid_base_x, grid_base_y + grid_height + 60);
+	render::scale(.7f, .7f);
+	draw_text(tiny_font, {}, L"Next");
+	render::pop_matrix();
+
+	// next jukugo
+	render::push_matrix();
+	render::translate(grid_base_x, grid_base_y + grid_height + 16);
+	render::scale(.8f, .8f);
+	draw_text(medium_font, {}, next_falling_blocks_);
+	render::pop_matrix();
 
 	score_display_.draw(
-		mat,
 		grid_base_x + world_.get_width() - 8,
 		grid_base_y + world_.get_height() + 28);
 
-	if (!practice_mode)
-		timer_display_.draw(mat*g2d::mat4::translation(0, grid_base_y + world_.get_height() + 32, 0), alpha);
+	if (!practice_mode) {
+		render::push_matrix();
+		render::translate(0, grid_base_y + world_.get_height() + 32);
+		timer_display_.draw(alpha);
+		render::pop_matrix();
+	}
 }
 
 void
@@ -1037,9 +1030,7 @@ in_game_state_impl::redraw() const
 
 	pause_button_.draw(1);
 
-#ifdef FIX_ME
-	draw_hud(ortho);
-#endif
+	draw_hud();
 
 	render::push_matrix();
 	render::translate(grid_base_x, grid_base_y);
@@ -1175,7 +1166,6 @@ in_game_state_impl::on_menu_key()
 void
 in_game_state_impl::set_jukugo_left(int jukugo_left)
 {
-	update_hud_text();
 }
 
 void
@@ -1189,8 +1179,6 @@ in_game_state_impl::set_next_falling_blocks(const wchar_t left, const wchar_t ri
 {
 	next_falling_blocks_[0] = left;
 	next_falling_blocks_[1] = right;
-
-	update_hud_text();
 }
 
 void

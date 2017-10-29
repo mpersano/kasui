@@ -1,17 +1,11 @@
 #include <cassert>
 
-#include "guava2d/g2dgl.h"
-#include "guava2d/texture.h"
-#include "guava2d/font_manager.h"
-#include "guava2d/vertex_array.h"
-#include "guava2d/rgb.h"
+#include <guava2d/font_manager.h>
+#include <guava2d/rgb.h>
 
-#include "program_registry.h"
+#include "render.h"
 #include "common.h"
 #include "in_game.h"
-#include "tween.h"
-#include "action.h"
-#include "sounds.h"
 #include "timer_display.h"
 
 
@@ -27,13 +21,7 @@ timer_display::timer_display()
 	texture_ = font->get_texture();
 }
 
-typedef g2d::indexed_vertex_array<
-		GLubyte,
-		g2d::vertex::attrib<GLfloat, 2>,
-		g2d::vertex::attrib<GLfloat, 2> > vertex_array_type;
-
-static void
-draw_glyph(vertex_array_type& va, const g2d::glyph_info *g, float x, float y, float scale)
+void timer_display::draw_glyph(const g2d::glyph_info *g, float x, float y, float scale) const
 {
 	const float y0 = y + .5*g->height*scale;
 	const float y1 = y - .5*g->height*scale;
@@ -41,27 +29,11 @@ draw_glyph(vertex_array_type& va, const g2d::glyph_info *g, float x, float y, fl
 	const float x0 = x - .5*scale*g->width;
 	const float x1 = x + .5*scale*g->width;
 
-	const float t0x = g->texuv[0].x;
-	const float t0y = g->texuv[0].y;
-	
-	const float t1x = g->texuv[1].x;
-	const float t1y = g->texuv[1].y;
-	
-	const float t2x = g->texuv[2].x;
-	const float t2y = g->texuv[2].y;
-	
-	const float t3x = g->texuv[3].x;
-	const float t3y = g->texuv[3].y;
-
-	const int vert_index = va.get_num_verts();
-
-	va << x0, y0, t0x, t0y;
-	va << x1, y0, t1x, t1y;
-	va << x1, y1, t2x, t2y;
-	va << x0, y1, t3x, t3y;
-
-	va < vert_index + 0, vert_index + 1, vert_index + 2,
-	     vert_index + 2, vert_index + 3, vert_index + 0;
+	render::draw_quad(
+		texture_,
+		{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+		{ g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3] },
+		50);
 }
 
 void
@@ -80,29 +52,27 @@ timer_display::update(uint32_t dt)
 }
 
 void
-timer_display::draw(const g2d::mat4& proj_modelview, float alpha) const
+timer_display::draw(float alpha) const
 {
 	int secs = tics_left/1000;
 	int csecs = (tics_left%1000)/10;
 
-	enum {
-		ALARM_FADE_IN_TICS = 60*MS_PER_TIC,
-		NUM_INTEGER_DIGITS = 2,
-		NUM_FRACTIONAL_DIGITS = 2
-	};
+	constexpr int ALARM_FADE_IN_TICS = 60*MS_PER_TIC;
+	constexpr int NUM_INTEGER_DIGITS = 2;
+	constexpr int NUM_FRACTIONAL_DIGITS = 2;
 
-	static const float FRACTIONAL_DIGITS_SCALE = .7;
-	static const float DIGIT_WIDTH = 36;
-	static const float BYOU_WIDTH = 1.8*DIGIT_WIDTH;
+	constexpr float FRACTIONAL_DIGITS_SCALE = .7;
+	constexpr float DIGIT_WIDTH = 36;
+	constexpr float BYOU_WIDTH = 1.8*DIGIT_WIDTH;
 
-	const float width =
+	constexpr float width =
 		NUM_INTEGER_DIGITS*DIGIT_WIDTH +
 		FRACTIONAL_DIGITS_SCALE*(NUM_FRACTIONAL_DIGITS*DIGIT_WIDTH + BYOU_WIDTH);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
 
-	float mix; 
+	float mix;
 
 	if (tics_left < MIN_SAFE_SECS*1000 + ALARM_FADE_IN_TICS) {
 		float s = .5;
@@ -117,23 +87,21 @@ timer_display::draw(const g2d::mat4& proj_modelview, float alpha) const
 
 	float x = .5*window_width - .5*width + .5*DIGIT_WIDTH;
 
-	static vertex_array_type va(5*4, 5*6);
-	va.reset();
-
-	draw_glyph(va, digit_glyphs_[secs/10], x, 0, 1.);
+	draw_glyph(digit_glyphs_[secs/10], x, 0, 1.);
 	x += DIGIT_WIDTH;
 
-	draw_glyph(va, digit_glyphs_[secs%10], x, 0, 1.);
+	draw_glyph(digit_glyphs_[secs%10], x, 0, 1.);
 	x += .5*(DIGIT_WIDTH + FRACTIONAL_DIGITS_SCALE*BYOU_WIDTH);
 
-	draw_glyph(va, byou_, x, 0, FRACTIONAL_DIGITS_SCALE);
+	draw_glyph(byou_, x, 0, FRACTIONAL_DIGITS_SCALE);
 	x += .5*FRACTIONAL_DIGITS_SCALE*(BYOU_WIDTH + DIGIT_WIDTH);
 
-	draw_glyph(va, digit_glyphs_[csecs/10], x, 0, FRACTIONAL_DIGITS_SCALE);
+	draw_glyph(digit_glyphs_[csecs/10], x, 0, FRACTIONAL_DIGITS_SCALE);
 	x += FRACTIONAL_DIGITS_SCALE*DIGIT_WIDTH;
 
-	draw_glyph(va, digit_glyphs_[csecs%10], x, 0, FRACTIONAL_DIGITS_SCALE);
+	draw_glyph(digit_glyphs_[csecs%10], x, 0, FRACTIONAL_DIGITS_SCALE);
 
+#if 0
 	program_timer_text& prog = get_program_instance<program_timer_text>();
 	prog.use();
 	prog.set_proj_modelview_matrix(proj_modelview);
@@ -143,4 +111,5 @@ timer_display::draw(const g2d::mat4& proj_modelview, float alpha) const
 
 	texture_->bind();
 	va.draw(GL_TRIANGLES);
+#endif
 }

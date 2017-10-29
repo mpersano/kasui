@@ -1,13 +1,10 @@
 #include <cassert>
 
-#include "guava2d/g2dgl.h"
-#include "guava2d/font_manager.h"
-#include "guava2d/vertex_array.h"
-#include "guava2d/texture.h"
-#include "guava2d/rgb.h"
+#include <guava2d/font_manager.h>
+#include <guava2d/rgb.h>
 
+#include "render.h"
 #include "common.h"
-#include "program_registry.h"
 #include "in_game.h"
 #include "score_display.h"
 
@@ -84,55 +81,44 @@ score_display::update(uint32_t dt)
 }
 
 void
-score_display::draw(const g2d::mat4& proj_modelview, float x_center, float y_center) const
+score_display::draw(float x_center, float y_center) const
 {
-	using namespace g2d::vertex;
+	constexpr float SCORE_SCALE = .8;
 
-	typedef g2d::indexed_vertex_array<
-			GLubyte,
-			attrib<GLfloat, 2>,
-			attrib<GLfloat, 2> > vertex_array_type;
-
-	const float SCORE_SCALE = .8;
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	render::set_color({ 1.f, 1.f, 1.f, 1.f });
 
 	int num_digits = NUM_DIGITS;
 
 	while (num_digits > 1 && digits[num_digits - 1].value == 0)
 		--num_digits;
 
-	static vertex_array_type gv(NUM_DIGITS*4, NUM_DIGITS*6);
-	gv.reset();
-
-	int vert_index = 0;
-
 	for (const digit *p = digits; p != &digits[num_digits]; p++) {
 		const float fbump = p->bump > 0 ? static_cast<float>(p->bump)/MS_PER_TIC : 0;
 
 		const float scale = SCORE_SCALE/(1. - .05*fbump);
 
-		const g2d::glyph_info *gi = digit_glyphs_[p->value];
+		const auto g = digit_glyphs_[p->value];
 
-		const float dx = .5*gi->width*scale;
-		const float dy = .5*gi->height*scale;
+		const float dx = .5*g->width*scale;
+		const float dy = .5*g->height*scale;
 
-		const float x_left = x_center - dx, x_right = x_center + dx;
-		const float y_top = y_center + dy, y_bottom = y_center - dy;
+		const float x0 = x_center - dx;
+		const float x1 = x_center + dx;
 
-		gv << x_left, y_top, gi->texuv[0].x, gi->texuv[0].y;
-		gv << x_right, y_top, gi->texuv[1].x, gi->texuv[1].y;
-		gv << x_right, y_bottom, gi->texuv[2].x, gi->texuv[2].y;
-		gv << x_left, y_bottom, gi->texuv[3].x, gi->texuv[3].y;
+		const float y0 = y_center + dy;
+		const float y1 = y_center - dy;
 
-		gv < vert_index + 0, vert_index + 1, vert_index + 2;
-		gv < vert_index + 2, vert_index + 3, vert_index + 0;
+		render::draw_quad(
+			texture_,
+			{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+			{ g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3] },
+			50);
 
-		vert_index += 4;
 		x_center -= DIGIT_WIDTH*SCORE_SCALE;
 	}
 
+#if 0
 	program_timer_text& prog = get_program_instance<program_timer_text>();
 	prog.use();
 	prog.set_proj_modelview_matrix(proj_modelview);
@@ -142,4 +128,5 @@ score_display::draw(const g2d::mat4& proj_modelview, float x_center, float y_cen
 
 	texture_->bind();
 	gv.draw(GL_TRIANGLES);
+#endif
 }

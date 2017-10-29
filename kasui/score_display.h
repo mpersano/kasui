@@ -1,8 +1,6 @@
-#ifndef SCORE_DISPLAY_H_
-#define SCORE_DISPLAY_H_
+#pragma once
 
 namespace g2d {
-class mat4;
 class glyph_info;
 };
 
@@ -15,7 +13,7 @@ public:
 	void enqueue_value(int value);
 	void set_value(int value);
 
-	void draw(const g2d::mat4& mat, float x_base, float y_base) const;
+	void draw(float x_base, float y_base) const;
 	void update(uint32_t dt);
 
 private:
@@ -35,5 +33,3 @@ private:
 	const g2d::glyph_info *digit_glyphs_[10];
 	const g2d::texture *texture_;
 };
-
-#endif // SCORE_DISPLAY_H_
