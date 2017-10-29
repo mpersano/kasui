@@ -21,7 +21,6 @@
 
 #include "program_manager.h"
 #include "sprite_manager.h"
-#include "draw_text.h"
 #include "render.h"
 #include "main_menu.h"
 #include "hiscore_input.h"
@@ -943,7 +942,8 @@ in_game_state_impl::draw_hud() const
 	render::push_matrix();
 	render::translate(grid_base_x + grid_width - 6, grid_base_y + grid_height + 60);
 	render::scale(.7f, .7f);
-	draw_text(tiny_font, {}, text_align::RIGHT, L"Score");
+	render::set_text_align(text_align::RIGHT);
+	render::draw_text(tiny_font, {}, L"Score");
 	render::pop_matrix();
 
 	render::push_matrix();
@@ -951,7 +951,8 @@ in_game_state_impl::draw_hud() const
 	{
 		std::wstringstream ss;
 		ss << L"Level " << cur_level + 1;
-		draw_text(tiny_font, {}, ss.str().c_str());
+		render::set_text_align(text_align::LEFT);
+		render::draw_text(tiny_font, {}, ss.str().c_str());
 	}
 	render::pop_matrix();
 
@@ -962,12 +963,13 @@ in_game_state_impl::draw_hud() const
 	render::push_matrix();
 	render::translate(grid_base_x + grid_width - 8, grid_base_y - 28);
 
+	render::set_text_align(text_align::RIGHT);
 	if (!practice_mode) {
 		std::wstringstream ss;
 		ss << L"Left:" << world_.get_jukugo_left();
-		draw_text(tiny_font, {}, text_align::RIGHT, ss.str().c_str());
+		render::draw_text(tiny_font, {}, ss.str().c_str());
 	} else {
-		draw_text(tiny_font, {}, text_align::RIGHT, L"practice");
+		render::draw_text(tiny_font, {}, L"practice");
 	}
 
 	render::pop_matrix();
@@ -976,14 +978,15 @@ in_game_state_impl::draw_hud() const
 	render::push_matrix();
 	render::translate(grid_base_x, grid_base_y + grid_height + 60);
 	render::scale(.7f, .7f);
-	draw_text(tiny_font, {}, L"Next");
+	render::set_text_align(text_align::LEFT);
+	render::draw_text(tiny_font, {}, L"Next");
 	render::pop_matrix();
 
 	// next jukugo
 	render::push_matrix();
 	render::translate(grid_base_x, grid_base_y + grid_height + 16);
 	render::scale(.8f, .8f);
-	draw_text(medium_font, {}, next_falling_blocks_);
+	render::draw_text(medium_font, {}, next_falling_blocks_);
 	render::pop_matrix();
 
 	score_display_.draw(

@@ -6,6 +6,7 @@
 
 #include <guava2d/texture.h>
 #include <guava2d/program.h>
+#include <guava2d/font.h>
 #include <guava2d/rgb.h>
 
 #include <cassert>
@@ -60,6 +61,9 @@ public:
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
 
+    void set_text_align(text_align align);
+    void add_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str);
+
 private:
     struct sprite
     {
@@ -86,6 +90,7 @@ private:
     blend_mode blend_mode_;
     g2d::rgba color_;
     g2d::mat3 matrix_;
+    text_align text_align_;
     std::stack<g2d::mat3> matrix_stack_;
 
     const g2d::program *program_texture_;
@@ -129,6 +134,7 @@ void sprite_batch::begin_batch()
     sprite_queue_size_ = 0;
     blend_mode_ = blend_mode::NO_BLEND;
     color_ = { 1, 1, 1, 1 };
+    text_align_ = text_align::LEFT;
     matrix_ = g2d::mat3::identity();
     matrix_stack_ = std::stack<g2d::mat3>();
 }
@@ -200,6 +206,42 @@ void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *tex
 void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
 {
     add_quad(program, texture, verts, texcoords, { color_, color_, color_, color_ }, layer);
+}
+
+void sprite_batch::set_text_align(text_align align)
+{
+    text_align_ = align;
+}
+
+// XXX should this even be here?
+void sprite_batch::add_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str)
+{
+    float x = pos.x;
+
+    if (text_align_ == text_align::RIGHT)
+        x -= font->get_string_width(str);
+    else if (text_align_ == text_align::CENTER)
+        x -= .5f*font->get_string_width(str);
+
+    const auto texture = font->get_texture();
+
+    for (const wchar_t *p = str; *p; ++p) {
+        const auto g = font->find_glyph(*p);
+
+        const float x0 = x + g->left;
+        const float x1 = x0 + g->width;
+        const float y0 = pos.y + g->top;
+        const float y1 = y0 - g->height;
+
+        add_quad(
+            nullptr,
+            texture,
+            { { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+            { g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3] },
+            50);
+
+        x += g->advance_x;
+    }
 }
 
 void sprite_batch::load_programs()
@@ -476,6 +518,16 @@ void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texco
 void draw_quad(const quad& verts, const vert_colors& colors, int layer)
 {
     g_sprite_batch.add_quad(nullptr, nullptr, verts, {}, colors, layer);
+}
+
+void set_text_align(text_align align)
+{
+    g_sprite_batch.set_text_align(align);
+}
+
+void draw_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str)
+{
+    g_sprite_batch.add_text(font, pos, str);
 }
 
 }

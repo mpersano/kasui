@@ -6,7 +6,6 @@
 #include "common.h"
 #include "tween.h"
 #include "line_splitter.h"
-#include "draw_text.h"
 #include "jukugo_info_sprite.h"
 
 jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g)
@@ -71,12 +70,11 @@ jukugo_info_sprite::draw() const
 
 	render::set_color({ 1.f, 1.f, 1.f, alpha_ });
 
-	draw_text(kanji_font_, pos_kanji_, jukugo_->kanji);
-
-	draw_text(furigana_font_, pos_furigana_, jukugo_->reading);
+	render::draw_text(kanji_font_, pos_kanji_, jukugo_->kanji);
+	render::draw_text(furigana_font_, pos_furigana_, jukugo_->reading);
 
 	for (const auto& p : eigo_lines_)
-		draw_text(eigo_font_, p.first, p.second.c_str());
+		render::draw_text(eigo_font_, p.first, p.second.c_str());
 
 	render::pop_matrix();
 

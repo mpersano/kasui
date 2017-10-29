@@ -3,7 +3,6 @@
 #include <guava2d/font_manager.h>
 
 #include "render.h"
-#include "draw_text.h"
 #include "common.h"
 #include "theme.h"
 #include "combo_sprite.h"
@@ -48,8 +47,8 @@ combo_sprite::draw() const
 	render::push_matrix();
 	render::translate(x_origin_, y_origin_ + y_offset_);
 
-	draw_text(large_font_, {}, combo_size_.c_str());
-	draw_text(small_font_, { x_chain_text_, 16 }, L"chain!");
+	render::draw_text(large_font_, {}, combo_size_.c_str());
+	render::draw_text(small_font_, { x_chain_text_, 16 }, L"chain!");
 
 	render::pop_matrix();
 

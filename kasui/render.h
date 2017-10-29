@@ -10,9 +10,12 @@ namespace g2d {
 class program;
 class texture;
 class sprite;
+class font;
 }
 
 enum class blend_mode { NO_BLEND, ALPHA_BLEND, ADDITIVE_BLEND };
+
+enum class text_align { LEFT, RIGHT, CENTER };
 
 namespace render {
 
@@ -52,5 +55,8 @@ void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texco
 
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
+
+void set_text_align(text_align align);
+void draw_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str);
 
 }

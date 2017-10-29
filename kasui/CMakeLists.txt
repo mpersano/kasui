@@ -56,8 +56,7 @@ set(KASUI_SOURCES
     title_background.cpp
     tutorial.cpp
     utf8.cpp
-    world.cpp
-    draw_text.cpp)
+    world.cpp)
 
 add_executable(kasui ${KASUI_SOURCES})
 
