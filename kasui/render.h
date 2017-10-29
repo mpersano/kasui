@@ -13,7 +13,7 @@ class sprite;
 class font;
 }
 
-enum class blend_mode { NO_BLEND, ALPHA_BLEND, ADDITIVE_BLEND };
+enum class blend_mode { NO_BLEND, ALPHA_BLEND, ADDITIVE_BLEND, INVERSE_BLEND };
 
 enum class text_align { LEFT, RIGHT, CENTER };
 
@@ -22,6 +22,11 @@ namespace render {
 struct quad
 {
     g2d::vec2 v00, v01, v10, v11;
+};
+
+struct box
+{
+    g2d::vec2 v0, v1;
 };
 
 struct vert_colors
@@ -51,6 +56,8 @@ void draw_quad(const quad& verts, int layer);
 void draw_quad(const quad& verts, const vert_colors& colors, int layer);
 
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
+void draw_box(const g2d::texture *texture, const box& verts, const box& texcoords, int layer);
+
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
 
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);

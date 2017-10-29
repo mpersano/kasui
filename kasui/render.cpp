@@ -33,6 +33,11 @@ void gl_set_blend_mode(blend_mode mode)
             GL_CHECK(glEnable(GL_BLEND));
             GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
             break;
+
+        case blend_mode::INVERSE_BLEND:
+            GL_CHECK(glEnable(GL_BLEND));
+	        GL_CHECK(glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR));
+            break;
     }
 }
 
@@ -498,6 +503,26 @@ void draw_quad(const g2d::program *program, const g2d::texture *texture, const q
 void draw_quad(const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
 {
     g_sprite_batch.add_quad(nullptr, texture, verts, texcoords, layer);
+}
+
+void draw_box(const g2d::texture *texture, const box& verts, const box& texcoords, int layer)
+{
+    const float x0 = verts.v0.x;
+    const float y0 = verts.v0.y;
+
+    const float x1 = verts.v1.x;
+    const float y1 = verts.v1.y;
+
+    const float u0 = texcoords.v0.x;
+    const float v0 = texcoords.v0.y;
+
+    const float u1 = texcoords.v1.x;
+    const float v1 = texcoords.v1.y;
+
+    g_sprite_batch.add_quad(nullptr, texture,
+            { { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
+            { { u0, v0 }, { u1, v0 }, { u1, v1 }, { u0, v1 } },
+            layer);
 }
 
 void draw_quad(const quad& verts, int layer)

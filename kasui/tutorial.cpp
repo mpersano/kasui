@@ -5,9 +5,9 @@
 #include <guava2d/vertex_array.h>
 #include <guava2d/font_manager.h>
 #include <guava2d/texture_manager.h>
-#include <guava2d/draw_queue.h>
 #include <guava2d/xwchar.h>
 
+#include "render.h"
 #include "sprite.h"
 #include "sprite_manager.h"
 #include "panic.h"
@@ -409,17 +409,14 @@ tutorial_state_impl::redraw() const
 {
 	background_draw_gradient();
 
-	theme_->draw();
-
-	{
 #ifdef FIX_ME
-	const g2d::mat4 mat =
-		get_ortho_projection()*
-		g2d::mat4::translation(grid_base_x_, grid_base_y_, 0);
-
-	world_.draw(mat); // XXX: lerp_dt?
+	theme_->draw();
 #endif
-	}
+
+	render::push_matrix();
+	render::translate(grid_base_x_, grid_base_y_);
+	world_.draw();
+	render::pop_matrix();
 
 	if (show_text_box_) {
 		float scale, alpha;
@@ -450,8 +447,14 @@ tutorial_state_impl::redraw() const
 			get_ortho_projection()*
 			g2d::mat4::translation(.5*window_width, window_height - .5*text_box::HEIGHT, 0)*
 			g2d::mat4::scale(scale, scale, 0);
-	
-		text_box_.draw(mat, alpha);
+
+		render::push_matrix();
+		render::translate(.5*window_width, window_height - .5*text_box::HEIGHT);
+		render::scale(scale, scale);
+
+		text_box_.draw(alpha);
+
+		render::pop_matrix();
 	}
 
 	if (cur_state_ == STATE_FINGER_ANIMATION) {
@@ -482,22 +485,12 @@ tutorial_state_impl::redraw() const
 			+ grid_base_x_ + .5*world_.get_width()
 			- .5*finger_->get_width();
 
-		const g2d::mat4 mat =
-			get_ortho_projection()*
-			g2d::mat4::translation(x, y, 0);
-
-		auto& prog = get_program_instance<program_texture_uniform_alpha>();
-		prog.use();
-		prog.set_proj_modelview_matrix(mat);
-		prog.set_texture(0);
-		prog.set_alpha(alpha);
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-#ifdef FIX_ME
-		finger_->draw(0, 0);
-#endif
+		render::set_blend_mode(blend_mode::ALPHA_BLEND);
+		render::set_color({ 1.f, 1.f, 1.f, alpha });
+		render::push_matrix();
+		render::translate(x, y);
+		finger_->draw(0, 0, 20);
+		render::pop_matrix();
 	}
 
 	pause_button_.draw(1);
