@@ -56,13 +56,14 @@ set(KASUI_SOURCES
     title_background.cpp
     tutorial.cpp
     utf8.cpp
-    world.cpp)
+    world.cpp
+    draw_text.cpp)
 
 add_executable(kasui ${KASUI_SOURCES})
 
 target_link_libraries(
 	kasui
-    guava2d
+	guava2d
 	${SDL_LIBRARY}
 	${GLEW_LIBRARY}
 	${OPENGL_LIBRARIES}

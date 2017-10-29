@@ -1,53 +1,59 @@
-#include "guava2d/g2dgl.h"
-#include "guava2d/vertex_array.h"
-#include "guava2d/font_manager.h"
-#include "guava2d/xwchar.h"
+#include <sstream>
 
-#include "program_registry.h"
+#include <guava2d/font_manager.h>
+
+#include "render.h"
+#include "draw_text.h"
 #include "common.h"
 #include "theme.h"
 #include "combo_sprite.h"
 
-enum {
-	TTL = 60*MS_PER_TIC,
-	DIGIT_WIDTH = 25,
-};
 
 combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient *g)
-: x_origin(x)
-, y_origin(y)
-, y_offset(0)
-, gradient_(g)
-, ttl(TTL)
+	: x_origin_(x)
+	, y_origin_(y)
+	, gradient_(g)
+	, large_font_(g2d::font_manager::get_instance().load("fonts/large"))
+	, small_font_(g2d::font_manager::get_instance().load("fonts/small"))
 {
-	const g2d::font *large_font = g2d::font_manager::get_instance().load("fonts/large");
-	const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/small");
+	// XXX use boost::lexical_cast here
+	std::wstringstream ss;
+	ss << combo_size;
+	combo_size_ = ss.str();
 
-	wchar_t buf[80];
-	xswprintf(buf, L"%d", combo_size);
-
-	text_.text_program(get_program_instance<program_timer_text>().get_raw())
-		.render_text(large_font, L"%d", combo_size)
-		.translate(large_font->get_string_width(buf) + 12, 16)
-		.render_text(small_font, L"chain!");
+	x_chain_text_ = large_font_->get_string_width(combo_size_.c_str()) + 12;
 }
 
 bool
 combo_sprite::update(uint32_t dt)
 {
-	float dy = cosf(ttl*M_PI/TTL);
+	float dy = cosf(ttl_*M_PI/TTL);
 	dy *= dy;
 	dy += .4;
 
-	y_offset += dt*2.4*dy/MS_PER_TIC;
+	y_offset_ += dt*2.4*dy/MS_PER_TIC;
 
-	return (ttl -= dt) > 0;
+	return (ttl_ -= dt) > 0;
 }
 
 void
 combo_sprite::draw() const
 {
-#ifdef FIX_ME
+	float alpha = sinf(ttl_*M_PI/TTL);
+	alpha *= alpha;
+
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
+
+	render::push_matrix();
+	render::translate(x_origin_, y_origin_ + y_offset_);
+
+	draw_text(large_font_, {}, combo_size_.c_str());
+	draw_text(small_font_, { x_chain_text_, 16 }, L"chain!");
+
+	render::pop_matrix();
+
+#if 0
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

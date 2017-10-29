@@ -6,6 +6,7 @@
 #include "common.h"
 #include "tween.h"
 #include "line_splitter.h"
+#include "draw_text.h"
 #include "jukugo_info_sprite.h"
 
 jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g)
@@ -70,12 +71,12 @@ jukugo_info_sprite::draw() const
 
 	render::set_color({ 1.f, 1.f, 1.f, alpha_ });
 
-	draw_line(kanji_font_, pos_kanji_, jukugo_->kanji);
+	draw_text(kanji_font_, pos_kanji_, jukugo_->kanji);
 
-	draw_line(furigana_font_, pos_furigana_, jukugo_->reading);
+	draw_text(furigana_font_, pos_furigana_, jukugo_->reading);
 
 	for (const auto& p : eigo_lines_)
-		draw_line(eigo_font_, p.first, p.second.c_str());
+		draw_text(eigo_font_, p.first, p.second.c_str());
 
 	render::pop_matrix();
 
@@ -128,33 +129,4 @@ jukugo_info_sprite::draw() const
 	draw_quads();
 	}
 #endif
-}
-
-void jukugo_info_sprite::draw_line(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str) const
-{
-	float x = pos.x;
-
-	const auto texture = font->get_texture();
-
-	for (const wchar_t *p = str; *p; ++p) {
-		const auto g = font->find_glyph(*p);
-
-		const auto& t0 = g->texuv[0];
-		const auto& t1 = g->texuv[1];
-		const auto& t2 = g->texuv[2];
-		const auto& t3 = g->texuv[3];
-
-		const float x0 = x + g->left;
-		const float x1 = x0 + g->width;
-		const float y0 = pos.y + g->top;
-		const float y1 = y0 - g->height;
-
-		render::draw_quad(
-			texture,
-			{ { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
-			{ { t0.x, t0.y }, { t1.x, t1.y }, { t2.x, t2.y }, { t3.x, t3.y } },
-			50);
-
-		x += g->advance_x;
-	}
 }

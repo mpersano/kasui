@@ -24,8 +24,6 @@ public:
 	void draw() const override;
 
 private:
-	void draw_line(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str) const;
-
 	const jukugo *jukugo_;
 
 	float x_base_, y_base_;

@@ -1,5 +1,4 @@
-#ifndef COMBO_CLIP_H_
-#define COMBO_CLIP_H_
+#pragma once
 
 #include <guava2d/draw_queue.h>
 
@@ -10,17 +9,19 @@ class combo_sprite : public sprite
 public:
 	combo_sprite(int combo_size, float x, float y, const gradient *g);
 
-	bool update(uint32_t dt);
-	void draw() const;
+	bool update(uint32_t dt) override;
+	void draw() const override;
 
 private:
-	g2d::draw_queue text_;
+	static constexpr int TTL = 60*MS_PER_TIC;
+	static constexpr int DIGIT_WIDTH = 25;
 
-	float x_origin, y_origin;
-	float y_offset;
+	float x_origin_, y_origin_;
+	float y_offset_ = 0;
+	float x_chain_text_;
 	const gradient *gradient_;
-
-	int ttl;
+	const g2d::font *large_font_;
+	const g2d::font *small_font_;
+	int ttl_ = TTL;
+	std::wstring combo_size_;
 };
-
-#endif // COMBO_CLIP_H_
