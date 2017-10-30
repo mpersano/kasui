@@ -82,6 +82,8 @@ private:
     };
 
     void load_programs();
+    void init_vbo();
+    void init_vaos();
 
     void flush_queue();
     void render_sprites_texture(const sprite *const *sprites, int num_sprites) const;
@@ -101,6 +103,10 @@ private:
     const g2d::program *program_texture_;
     const g2d::program *program_flat_;
 
+    GLuint vbo_;
+    GLuint vao_flat_;
+    GLuint vao_texture_;
+
     std::array<GLfloat, 16> proj_matrix_;
 } g_sprite_batch;
 
@@ -111,6 +117,8 @@ sprite_batch::sprite_batch()
 void sprite_batch::init()
 {
     load_programs();
+    init_vbo();
+    init_vaos();
 }
 
 void sprite_batch::set_viewport(int x_min, int x_max, int y_min, int y_max)
@@ -255,6 +263,39 @@ void sprite_batch::load_programs()
     program_flat_ = load_program("shaders/flat.vert", "shaders/flat.frag");
 }
 
+void sprite_batch::init_vbo()
+{
+    GL_CHECK(glGenBuffers(1, &vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, SPRITE_QUEUE_CAPACITY*4*8*sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+}
+
+void sprite_batch::init_vaos()
+{
+    auto enable_vertex_attrib_array = [](GLuint index, GLint size, GLsizei stride, int offset) {
+        GL_CHECK(glVertexAttribPointer(
+                    index, size, GL_FLOAT, GL_FALSE, stride,
+                    reinterpret_cast<GLvoid *>(offset*sizeof(GLfloat))));
+        GL_CHECK(glEnableVertexAttribArray(index));
+    };
+
+    GL_CHECK(glGenVertexArrays(1, &vao_flat_));
+    GL_CHECK(glBindVertexArray(vao_flat_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    enable_vertex_attrib_array(0, 2, 6*sizeof(GLfloat), 0);
+    enable_vertex_attrib_array(1, 4, 6*sizeof(GLfloat), 2);
+
+    GL_CHECK(glGenVertexArrays(1, &vao_texture_));
+    GL_CHECK(glBindVertexArray(vao_texture_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    enable_vertex_attrib_array(0, 2, 8*sizeof(GLfloat), 0);
+    enable_vertex_attrib_array(1, 2, 8*sizeof(GLfloat), 2);
+    enable_vertex_attrib_array(2, 4, 8*sizeof(GLfloat), 4);
+
+    GL_CHECK(glBindVertexArray(0));
+}
+
 void sprite_batch::flush_queue()
 {
     if (sprite_queue_size_ == 0)
@@ -340,7 +381,7 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 {
     assert(num_sprites > 0);
 
-    static GLfloat data[SPRITE_QUEUE_CAPACITY*4*8];
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     struct {
         GLfloat *dest;
@@ -358,7 +399,7 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
             *dest++ = color.b;
             *dest++ = color.a;
         }
-    } add_vertex { data };
+    } add_vertex{ reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))) };
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
@@ -368,31 +409,18 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
         add_vertex(p->verts.v11, p->texcoords.v11, p->colors.c11);
     }
 
-    // TODO VAO
+    GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
 
-    GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), &data[0]));
-    GL_CHECK(glEnableVertexAttribArray(0));
-
-    GL_CHECK(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), &data[2]));
-    GL_CHECK(glEnableVertexAttribArray(1));
-
-    GL_CHECK(glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), &data[4]));
-    GL_CHECK(glEnableVertexAttribArray(2));
-
-    // TODO triangles, not quads
-
-    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites));
-
-    GL_CHECK(glDisableVertexAttribArray(2));
-    GL_CHECK(glDisableVertexAttribArray(1));
-    GL_CHECK(glDisableVertexAttribArray(0));
+    GL_CHECK(glBindVertexArray(vao_texture_));
+    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites)); // TODO triangles, not quads
+    GL_CHECK(glBindVertexArray(0));
 }
 
 void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_sprites) const
 {
     assert(num_sprites > 0);
 
-    static GLfloat data[SPRITE_QUEUE_CAPACITY*4*6];
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     struct {
         GLfloat *dest;
@@ -407,7 +435,7 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
             *dest++ = color.b;
             *dest++ = color.a;
         }
-    } add_vertex { data };
+    } add_vertex{ reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))) };
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
@@ -417,20 +445,11 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
         add_vertex(p->verts.v11, p->colors.c11);
     }
 
-    // TODO vao
+    GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
 
-    GL_CHECK(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), &data[0]));
-    GL_CHECK(glEnableVertexAttribArray(0));
-
-    GL_CHECK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), &data[2]));
-    GL_CHECK(glEnableVertexAttribArray(1));
-
-    // TODO triangles, not quads
-
-    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites));
-
-    GL_CHECK(glDisableVertexAttribArray(1));
-    GL_CHECK(glDisableVertexAttribArray(0));
+    GL_CHECK(glBindVertexArray(vao_flat_));
+    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites)); // TODO triangles, not quads
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
 } // anonymous namespace
