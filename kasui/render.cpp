@@ -292,8 +292,6 @@ void sprite_batch::init_vaos()
     enable_vertex_attrib_array(0, 2, 8*sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 2, 8*sizeof(GLfloat), 2);
     enable_vertex_attrib_array(2, 4, 8*sizeof(GLfloat), 4);
-
-    GL_CHECK(glBindVertexArray(0));
 }
 
 void sprite_batch::flush_queue()
@@ -413,7 +411,6 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 
     GL_CHECK(glBindVertexArray(vao_texture_));
     GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites)); // TODO triangles, not quads
-    GL_CHECK(glBindVertexArray(0));
 }
 
 void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_sprites) const
@@ -449,7 +446,6 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
 
     GL_CHECK(glBindVertexArray(vao_flat_));
     GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites)); // TODO triangles, not quads
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
 }
 
 } // anonymous namespace
