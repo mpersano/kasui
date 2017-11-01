@@ -70,11 +70,11 @@ jukugo_info_sprite::draw() const
 
 	render::set_color({ 1.f, 1.f, 1.f, alpha_ });
 
-	render::draw_text(kanji_font_, pos_kanji_, jukugo_->kanji);
-	render::draw_text(furigana_font_, pos_furigana_, jukugo_->reading);
+	render::draw_text(kanji_font_, pos_kanji_, 50, jukugo_->kanji);
+	render::draw_text(furigana_font_, pos_furigana_, 50, jukugo_->reading);
 
 	for (const auto& p : eigo_lines_)
-		render::draw_text(eigo_font_, p.first, p.second.c_str());
+		render::draw_text(eigo_font_, p.first, 50, p.second.c_str());
 
 	render::pop_matrix();
 

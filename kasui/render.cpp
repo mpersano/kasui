@@ -67,7 +67,7 @@ public:
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
 
     void set_text_align(text_align align);
-    void add_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str);
+    void add_text(const g2d::font *font, const g2d::vec2& pos, int layer, const wchar_t *str);
 
 private:
     struct sprite
@@ -227,7 +227,7 @@ void sprite_batch::set_text_align(text_align align)
 }
 
 // XXX should this even be here?
-void sprite_batch::add_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str)
+void sprite_batch::add_text(const g2d::font *font, const g2d::vec2& pos, int layer, const wchar_t *str)
 {
     float x = pos.x;
 
@@ -251,7 +251,7 @@ void sprite_batch::add_text(const g2d::font *font, const g2d::vec2& pos, const w
             texture,
             { { x0, y0 }, { x1, y0 }, { x1, y1 }, { x0, y1 } },
             { g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3] },
-            50);
+            layer);
 
         x += g->advance_x;
     }
@@ -565,9 +565,9 @@ void set_text_align(text_align align)
     g_sprite_batch.set_text_align(align);
 }
 
-void draw_text(const g2d::font *font, const g2d::vec2& pos, const wchar_t *str)
+void draw_text(const g2d::font *font, const g2d::vec2& pos, int layer, const wchar_t *str)
 {
-    g_sprite_batch.add_text(font, pos, str);
+    g_sprite_batch.add_text(font, pos, layer, str);
 }
 
 }

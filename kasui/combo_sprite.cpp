@@ -47,8 +47,8 @@ combo_sprite::draw() const
 	render::push_matrix();
 	render::translate(x_origin_, y_origin_ + y_offset_);
 
-	render::draw_text(large_font_, {}, combo_size_.c_str());
-	render::draw_text(small_font_, { x_chain_text_, 16 }, L"chain!");
+	render::draw_text(large_font_, {}, 50, combo_size_.c_str());
+	render::draw_text(small_font_, { x_chain_text_, 16 }, 50, L"chain!");
 
 	render::pop_matrix();
 
