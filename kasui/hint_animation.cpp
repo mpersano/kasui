@@ -6,17 +6,17 @@
 #include "action.h"
 #include "tween.h"
 #include "jukugo.h"
-#include "program_registry.h"
 #include "settings.h" // for gradient
 #include "block_info.h"
 #include "hint_animation.h"
 
 hint_text_box::hint_text_box(const hint& h, float cell_size, float width, const gradient *g)
 : width_(width)
+, title_font_(g2d::font_manager::get_instance().load("fonts/medium"))
 , text_box_(width)
 , state_tics_(0)
 , tics_(0)
-, state_(INTRO)
+, state_(state::INTRO)
 , gradient_(g)
 , block_texture_(g2d::texture_manager::get_instance().load("images/blocks.png"))
 , arrow_texture_(g2d::texture_manager::get_instance().load("images/arrow.png"))
@@ -28,41 +28,9 @@ hint_text_box::hint_text_box(const hint& h, float cell_size, float width, const 
 
 	text_box_.set_text(buf);
 
-	// title
-
-	const wchar_t *TITLE = L"hint!";
-
-	const g2d::font *font = g2d::font_manager::get_instance().load("fonts/medium");
-
-	title_texture_ = font->get_texture();
-
-	float x = -.5*font->get_string_width(TITLE);
-
-	for (const wchar_t *p = TITLE; *p; p++) {
-		const g2d::glyph_info *gi = font->find_glyph(*p);
-
-		const float x_left = x + gi->left;
-		const float x_right = x_left + gi->width;
-		const float y_top = gi->top;
-		const float y_bottom = y_top - gi->height;
-
-		static g2d::vertex_array_texuv gv(4);
-
-		title_va_ << x_left, y_top, gi->texuv[0].x, gi->texuv[0].y;
-		title_va_ << x_right, y_top, gi->texuv[1].x, gi->texuv[1].y;
-		title_va_ << x_right, y_bottom, gi->texuv[2].x, gi->texuv[2].y;
-
-		title_va_ << x_right, y_bottom, gi->texuv[2].x, gi->texuv[2].y;
-		title_va_ << x_left, y_bottom, gi->texuv[3].x, gi->texuv[3].y;
-		title_va_ << x_left, y_top, gi->texuv[0].x, gi->texuv[0].y;
-
-		x += gi->advance_x;
-	}
-
 	// block/arrow
 
 	extern block_info block_infos[];
-
 	const block_info& bi = block_infos[h.block_type & ~BAKUDAN_FLAG];
 	const block_info::texuv& t = bi.texuvs[!!(h.block_type & BAKUDAN_FLAG)];
 
@@ -76,27 +44,13 @@ hint_text_box::hint_text_box(const hint& h, float cell_size, float width, const 
 	g2d::vec2 dir = cell_size*g2d::vec2(h.match_c, h.match_r) - to_pos_;
 	from_pos_ = to_pos_ - .5*dir;
 
-	block_va_ << 0, 0, uv0.y, uv1.x;
-	block_va_ << cell_size, 0, uv1.y, uv1.x;
+	block_quad_ = { { 0, 0 }, { cell_size, 0 }, { cell_size, cell_size }, { 0, cell_size } };
+	block_texuv_ = { { uv0.y, uv1.x }, { uv1.y, uv1.x }, { uv1.y, uv0.x }, { uv0.y, uv0.x } };
 
-	block_va_ << 0, cell_size, uv0.y, uv0.x;
-	block_va_ << cell_size, cell_size, uv1.y, uv0.x;
-
-	g2d::vec2 u = .5*cell_size*(to_pos_ - from_pos_).normalize();
-	g2d::vec2 v(-u.y, u.x);
-
-	g2d::vec2 p = to_pos_ + g2d::vec2(.5*cell_size, .5*cell_size);
-
-	g2d::vec2 p0 = p - u - v;
-	g2d::vec2 p1 = p - u + v;
-	g2d::vec2 p2 = p + u - v;
-	g2d::vec2 p3 = p + u + v;
-
-	arrow_va_ << p0.x, p0.y, 0, 0;
-	arrow_va_ << p1.x, p1.y, 0, 1;
-
-	arrow_va_ << p2.x, p2.y, 1, 0;
-	arrow_va_ << p3.x, p3.y, 1, 1;
+	const g2d::vec2 u = .5*cell_size*(to_pos_ - from_pos_).normalize();
+	const g2d::vec2 v(-u.y, u.x);
+	const g2d::vec2 p = to_pos_ + g2d::vec2(.5*cell_size, .5*cell_size);
+	arrow_quad_ = { p - u - v, p - u + v, p + u + v, p + u - v };
 }
 
 hint_text_box::~hint_text_box()
@@ -105,18 +59,17 @@ hint_text_box::~hint_text_box()
 void
 hint_text_box::draw() const
 {
-#ifdef FIX_ME
 	float scale;
 
 	switch (state_) {
-		case INTRO:
+		case state::INTRO:
 			{
 			float t = static_cast<float>(state_tics_)/INTRO_TICS;
 			scale = out_bounce_tween<float>()(.5, 1, t);
 			}
 			break;
 
-		case OUTRO:
+		case state::OUTRO:
 			{
 			float t = static_cast<float>(state_tics_)/OUTRO_TICS;
 			scale = in_back_tween<float>()(1, .5, t);
@@ -130,20 +83,13 @@ hint_text_box::draw() const
 
 	const float alpha = get_alpha();
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	auto& prog = get_program_instance<program_texture_uniform_alpha>();
-	prog.use();
-	prog.set_texture(0);
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
 	// arrow
 
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_alpha(.6*alpha);
-
-	arrow_texture_->bind();
-	arrow_va_.draw(GL_TRIANGLE_STRIP);
+	render::set_color({ 1.f, 1.f, 1.f, .6f*alpha });
+	render::draw_quad(arrow_texture_, arrow_quad_,
+		{ { 0, 0 }, { 0, 1 }, { 1, 1 }, { 1, 0 } }, 55);
 
 	// block
 
@@ -152,19 +98,35 @@ hint_text_box::draw() const
 	float t = fmodf(tics_, PERIOD)/PERIOD;
 	const g2d::vec2 p = t*to_pos_ + (1. - t)*from_pos_;
 
-	prog.set_proj_modelview_matrix(mat*g2d::mat4::translation(p.x, p.y, 0));
-	prog.set_alpha((.5 + .5*t*t)*alpha);
-
-	block_texture_->bind();
-	block_va_.draw(GL_TRIANGLE_STRIP);
+	render::push_matrix();
+	render::translate(p.x, p.y);
+	render::set_color({ 1.f, 1.f, 1.f, (.5f + .5f*t*t)*alpha });
+	render::draw_quad(block_texture_, block_quad_, block_texuv_, 50);
+	render::pop_matrix();
 
 	// text box
 
-	g2d::mat4 m = mat*g2d::mat4::translation(pos_.x, pos_.y, 0)*g2d::mat4::scale(scale, scale, 0);
-	text_box_.draw(m, alpha);
+	render::push_matrix();
+	render::translate(pos_.x, pos_.y);
+	render::scale(scale, scale);
+	text_box_.draw(alpha);
 
 	// title
 
+	const wchar_t *TITLE = L"hint!";
+	float x = -.5*title_font_->get_string_width(TITLE);
+
+	render::translate(0, .5f*text_box_.get_height());
+
+	render::set_text_align(text_align::CENTER);
+	render::set_color({ 1.f, 1.f, 1.f, alpha });
+	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
+	render::draw_text(title_font_, 0, 0, TITLE);
+
+	render::pop_matrix();
+
+#if 0
 	{
 	auto& prog = get_program_instance<program_timer_text>();
 	prog.use();
@@ -193,14 +155,14 @@ hint_text_box::update(uint32_t dt)
 	tics_ += dt;
 
 	switch (state_) {
-		case INTRO:
+		case state::INTRO:
 			if ((state_tics_ += dt) >= INTRO_TICS) {
-				state_ = ACTIVE;
+				state_ = state::ACTIVE;
 				state_tics_ = 0;
 			}
 			return true;
 
-		case OUTRO:
+		case state::OUTRO:
 			return (state_tics_ += dt) < OUTRO_TICS;
 
 		default:
@@ -211,8 +173,8 @@ hint_text_box::update(uint32_t dt)
 bool
 hint_text_box::close()
 {
-	if (state_ == ACTIVE) {
-		state_ = OUTRO;
+	if (state_ == state::ACTIVE) {
+		state_ = state::OUTRO;
 		state_tics_ = 0;
 		return true;
 	} else {
@@ -224,10 +186,10 @@ float
 hint_text_box::get_alpha() const
 {
 	switch (state_) {
-		case INTRO:
+		case state::INTRO:
 			return static_cast<float>(state_tics_)/INTRO_TICS;
 
-		case OUTRO:
+		case state::OUTRO:
 			return 1. - static_cast<float>(state_tics_)/OUTRO_TICS;
 
 		default:

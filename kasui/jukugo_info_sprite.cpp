@@ -69,6 +69,7 @@ jukugo_info_sprite::draw() const
 	render::scale(scale, scale*sy);
 
 	render::set_color({ 1.f, 1.f, 1.f, alpha_ });
+	render::set_text_align(text_align::LEFT);
 
 	render::draw_text(kanji_font_, pos_kanji_, 50, jukugo_->kanji);
 	render::draw_text(furigana_font_, pos_furigana_, 50, jukugo_->reading);
