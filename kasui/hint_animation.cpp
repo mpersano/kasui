@@ -59,28 +59,7 @@ hint_text_box::~hint_text_box()
 void
 hint_text_box::draw() const
 {
-	float scale;
-
-	switch (state_) {
-		case state::INTRO:
-			{
-			float t = static_cast<float>(state_tics_)/INTRO_TICS;
-			scale = out_bounce_tween<float>()(.5, 1, t);
-			}
-			break;
-
-		case state::OUTRO:
-			{
-			float t = static_cast<float>(state_tics_)/OUTRO_TICS;
-			scale = in_back_tween<float>()(1, .5, t);
-			}
-			break;
-
-		default:
-			scale = 1.;
-			break;
-	}
-
+	const float scale = get_scale();
 	const float alpha = get_alpha();
 
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
@@ -194,5 +173,25 @@ hint_text_box::get_alpha() const
 
 		default:
 			return 1;
+	}
+}
+
+
+float
+hint_text_box::get_scale() const
+{
+	switch (state_) {
+		case state::INTRO: {
+			float t = static_cast<float>(state_tics_)/INTRO_TICS;
+			return out_bounce_tween<float>()(.5, 1, t);
+		}
+
+		case state::OUTRO: {
+			float t = static_cast<float>(state_tics_)/OUTRO_TICS;
+			return in_back_tween<float>()(1, .5, t);
+		}
+
+		default:
+			return 1.;
 	}
 }

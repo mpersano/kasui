@@ -37,6 +37,8 @@ public:
 	bool close();
 
 private:
+	float get_scale() const;
+
 	g2d::vec2 pos_;
 	float width_;
 	text_box text_box_;
