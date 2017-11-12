@@ -93,15 +93,12 @@ hint_text_box::draw() const
 	// title
 
 	const wchar_t *TITLE = L"hint!";
-	float x = -.5*title_font_->get_string_width(TITLE);
-
-	render::translate(0, .5f*text_box_.get_height());
 
 	render::set_text_align(text_align::CENTER);
 	render::set_color({ 1.f, 1.f, 1.f, alpha });
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	render::draw_text(title_font_, 0, 0, TITLE);
+	render::draw_text(title_font_, { 0, .5f*text_box_.get_height() }, 55, TITLE);
 
 	render::pop_matrix();
 
