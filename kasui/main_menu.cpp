@@ -1,25 +1,12 @@
-#include <cstdio>
-#include <cassert>
-
-#include <stdlib.h>
-
 #include <sstream>
 
-#include "guava2d/g2dgl.h"
-#include "guava2d/rgb.h"
-#include "guava2d/texture_manager.h"
-
-#include "sprite_manager.h"
 #include "render.h"
 
 #include "options.h"
 #include "common.h"
-#include "tween.h"
 #include "menu.h"
-#include "action.h"
 #include "sounds.h"
 #include "title_background.h"
-#include "credits.h"
 #include "main_menu.h"
 
 extern void on_rate_me_clicked();
@@ -174,12 +161,12 @@ g2d::vec2 vertical_menu::get_item_position(int item_index) const
 	const float base_y = .5*(window_height + total_height) - .5*ITEM_HEIGHT;
 	const float base_x = window_width - ITEM_WIDTH;
 
-	float y = base_y - item_index*ITEM_HEIGHT - .5*ITEM_HEIGHT;
+	const float y = base_y - item_index*ITEM_HEIGHT - .5*ITEM_HEIGHT;
 
-	float offset_scale = 1. - get_cur_alpha();
-	float x_offset = (.5*window_width + item_index*72.)*offset_scale*offset_scale;
+	const float offset_scale = 1. - get_cur_alpha();
+	const float x_offset = (.5*window_width + item_index*72.)*offset_scale*offset_scale;
 
-	float x = base_x + x_offset - 32.*sinf(item->get_active_t()*M_PI);
+	const float x = base_x + x_offset - 32.*sinf(item->get_active_t()*M_PI);
 
 	return { x, y };
 }
