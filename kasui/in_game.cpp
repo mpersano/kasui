@@ -77,7 +77,7 @@ struct glyph_animation : game_animation
 	void draw() const;
 
 	struct glyph_state {
-		glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center);
+		glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center, const gradient *g);
 
 		void draw(const g2d::program *program, float a) const;
 
@@ -88,6 +88,8 @@ struct glyph_animation : game_animation
 		float flip; // in radians
 		float z;
 		float glyph_alpha;
+		g2d::rgb top_color_text, top_color_outline;
+		g2d::rgb bottom_color_text, bottom_color_outline;
 	};
 
 	std::vector <glyph_state> glyph_states;
@@ -167,7 +169,7 @@ glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, con
 , x_base(x_base)
 , y_base(y_base)
 , gradient_(g)
-, program_(load_program("shaders/sprite.vert", "shaders/intro_text.frag"))
+, program_(load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag"))
 {
 	int num_glyphs = xwcslen(message);
 
@@ -185,7 +187,7 @@ glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, con
 
 	for (int i = 0; i < num_glyphs; i++) {
 		const wchar_t ch = message[i];
-		glyph_states.emplace_back(font->find_glyph(ch), ch == L'〜', 0, y);
+		glyph_states.emplace_back(font->find_glyph(ch), ch == L'〜', 0, y, g);
 		y -= char_height;
 	}
 }
@@ -193,21 +195,6 @@ glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, con
 void
 glyph_animation::draw() const
 {
-	const g2d::rgb& top_color = *gradient_->from;
-	const g2d::rgb& bottom_color = *gradient_->to;
-
-	g2d::rgb top_color_text = top_color*(1./255);
-	g2d::rgb bottom_color_text = bottom_color*(1./255);
-
-	g2d::rgb top_color_outline = .5*top_color_text;
-	g2d::rgb bottom_color_outline = .5*bottom_color_text;
-
-	program_->use();
-	program_->set_uniform_f("top_color_text", top_color_text.r, top_color_text.g, top_color_text.b);
-	program_->set_uniform_f("bottom_color_text", bottom_color_text.r, bottom_color_text.g, bottom_color_text.b);
-	program_->set_uniform_f("top_color_outline", top_color_outline.r, top_color_outline.g, top_color_outline.b);
-	program_->set_uniform_f("bottom_color_outline", bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b);
-
 	render::push_matrix();
 	render::translate(x_base, y_base);
 	render::scale(scale, scale);
@@ -222,7 +209,7 @@ glyph_animation::draw() const
 	render::pop_matrix();
 }
 
-glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center)
+glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center, const gradient *g)
 : texture(gi->texture_)
 , x_center(x_center)
 , y_center(y_center)
@@ -249,6 +236,15 @@ glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, 
 	t1 = gi->texuv[1];
 	t2 = gi->texuv[2];
 	t3 = gi->texuv[3];
+
+	const g2d::rgb& top_color = *g->from;
+	const g2d::rgb& bottom_color = *g->to;
+
+	top_color_text = top_color*(1./255);
+	bottom_color_text = bottom_color*(1./255);
+
+	top_color_outline = .5*top_color_text;
+	bottom_color_outline = .5*bottom_color_text;
 }
 
 void
@@ -266,7 +262,14 @@ glyph_animation::glyph_state::draw(const g2d::program *program, float alpha) con
 		texture,
 		{ { p0.x, p0.y }, { p1.x, p1.y }, { p2.x, p2.y }, { p3.x, p3.y } },
 		{ { t0.x, t0.y }, { t1.x, t1.y }, { t2.x, t2.y }, { t3.x, t3.y } },
-		{ { 0.f, 1.f, 1.f, alpha }, { 0.f, 1.f, 1.f, alpha }, { 1.f, 1.f, 1.f, alpha }, { 1.f, 1.f, 1.f, alpha } },
+		{ { top_color_outline.r, top_color_outline.g, top_color_outline.b, alpha },
+		  { top_color_outline.r, top_color_outline.g, top_color_outline.b, alpha },
+		  { bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b, alpha },
+		  { bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b, alpha } },
+		{ { top_color_text.r, top_color_text.g, top_color_text.b, alpha },
+		  { top_color_text.r, top_color_text.g, top_color_text.b, alpha },
+		  { bottom_color_text.r, bottom_color_text.g, bottom_color_text.b, alpha },
+		  { bottom_color_text.r, bottom_color_text.g, bottom_color_text.b, alpha } },
 		100);
 
 	render::pop_matrix();

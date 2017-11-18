@@ -63,6 +63,7 @@ public:
     void set_blend_mode(blend_mode mode);
     void set_color(const g2d::rgba& color);
 
+    void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors0, const vert_colors& colors1, int layer);
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer);
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer);
 
@@ -75,9 +76,10 @@ private:
         int layer;
         const g2d::program *program;
         const g2d::texture *texture;
+        int num_vert_colors; // for now always 1 or 2
         quad verts;
         quad texcoords;
-        vert_colors colors;
+        vert_colors colors[2];
         blend_mode blend;
     };
 
@@ -87,6 +89,7 @@ private:
 
     void flush_queue();
     void render_sprites_texture(const sprite *const *sprites, int num_sprites) const;
+    void render_sprites_texture_2c(const sprite *const *sprites, int num_sprites) const;
     void render_sprites_flat(const sprite *const *sprites, int num_sprites) const;
 
     static const int SPRITE_QUEUE_CAPACITY = 1024;
@@ -106,6 +109,7 @@ private:
     GLuint vbo_;
     GLuint vao_flat_;
     GLuint vao_texture_;
+    GLuint vao_texture_2c_;
 
     std::array<GLfloat, 16> proj_matrix_;
 } g_sprite_batch;
@@ -194,6 +198,31 @@ void sprite_batch::set_color(const g2d::rgba& color)
     color_ = color;
 }
 
+void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors0, const vert_colors& colors1, int layer)
+{
+    if (sprite_queue_size_ == SPRITE_QUEUE_CAPACITY)
+        flush_queue();
+
+    auto& s = sprite_queue_[sprite_queue_size_++];
+
+    s.program = program;
+    s.texture = texture;
+
+    s.verts.v00 = matrix_*verts.v00;
+    s.verts.v01 = matrix_*verts.v01;
+    s.verts.v10 = matrix_*verts.v10;
+    s.verts.v11 = matrix_*verts.v11;
+
+    s.texcoords = texcoords;
+
+    s.layer = layer;
+    s.blend = blend_mode_;
+
+    s.num_vert_colors = 2;
+    s.colors[0] = colors0;
+    s.colors[1] = colors1;
+}
+
 void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer)
 {
     if (sprite_queue_size_ == SPRITE_QUEUE_CAPACITY)
@@ -213,7 +242,9 @@ void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *tex
 
     s.layer = layer;
     s.blend = blend_mode_;
-    s.colors = colors;
+
+    s.num_vert_colors = 1;
+    s.colors[0] = colors;
 }
 
 void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, int layer)
@@ -292,6 +323,14 @@ void sprite_batch::init_vaos()
     enable_vertex_attrib_array(0, 2, 8*sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 2, 8*sizeof(GLfloat), 2);
     enable_vertex_attrib_array(2, 4, 8*sizeof(GLfloat), 4);
+
+    GL_CHECK(glGenVertexArrays(1, &vao_texture_2c_));
+    GL_CHECK(glBindVertexArray(vao_texture_2c_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    enable_vertex_attrib_array(0, 2, 12*sizeof(GLfloat), 0);
+    enable_vertex_attrib_array(1, 2, 12*sizeof(GLfloat), 2);
+    enable_vertex_attrib_array(2, 4, 12*sizeof(GLfloat), 4);
+    enable_vertex_attrib_array(3, 4, 12*sizeof(GLfloat), 8);
 }
 
 void sprite_batch::flush_queue()
@@ -336,6 +375,7 @@ void sprite_batch::flush_queue()
     auto cur_program = sorted_sprites[0]->program;
     auto cur_texture = sorted_sprites[0]->texture;
     auto cur_blend_mode = sorted_sprites[0]->blend;
+    auto cur_num_vert_colors = sorted_sprites[0]->num_vert_colors;
 
     bind_texture(cur_program, cur_texture);
     gl_set_blend_mode(cur_blend_mode);
@@ -343,16 +383,20 @@ void sprite_batch::flush_queue()
     int batch_start = 0;
 
     const auto render_sprites = [&](int batch_end) {
-        if (cur_texture)
-            render_sprites_texture(&sorted_sprites[batch_start], batch_end - batch_start);
-        else
+        if (cur_texture) {
+            if (cur_num_vert_colors == 1)
+                render_sprites_texture(&sorted_sprites[batch_start], batch_end - batch_start);
+            else
+                render_sprites_texture_2c(&sorted_sprites[batch_start], batch_end - batch_start);
+        } else {
             render_sprites_flat(&sorted_sprites[batch_start], batch_end - batch_start);
+        }
     };
 
     for (int i = 1; i < sprite_queue_size_; ++i) {
         const auto p = sorted_sprites[i];
 
-        if (p->blend != cur_blend_mode || p->texture != cur_texture || p->program != cur_program) {
+        if (p->blend != cur_blend_mode || p->texture != cur_texture || p->program != cur_program || p->num_vert_colors != cur_num_vert_colors) {
             render_sprites(i);
 
             batch_start = i;
@@ -367,6 +411,8 @@ void sprite_batch::flush_queue()
                 cur_blend_mode = p->blend;
                 gl_set_blend_mode(cur_blend_mode);
             }
+
+            cur_num_vert_colors = p->num_vert_colors;
         }
     }
 
@@ -382,7 +428,7 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     struct {
-        GLfloat *dest;
+        GLfloat *dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
 
         void operator()(const g2d::vec2& vert, const g2d::vec2& texuv, const g2d::rgba& color)
         {
@@ -397,19 +443,62 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
             *dest++ = color.b;
             *dest++ = color.a;
         }
-    } add_vertex{ reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))) };
+    } add_vertex;
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
-        add_vertex(p->verts.v00, p->texcoords.v00, p->colors.c00);
-        add_vertex(p->verts.v01, p->texcoords.v01, p->colors.c01);
-        add_vertex(p->verts.v10, p->texcoords.v10, p->colors.c10);
-        add_vertex(p->verts.v11, p->texcoords.v11, p->colors.c11);
+        add_vertex(p->verts.v00, p->texcoords.v00, p->colors[0].c00);
+        add_vertex(p->verts.v01, p->texcoords.v01, p->colors[0].c01);
+        add_vertex(p->verts.v10, p->texcoords.v10, p->colors[0].c10);
+        add_vertex(p->verts.v11, p->texcoords.v11, p->colors[0].c11);
     }
 
     GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
 
     GL_CHECK(glBindVertexArray(vao_texture_));
+    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites)); // TODO triangles, not quads
+}
+
+void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int num_sprites) const
+{
+    assert(num_sprites > 0);
+
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+
+    struct {
+        GLfloat *dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+
+        void operator()(const g2d::vec2& vert, const g2d::vec2& texuv, const g2d::rgba& color0, const g2d::rgba& color1)
+        {
+            *dest++ = vert.x;
+            *dest++ = vert.y;
+
+            *dest++ = texuv.x;
+            *dest++ = texuv.y;
+
+            *dest++ = color0.r;
+            *dest++ = color0.g;
+            *dest++ = color0.b;
+            *dest++ = color0.a;
+
+            *dest++ = color1.r;
+            *dest++ = color1.g;
+            *dest++ = color1.b;
+            *dest++ = color1.a;
+        }
+    } add_vertex;
+
+    for (int i = 0; i < num_sprites; ++i) {
+        auto p = sprites[i];
+        add_vertex(p->verts.v00, p->texcoords.v00, p->colors[0].c00, p->colors[1].c00);
+        add_vertex(p->verts.v01, p->texcoords.v01, p->colors[0].c01, p->colors[1].c01);
+        add_vertex(p->verts.v10, p->texcoords.v10, p->colors[0].c10, p->colors[1].c10);
+        add_vertex(p->verts.v11, p->texcoords.v11, p->colors[0].c11, p->colors[1].c11);
+    }
+
+    GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
+
+    GL_CHECK(glBindVertexArray(vao_texture_2c_));
     GL_CHECK(glDrawArrays(GL_QUADS, 0, 4*num_sprites)); // TODO triangles, not quads
 }
 
@@ -420,7 +509,7 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     struct {
-        GLfloat *dest;
+        GLfloat *dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
 
         void operator()(const g2d::vec2& vert, const g2d::rgba& color)
         {
@@ -432,14 +521,14 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
             *dest++ = color.b;
             *dest++ = color.a;
         }
-    } add_vertex{ reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY))) };
+    } add_vertex;
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
-        add_vertex(p->verts.v00, p->colors.c00);
-        add_vertex(p->verts.v01, p->colors.c01);
-        add_vertex(p->verts.v10, p->colors.c10);
-        add_vertex(p->verts.v11, p->colors.c11);
+        add_vertex(p->verts.v00, p->colors[0].c00);
+        add_vertex(p->verts.v01, p->colors[0].c01);
+        add_vertex(p->verts.v10, p->colors[0].c10);
+        add_vertex(p->verts.v11, p->colors[0].c11);
     }
 
     GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
@@ -543,6 +632,11 @@ void draw_box(const g2d::texture *texture, const box& verts, const box& texcoord
 void draw_quad(const quad& verts, int layer)
 {
     g_sprite_batch.add_quad(nullptr, nullptr, verts, {}, layer);
+}
+
+void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors0, const vert_colors& colors1, int layer)
+{
+    g_sprite_batch.add_quad(program, texture, verts, texcoords, colors0, colors1, layer);
 }
 
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad& verts, const quad& texcoords, const vert_colors& colors, int layer)
