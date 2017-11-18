@@ -41,38 +41,18 @@ combo_sprite::draw() const
 	float alpha = sinf(ttl_*M_PI/TTL);
 	alpha *= alpha;
 
+	const g2d::rgb base_color = *gradient_->to*(1./255.);
+	const g2d::rgba text_color(base_color, alpha);
+	const g2d::rgba outline_color(.5*base_color, alpha);
+
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 	render::set_color({ 1.f, 1.f, 1.f, alpha });
 
 	render::push_matrix();
 	render::translate(x_origin_, y_origin_ + y_offset_);
 
-	render::draw_text(large_font_, {}, 50, combo_size_.c_str());
-	render::draw_text(small_font_, { x_chain_text_, 16 }, 50, L"chain!");
+	render::draw_text(large_font_, {}, 50, outline_color, text_color, combo_size_.c_str());
+	render::draw_text(small_font_, { x_chain_text_, 16 }, 50, outline_color, text_color, L"chain!");
 
 	render::pop_matrix();
-
-#if 0
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	float alpha = sin(ttl*M_PI/TTL);
-	alpha *= alpha;
-
-	const g2d::mat4 mat =
-		proj_modelview*
-		g2d::mat4::translation(x_origin, y_origin + y_offset, 0);
-
-	const g2d::rgb& text_color = *gradient_->to*(1./255.);
-	const g2d::rgb& outline_color = .5*text_color;
-
-	program_timer_text& prog = get_program_instance<program_timer_text>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-	prog.set_text_color(g2d::rgba(text_color, alpha));
-	prog.set_outline_color(g2d::rgba(outline_color, alpha));
-
-	text_.draw();
-#endif
 }

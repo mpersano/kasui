@@ -92,37 +92,19 @@ hint_text_box::draw() const
 
 	// title
 
+	const g2d::rgb base_color = *gradient_->to*(1./255.);
+	const g2d::rgba text_color(base_color, alpha);
+	const g2d::rgba outline_color(.5*base_color, alpha);
+
 	const wchar_t *TITLE = L"hint!";
 
 	render::set_text_align(text_align::CENTER);
 	render::set_color({ 1.f, 1.f, 1.f, alpha });
 	render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	render::draw_text(title_font_, { 0, .5f*text_box_.get_height() }, 55, TITLE);
+	render::draw_text(title_font_, { 0, .5f*text_box_.get_height() }, 55, outline_color, text_color, TITLE);
 
 	render::pop_matrix();
-
-#if 0
-	{
-	auto& prog = get_program_instance<program_timer_text>();
-	prog.use();
-	prog.set_proj_modelview_matrix(m*g2d::mat4::translation(0, .5*text_box_.get_height(), 0));
-	prog.set_texture(0);
-
-	const g2d::rgb& text_color = *gradient_->to*(1./255.);
-	const g2d::rgb& outline_color = .5*text_color;
-
-	prog.set_text_color(g2d::rgba(text_color, alpha));
-	prog.set_outline_color(g2d::rgba(outline_color, alpha));
-	}
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	title_texture_->bind();
-
-	title_va_.draw(GL_TRIANGLES);
-#endif
 }
 
 bool
