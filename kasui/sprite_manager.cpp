@@ -27,7 +27,7 @@ const sprite *sprite_manager::get_sprite(const std::string &name)
     auto it = sprite_dict_.find(name);
 
     if (it == sprite_dict_.end())
-        panic("failed to locate sprite `%s'", name);
+        panic("failed to locate sprite `%s'", name.c_str());
 
     return it->second;
 }
