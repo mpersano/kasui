@@ -16,7 +16,7 @@ std::wstring line_splitter::next_line(int max_size)
 	if (!*str_)
 		return {};
 
-	const wchar_t *line_end = 0;
+	const wchar_t *line_end = nullptr;
 
 	int size = 0;
 	const wchar_t *p = str_;

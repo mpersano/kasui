@@ -145,7 +145,7 @@ update(uint32_t dt)
 }
 
 theme clouds_theme = {
-	0,
+	nullptr,
 	initialize,
 	reset,
 	draw,

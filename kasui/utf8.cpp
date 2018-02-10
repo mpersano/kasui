@@ -64,7 +64,7 @@ utf8_to_wchar(const char *utf8_data, int utf8_data_size)
 
 failed:
 	panic("invalid UTF-8 character sequence");
-	return 0;
+	return nullptr;
 }
 
 wchar_t *

@@ -103,7 +103,7 @@ char *
 file_input_stream::gets(char *str, size_t size)
 {
 	if (bytes_remaining_ <= 0) {
-		return 0;
+		return nullptr;
 	} else {
 		if (size > bytes_remaining_ + 1)
 			size = bytes_remaining_ + 1;

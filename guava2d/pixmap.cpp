@@ -21,18 +21,18 @@ pixmap::load(const char *path)
 	file_input_stream file(path);
 
 	png_structp png_ptr;
-	if ((png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0)) == 0)
+	if ((png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr)) == nullptr)
 		panic("png_create_read_struct failed");
 
 	png_infop info_ptr;
-	if ((info_ptr = png_create_info_struct(png_ptr)) == 0)
+	if ((info_ptr = png_create_info_struct(png_ptr)) == nullptr)
 		panic("png_create_info_struct failed");
 
 	if (setjmp(png_jmpbuf(png_ptr)))
 		panic("some kind of png error");
 
 	png_init_io(png_ptr, file.get_raw_stream());
-	png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, 0);
+	png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
 
 	int color_type = png_get_color_type(png_ptr, info_ptr);
 	int bit_depth = png_get_bit_depth(png_ptr, info_ptr);
@@ -75,7 +75,7 @@ pixmap::load(const char *path)
 	for (int i = 0; i < height; i++)
 		memcpy(&pm->bits_[i*stride], rows[i], stride);
 
-	png_destroy_read_struct(&png_ptr, &info_ptr, 0);
+	png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
 
 	return pm;
 }
@@ -197,17 +197,17 @@ pixmap::save(const char *path) const
 {
 	FILE *fp;
 
-	if ((fp = fopen(path, "wb")) == NULL)
+	if ((fp = fopen(path, "wb")) == nullptr)
 		panic("fopen %s for write failed: %s", strerror(errno));
 
 	png_structp png_ptr;
 
-	if ((png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, NULL, NULL)) == NULL)
+	if ((png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)nullptr, nullptr, nullptr)) == nullptr)
 		panic("png_create_write_struct");
 
 	png_infop info_ptr;
 
-	if ((info_ptr = png_create_info_struct(png_ptr)) == NULL)
+	if ((info_ptr = png_create_info_struct(png_ptr)) == nullptr)
 		panic("png_create_info_struct");
 
 	if (setjmp(png_jmpbuf(png_ptr)))

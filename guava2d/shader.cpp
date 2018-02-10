@@ -19,7 +19,7 @@ shader::~shader()
 void
 shader::set_source(const char *source) const
 {
-	glShaderSource(id_, 1, &source, 0);
+	glShaderSource(id_, 1, &source, nullptr);
 }
 
 void

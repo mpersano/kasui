@@ -28,7 +28,7 @@ const struct name_to_option {
 	{ "max-unlocked-level", OPTION_INTEGER, &options::max_unlocked_level },
 	{ "enable-sound", OPTION_INTEGER, &options::enable_sound },
 	{ "player-name", OPTION_STRING, reinterpret_cast<int options::*>(&options::player_name) },
-	{ 0, OPTION_NONE, 0 },
+	{ nullptr, OPTION_NONE, nullptr },
 };
 
 } // namespace
@@ -37,24 +37,24 @@ options::options()
 : enable_hints(true)
 , max_unlocked_level(0)
 , enable_sound(false)
-, player_name(0)
+, player_name(nullptr)
 { }
 
 options *
 options::load(const char *path)
 {
-	options *o = 0;
+	options *o = nullptr;
 
 	FILE *in;
 
-	if ((in = fopen(path, "r")) != 0) {
+	if ((in = fopen(path, "r")) != nullptr) {
 		o = new options;
 
 		static char line[256];
 
 		while (fgets(line, sizeof line, in)) {
 			char *name = strtok(line, " ");
-			char *value = strtok(0, " ");
+			char *value = strtok(nullptr, " ");
 			if (!value)
 				break;
 
@@ -92,7 +92,7 @@ options::save(const char *path) const
 {
 	FILE *out;
 
-	if ((out = fopen(path, "w")) != 0) {
+	if ((out = fopen(path, "w")) != nullptr) {
 		for (const name_to_option *p = name_to_options; p->name; p++) {
 			switch (p->type) {
 				case OPTION_INTEGER:

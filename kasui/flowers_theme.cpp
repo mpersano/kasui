@@ -173,7 +173,7 @@ draw()
 }
 
 theme flowers_theme = {
-	0,
+	nullptr,
 	initialize,
 	reset,
 	draw,

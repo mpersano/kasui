@@ -29,9 +29,9 @@ jukugo_initialize()
 
 	while (reader.gets(line, sizeof line)) {
 		char *kanji_utf8 = strtok(line, "\t");
-		char *reading_utf8 = strtok(0, "\t");
-		char *eigo_utf8 = strtok(0, "\t");
-		char *level = strtok(0, "\t\r\n");
+		char *reading_utf8 = strtok(nullptr, "\t");
+		char *eigo_utf8 = strtok(nullptr, "\t");
+		char *level = strtok(nullptr, "\t\r\n");
 
 		if (!kanji_utf8 || !reading_utf8 || !eigo_utf8 || !level)
 			panic("invalid jukugo file");
@@ -61,7 +61,7 @@ jukugo_load_hits(const char *path)
 {
 	FILE *in;
 
-	if ((in = fopen(path, "r")) != 0) {
+	if ((in = fopen(path, "r")) != nullptr) {
 		for (int i = 0; i < jukugo_list_size; i++) {
 			jukugo *p = jukugo_list[i];
 			fread(&p->hits, sizeof(p->hits), 1, in);
@@ -76,7 +76,7 @@ jukugo_save_hits(const char *path)
 {
 	FILE *out;
 
-	if ((out = fopen(path, "w")) != 0) {
+	if ((out = fopen(path, "w")) != nullptr) {
 		for (int i = 0; i < jukugo_list_size; i++) {
 			const jukugo *p = jukugo_list[i];
 			fwrite(&p->hits, sizeof(p->hits), 1, out);

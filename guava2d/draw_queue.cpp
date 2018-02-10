@@ -163,8 +163,8 @@ draw_queue_impl::draw_queue_impl()
 : cur_matrix_(mat3::identity())
 , text_align_(ALIGN_LEFT)
 , text_outline_(false)
-, text_program_(0)
-, text_outline_program_(0)
+, text_program_(nullptr)
+, text_outline_program_(nullptr)
 { }
 
 draw_queue_impl::~draw_queue_impl()

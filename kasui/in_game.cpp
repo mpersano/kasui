@@ -60,7 +60,7 @@ enum {
 
 struct game_animation
 {
-	game_animation() : action(0) { }
+	game_animation() : action(nullptr) { }
 
 	virtual ~game_animation() { delete action; }
 
@@ -641,7 +641,7 @@ private:
 
 in_game_state_impl::in_game_state_impl()
 : world_(GRID_ROWS, GRID_COLS, window_height - 120)
-, cur_game_animation_(0)
+, cur_game_animation_(nullptr)
 , pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
 , touch_is_down_(false)
 {
@@ -795,7 +795,7 @@ in_game_state_impl::update(uint32_t dt)
 	if (cur_game_animation_) {
 		if (!cur_game_animation_->update(dt)) {
 			if (cur_state_ != STATE_GAME_OVER) {
-				set_cur_game_animation(0);
+				set_cur_game_animation(nullptr);
 				animation_done = true;
 			} else {
 				finish_in_game();
@@ -1050,7 +1050,7 @@ in_game_state_impl::redraw() const
 void
 in_game_state_impl::reset()
 {
-	set_cur_game_animation(0);
+	set_cur_game_animation(nullptr);
 
 	touch_is_down_ = false;
 

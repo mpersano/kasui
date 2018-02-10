@@ -32,7 +32,7 @@ for_each_char(const wchar_t *text, float max_width, Visitor visit)
 
 	float y = 0, x = 0;
 
-	const wchar_t *word_start = 0;
+	const wchar_t *word_start = nullptr;
 	float word_start_x = 0;
 
 	auto add_word = [&] {
@@ -45,7 +45,7 @@ for_each_char(const wchar_t *text, float max_width, Visitor visit)
 			x += g->advance_x;
 		}
 
-		word_start = 0;
+		word_start = nullptr;
 
 		return x;
 	};

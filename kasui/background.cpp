@@ -13,7 +13,7 @@ enum {
 	GRADIENT_TEXTURE_HEIGHT = 64,
 };
 
-static g2d::texture *gradient_texture = 0;
+static g2d::texture *gradient_texture = nullptr;
 
 void
 background_draw_gradient()

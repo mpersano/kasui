@@ -786,7 +786,7 @@ hiscore_input_state_impl::hiscore_input_state_impl()
 		  L"ASDFGHJKL",
 		  L"\x4ZXCVBNM",
 		  L"\x3 \r\n",
-		  0 };
+		  nullptr };
 
 	static const wchar_t *abc_keys_lower[] =
 		{ L"1234567890",
@@ -794,7 +794,7 @@ hiscore_input_state_impl::hiscore_input_state_impl()
 		  L"asdfghjkl",
 		  L"\x4zxcvbnm",
 		  L"\x3 \r\n",
-		  0 };
+		  nullptr };
 
 	static const wchar_t *hiragana_keys[] =
 		{ L"わらやまはなたさかあ",
@@ -803,7 +803,7 @@ hiscore_input_state_impl::hiscore_input_state_impl()
 		  L"をれ\x01めへねてせけえ",
 		  L"んろよもほのとそこお",
 		  L"\x6\x5\x7 \r\n",
-		  0 };
+		  nullptr };
 
 	static const wchar_t *katakana_keys[] =
 		{ L"ワラヤマハナタサカア",
@@ -812,7 +812,7 @@ hiscore_input_state_impl::hiscore_input_state_impl()
 		  L"ヲレ\x01メヘネテセケエ",
 		  L"ンロヨモホノトソコオ",
 		  L"\x2\x5\x7 \r\n",
-		  0 };
+		  nullptr };
 
 	abc_keyboard_upper_ = new keyboard_layout(keyboard_texture_, abc_keys_upper);
 	abc_keyboard_lower_ = new keyboard_layout(keyboard_texture_, abc_keys_lower);

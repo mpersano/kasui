@@ -408,13 +408,13 @@ stats_page::stats_page(int level, float top_y)
 		if (ji->level != level)
 			continue;
 
-		kanji_jukugo *p = 0;  
+		kanji_jukugo *p = nullptr;  
 
 		for (auto j = kanji_jukugos.begin(), end = kanji_jukugos.end(); j != end; j++) {
 			kanji_jukugo& q = *j;
 
 			if (q.ki->code == ji->kanji[0] || q.ki->code == ji->kanji[1]) {
-				if (p == 0 || q.jukugo_list.size() < p->jukugo_list.size())
+				if (p == nullptr || q.jukugo_list.size() < p->jukugo_list.size())
 					p = &q;
 			}
 		}

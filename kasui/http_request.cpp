@@ -121,7 +121,7 @@ struct dns_question
 uint64_t now()
 {
 	struct timeval tv;
-	gettimeofday(&tv, 0);
+	gettimeofday(&tv, nullptr);
 	return tv.tv_sec*1000ull + tv.tv_usec/1000ull;
 }
 
@@ -147,7 +147,7 @@ is_readable(int fd)
 
 	struct timeval tv = { 0, 0 };
 
-	switch (select(fd + 1, &fds, 0, 0, &tv)) {
+	switch (select(fd + 1, &fds, nullptr, nullptr, &tv)) {
 		case -1:
 			// wtf?
 			log_err("select: %s", strerror(errno));
@@ -173,7 +173,7 @@ is_writeable(int fd)
 
 	struct timeval tv = { 0, 0 };
 
-	switch (select(fd + 1, 0, &fds, 0, &tv)) {
+	switch (select(fd + 1, nullptr, &fds, nullptr, &tv)) {
 		case -1:
 			// wtf?
 			log_err("select: %s", strerror(errno));
@@ -343,7 +343,7 @@ resolving_state::send_request(http_request_impl& req)
 
 	while (*src) {
 		const char *sep = strchr(src, '.');
-		if (sep == 0)
+		if (sep == nullptr)
 			sep = src + strlen(src);
 
 		size_t len = sep - src;
@@ -733,7 +733,7 @@ reading_response_state::on_read(const char *buf, ssize_t size)
 } // namespace
 
 http_request_impl::http_request_impl()
-: state_(0)
+: state_(nullptr)
 , port_(0)
 { }
 
@@ -748,7 +748,7 @@ http_request_impl::on_error()
 	resp.success = false;
 	delegate_(resp);
 
-	set_state(0);
+	set_state(nullptr);
 }
 
 void
@@ -763,7 +763,7 @@ http_request_impl::on_completed(int status, const char *content, size_t content_
 
 	delegate_(resp);
 
-	set_state(0);
+	set_state(nullptr);
 }
 
 void
@@ -772,7 +772,7 @@ http_request_impl::set_state(state *next_state)
 	if (state_)
 		delete state_;
 
-	if ((state_ = next_state) != 0)
+	if ((state_ = next_state) != nullptr)
 		state_->initialize(*this);
 }
 
@@ -861,7 +861,7 @@ http_request_impl::poll()
 	if (state_)
 		state_->poll(*this);
 
-	return state_ != 0;
+	return state_ != nullptr;
 }
 
 void

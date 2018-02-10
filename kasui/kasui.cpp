@@ -118,7 +118,7 @@ get_cur_state()
 state *
 get_prev_state()
 {
-	return state_stack.size() > 1 ? state_stack[state_stack.size() - 2] : 0;
+	return state_stack.size() > 1 ? state_stack[state_stack.size() - 2] : nullptr;
 }
 
 void
@@ -267,7 +267,7 @@ preload_resources()
 		"images/petal.png",
 		"images/star.png",
 		"images/arrow.png",
-		0,
+		nullptr,
 	};
 
 	// fonts
@@ -283,7 +283,7 @@ preload_resources()
 		"fonts/tiny",
 		"fonts/title",
 		"fonts/micro",
-		0,
+		nullptr,
 	};
 
 	for (const char **p = fonts; *p; p++)

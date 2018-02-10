@@ -183,7 +183,7 @@ init_sdl(int width, int height)
 	if (SDL_Init(flags) < 0)
 		panic("SDL_Init: %s", SDL_GetError());
 
-	if (SDL_SetVideoMode(width, height, 0, SDL_OPENGL) == 0)
+	if (SDL_SetVideoMode(width, height, 0, SDL_OPENGL) == nullptr)
 		panic("SDL_SetVideoMode: %s", SDL_GetError());
 
 #ifdef ENABLE_AUDIO
@@ -193,7 +193,7 @@ init_sdl(int width, int height)
 
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1); 
 
-	SDL_WM_SetCaption(WINDOW_CAPTION, 0);
+	SDL_WM_SetCaption(WINDOW_CAPTION, nullptr);
 }
 
 static void
@@ -222,7 +222,7 @@ init(int width, int height)
 
 	setlocale(LC_ALL, "ja_JP.UTF-8");
 
-	srand(time(NULL));
+	srand(time(nullptr));
 
 	init_sdl(width, height);
 	init_glew();

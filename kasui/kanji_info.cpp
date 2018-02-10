@@ -20,10 +20,10 @@ kanji_info_initialize()
 
 	while (reader.gets(line, sizeof line)) {
 		char *code_utf8 = strtok(line, "\t");
-		char *on_utf8 = strtok(0, "\t");
-		char *kun_utf8 = strtok(0, "\t");
-		char *meaning_utf8 = strtok(0, "\t");
-		char *level = strtok(0, "\t\r\n");
+		char *on_utf8 = strtok(nullptr, "\t");
+		char *kun_utf8 = strtok(nullptr, "\t");
+		char *meaning_utf8 = strtok(nullptr, "\t");
+		char *level = strtok(nullptr, "\t\r\n");
 
 		if (!code_utf8 || !on_utf8 || !kun_utf8 || !meaning_utf8 || !level)
 			panic("invalid kanji info file");

@@ -497,7 +497,7 @@ leaderboard_page::load_cache()
 
 		while (fgets(line, sizeof line, in)) {
 			char *name = strtok(line, ":");
-			int score = atoi(strtok(0, "\n"));
+			int score = atoi(strtok(nullptr, "\n"));
 
 			// XXX: should check if list is ordered
 			items_.push_back(new item(index, utf8_to_wchar(name), score, false));

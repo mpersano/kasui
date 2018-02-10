@@ -222,7 +222,7 @@ draw()
 }
 
 theme falling_leaves_theme = {
-	0,
+	nullptr,
 	initialize,
 	reset,
 	draw,
