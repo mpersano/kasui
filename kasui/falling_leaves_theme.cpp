@@ -206,8 +206,8 @@ static void draw()
 
     gv.reset();
 
-    for (int i = 0; i < NUM_LEAVES; i++)
-        sorted_leaves[i]->draw(gv);
+    for (auto &sorted_leave : sorted_leaves)
+        sorted_leave->draw(gv);
 
     GLfloat matrix[16];
     initialize_perspective_matrix(matrix, FOV, window_width / window_height, Z_NEAR, Z_FAR);

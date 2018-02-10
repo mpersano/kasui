@@ -144,8 +144,8 @@ static void draw()
 
     gv.reset();
 
-    for (int i = 0; i < NUM_FLOWERS; i++)
-        sorted_flowers[i]->draw(gv);
+    for (auto &sorted_flower : sorted_flowers)
+        sorted_flower->draw(gv);
 
     const g2d::mat4 proj_modelview =
         get_ortho_projection() * g2d::mat4::translation(.5 * window_width, .5 * window_height, 0);

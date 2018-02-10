@@ -538,9 +538,7 @@ void leaderboard_page::draw_items(const g2d::mat4 &mat, float alpha) const
     else if (y > total_height)
         y = total_height;
 
-    for (auto it = items_.begin(); it != items_.end(); it++) {
-        const item *item = *it;
-
+    for (auto item : items_) {
         if (y - item::HEIGHT < top_y)
             item->draw(mat * g2d::mat4::translation(0, y, 0), alpha);
 

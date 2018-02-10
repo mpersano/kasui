@@ -400,9 +400,7 @@ stats_page::stats_page(int level, float top_y)
 
         kanji_jukugo *p = nullptr;
 
-        for (auto j = kanji_jukugos.begin(), end = kanji_jukugos.end(); j != end; j++) {
-            kanji_jukugo &q = *j;
-
+        for (auto &q : kanji_jukugos) {
             if (q.ki->code == ji->kanji[0] || q.ki->code == ji->kanji[1]) {
                 if (p == nullptr || q.jukugo_list.size() < p->jukugo_list.size())
                     p = &q;
@@ -414,15 +412,15 @@ stats_page::stats_page(int level, float top_y)
         p->jukugo_list.push_back(ji);
     }
 
-    for (auto i = kanji_jukugos.begin(), end = kanji_jukugos.end(); i != end; i++) {
-        items_.push_back(new kanji_info_item(i->ki));
+    for (auto &kanji_jukugo : kanji_jukugos) {
+        items_.push_back(new kanji_info_item(kanji_jukugo.ki));
 
-        for (auto j = i->jukugo_list.begin(), end = i->jukugo_list.end(); j != end; j++)
+        for (auto j = kanji_jukugo.jukugo_list.begin(), end = kanji_jukugo.jukugo_list.end(); j != end; j++)
             items_.push_back(new jukugo_info_item(*j));
     }
 
-    for (auto i = items_.begin(), end = items_.end(); i != end; i++)
-        total_height_ += (*i)->get_height();
+    for (auto &item : items_)
+        total_height_ += item->get_height();
 
     reset();
 
@@ -447,8 +445,8 @@ void stats_page::reset()
 
 void stats_page::reset_contents()
 {
-    for (auto i = items_.begin(), end = items_.end(); i != end; i++)
-        (*i)->reset_contents();
+    for (auto &item : items_)
+        item->reset_contents();
 }
 
 void stats_page::draw(const g2d::mat4 &mat, float alpha) const
@@ -465,9 +463,7 @@ void stats_page::draw(const g2d::mat4 &mat, float alpha) const
     else if (y > total_height_)
         y = total_height_;
 
-    for (auto it = items_.begin(); it != items_.end(); it++) {
-        const stats_page_item *item = *it;
-
+    for (auto item : items_) {
         if (y - item->get_height() < top_y_)
             item->draw(mat * g2d::mat4::translation(0, y, 0), alpha);
 
@@ -563,9 +559,9 @@ void stats_state_impl::reset()
 
     state_tics_ = 0;
 
-    for (int i = 0; i < NUM_LEVELS; i++) {
-        level_stats_[i]->reset_contents();
-        level_stats_[i]->reset();
+    for (auto &level_stat : level_stats_) {
+        level_stat->reset_contents();
+        level_stat->reset();
     }
 }
 

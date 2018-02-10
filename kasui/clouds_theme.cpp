@@ -109,8 +109,8 @@ static void draw()
     qsort(sorted_clouds, NUM_CLOUDS, sizeof *sorted_clouds, cloud_depth_compare);
 
     gv.reset();
-    for (int i = 0; i < NUM_CLOUDS; i++)
-        sorted_clouds[i]->draw(gv);
+    for (auto &sorted_cloud : sorted_clouds)
+        sorted_cloud->draw(gv);
 
     const g2d::mat4 proj_modelview =
         get_ortho_projection() * g2d::mat4::translation(.5 * window_width, .5 * window_height, 0);

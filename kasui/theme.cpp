@@ -8,6 +8,6 @@ theme *themes[NUM_THEMES] = {
 
 void themes_initialize()
 {
-    for (unsigned i = 0; i < NUM_THEMES; i++)
-        themes[i]->initialize();
+    for (auto &theme : themes)
+        theme->initialize();
 }
