@@ -1,21 +1,20 @@
 #include <cstdio>
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "panic.h"
 
-void
-panic(const char *fmt, ...)
+void panic(const char *fmt, ...)
 {
-	va_list ap;
+    va_list ap;
 
-	fprintf(stderr, "FATAL: ");
+    fprintf(stderr, "FATAL: ");
 
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
 
-	fputc('\n', stderr);
-	
-	abort();
+    fputc('\n', stderr);
+
+    abort();
 }

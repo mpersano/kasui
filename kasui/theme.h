@@ -5,24 +5,25 @@
 
 #include "settings.h"
 
-struct theme {
-	color_scheme *colors;
-	void (*initialize)();
-	void (*reset)();
-	void (*draw)();
-	void (*update)(uint32_t dt);
+struct theme
+{
+    color_scheme *colors;
+    void (*initialize)();
+    void (*reset)();
+    void (*draw)();
+    void (*update)(uint32_t dt);
 };
 
-enum {
-	THEME_CLOUDS,
-	THEME_FALLING_LEAVES,
-	THEME_FLOWERS,
-	NUM_THEMES,
+enum
+{
+    THEME_CLOUDS,
+    THEME_FALLING_LEAVES,
+    THEME_FLOWERS,
+    NUM_THEMES,
 };
 
 extern theme *themes[NUM_THEMES];
 
-void
-themes_initialize();
+void themes_initialize();
 
 #endif // THEME_H_

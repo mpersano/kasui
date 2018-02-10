@@ -9,24 +9,25 @@ class registry;
 template <typename Head, typename... Tail>
 struct registry<Head, Tail...> : registry<Tail...>
 {
-	typedef registry<Tail...> base_type;
+    typedef registry<Tail...> base_type;
 
-	static Head& get_instance()
-	{
-		static Head *instance;
+    static Head &get_instance()
+    {
+        static Head *instance;
 
-		if (!instance) {
-			instance = new Head;
-			instance->initialize();
-		}
+        if (!instance) {
+            instance = new Head;
+            instance->initialize();
+        }
 
-		return *instance;
-	}
+        return *instance;
+    }
 };
 
 template <>
 struct registry<>
-{ };
+{
+};
 
 template <typename T, typename Registry>
 struct find;
@@ -34,15 +35,14 @@ struct find;
 template <typename T, typename Registry>
 struct find
 {
-	typedef typename find<T, typename Registry::base_type>::result result;
+    typedef typename find<T, typename Registry::base_type>::result result;
 };
 
 template <typename T, typename... Tail>
-struct find<T, registry<T, Tail...> >
+struct find<T, registry<T, Tail...>>
 {
-	typedef registry<T, Tail...> result;
+    typedef registry<T, Tail...> result;
 };
-
 }
 
 #endif // SINGLETON_REGISTRY_H_

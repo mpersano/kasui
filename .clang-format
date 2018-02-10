@@ -1,0 +1,19 @@
+Language: Cpp
+Standard: Cpp11
+ColumnLimit: 120
+IndentWidth: 4
+AllowShortFunctionsOnASingleLine: Inline
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: false
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
+BreakConstructorInitializersBeforeComma: true
+AccessModifierOffset: -4
+AlignEscapedNewlinesLeft: true
+UseTab: Never
+AlwaysBreakTemplateDeclarations: true
+Cpp11BracedListStyle: true
+IndentCaseLabels: true

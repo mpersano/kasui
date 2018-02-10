@@ -2,26 +2,27 @@
 
 #include <guava2d/draw_queue.h>
 
+#include "common.h"
 #include "world.h"
 
 class combo_sprite : public sprite
 {
 public:
-	combo_sprite(int combo_size, float x, float y, const gradient *g);
+    combo_sprite(int combo_size, float x, float y, const gradient *g);
 
-	bool update(uint32_t dt) override;
-	void draw() const override;
+    bool update(uint32_t dt) override;
+    void draw() const override;
 
 private:
-	static constexpr int TTL = 60*MS_PER_TIC;
-	static constexpr int DIGIT_WIDTH = 25;
+    static constexpr int TTL = 60 * MS_PER_TIC;
+    static constexpr int DIGIT_WIDTH = 25;
 
-	float x_origin_, y_origin_;
-	float y_offset_ = 0;
-	float x_chain_text_;
-	const gradient *gradient_;
-	const g2d::font *large_font_;
-	const g2d::font *small_font_;
-	int ttl_ = TTL;
-	std::wstring combo_size_;
+    float x_origin_, y_origin_;
+    float y_offset_ = 0;
+    float x_chain_text_;
+    const gradient *gradient_;
+    const g2d::font *large_font_;
+    const g2d::font *small_font_;
+    int ttl_ = TTL;
+    std::wstring combo_size_;
 };

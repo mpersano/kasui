@@ -1,83 +1,80 @@
 #include <guava2d/font_manager.h>
 
+#include "common.h"
+#include "jukugo.h"
+#include "jukugo_info_sprite.h"
+#include "line_splitter.h"
 #include "program_manager.h"
 #include "render.h"
-#include "jukugo.h"
-#include "common.h"
 #include "tween.h"
-#include "line_splitter.h"
-#include "jukugo_info_sprite.h"
 
 jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g)
-	: jukugo_(jukugo_info)
-	, x_base_(x)
-	, y_base_(y)
-	, gradient_(g)
+    : jukugo_(jukugo_info)
+    , x_base_(x)
+    , y_base_(y)
+    , gradient_(g)
 {
-	action_.reset(
-	  (new parallel_action_group)
-	    ->add(
-	      (new sequential_action_group)
-	        ->add(new property_change_action<out_bounce_tween<float>>(&flip_, 0, .5*M_PI, 30*MS_PER_TIC))->add(new delay_action(30*MS_PER_TIC)))
-	    ->add(
-	      (new sequential_action_group)
-	        ->add(new delay_action(60*MS_PER_TIC))->add(new property_change_action<in_back_tween<float>>(&z_, 0, 1, 20*MS_PER_TIC)))
-	    ->add(
-	      (new sequential_action_group)
-	        ->add(new property_change_action<linear_tween<float>>(&alpha_, 0, 1., 10*MS_PER_TIC))
-		->add(new delay_action(60*MS_PER_TIC))
-		->add(new property_change_action<linear_tween<float>>(&alpha_, 1., 0, 10*MS_PER_TIC))));
+    action_.reset(
+        (new parallel_action_group)
+            ->add((new sequential_action_group)
+                      ->add(new property_change_action<out_bounce_tween<float>>(&flip_, 0, .5 * M_PI, 30 * MS_PER_TIC))
+                      ->add(new delay_action(30 * MS_PER_TIC)))
+            ->add((new sequential_action_group)
+                      ->add(new delay_action(60 * MS_PER_TIC))
+                      ->add(new property_change_action<in_back_tween<float>>(&z_, 0, 1, 20 * MS_PER_TIC)))
+            ->add((new sequential_action_group)
+                      ->add(new property_change_action<linear_tween<float>>(&alpha_, 0, 1., 10 * MS_PER_TIC))
+                      ->add(new delay_action(60 * MS_PER_TIC))
+                      ->add(new property_change_action<linear_tween<float>>(&alpha_, 1., 0, 10 * MS_PER_TIC))));
 
-	kanji_font_ = g2d::font_manager::get_instance().load("fonts/large");
-	eigo_font_ = g2d::font_manager::get_instance().load("fonts/tiny");
-	furigana_font_ = g2d::font_manager::get_instance().load("fonts/small");
+    kanji_font_ = g2d::font_manager::get_instance().load("fonts/large");
+    eigo_font_ = g2d::font_manager::get_instance().load("fonts/tiny");
+    furigana_font_ = g2d::font_manager::get_instance().load("fonts/small");
 
-	pos_kanji_ = { -.5f*kanji_font_->get_string_width(jukugo_info->kanji), -20.f };
-	pos_furigana_ = { -.5f*furigana_font_->get_string_width(jukugo_info->reading), 64.f };
+    pos_kanji_ = {-.5f * kanji_font_->get_string_width(jukugo_info->kanji), -20.f};
+    pos_furigana_ = {-.5f * furigana_font_->get_string_width(jukugo_info->reading), 64.f};
 
-	constexpr int MAX_LINE_WIDTH = 320;
-	float y_eigo = -64;
+    constexpr int MAX_LINE_WIDTH = 320;
+    float y_eigo = -64;
 
-	line_splitter ls(eigo_font_, jukugo_info->eigo);
+    line_splitter ls(eigo_font_, jukugo_info->eigo);
 
-	std::wstring line;
-	while (line = ls.next_line(MAX_LINE_WIDTH), !line.empty()) {
-		const float x = -.5*eigo_font_->get_string_width(line.c_str());
-		eigo_lines_.emplace_back(g2d::vec2(x, y_eigo), std::move(line));
-		y_eigo -= 44;
-	}
+    std::wstring line;
+    while (line = ls.next_line(MAX_LINE_WIDTH), !line.empty()) {
+        const float x = -.5 * eigo_font_->get_string_width(line.c_str());
+        eigo_lines_.emplace_back(g2d::vec2(x, y_eigo), std::move(line));
+        y_eigo -= 44;
+    }
 }
 
-bool
-jukugo_info_sprite::update(uint32_t dt)
+bool jukugo_info_sprite::update(uint32_t dt)
 {
-	action_->step(dt);
-	return !action_->done();
+    action_->step(dt);
+    return !action_->done();
 }
 
-void
-jukugo_info_sprite::draw() const
+void jukugo_info_sprite::draw() const
 {
-	const float scale = 1./(1. + z_);
-	const float sy = sinf(flip_);
+    const float scale = 1. / (1. + z_);
+    const float sy = sinf(flip_);
 
-	render::set_blend_mode(blend_mode::ALPHA_BLEND);
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-	render::push_matrix();
+    render::push_matrix();
 
-	render::translate(x_base_, y_base_);
-	render::scale(scale, scale*sy);
+    render::translate(x_base_, y_base_);
+    render::scale(scale, scale * sy);
 
-	render::set_color({ 1.f, 1.f, 1.f, alpha_ });
-	render::set_text_align(text_align::LEFT);
+    render::set_color({1.f, 1.f, 1.f, alpha_});
+    render::set_text_align(text_align::LEFT);
 
-	render::draw_text(kanji_font_, pos_kanji_, 50, jukugo_->kanji);
-	render::draw_text(furigana_font_, pos_furigana_, 50, jukugo_->reading);
+    render::draw_text(kanji_font_, pos_kanji_, 50, jukugo_->kanji);
+    render::draw_text(furigana_font_, pos_furigana_, 50, jukugo_->reading);
 
-	for (const auto& p : eigo_lines_)
-		render::draw_text(eigo_font_, p.first, 50, p.second.c_str());
+    for (const auto &p : eigo_lines_)
+        render::draw_text(eigo_font_, p.first, 50, p.second.c_str());
 
-	render::pop_matrix();
+    render::pop_matrix();
 
 #if 0
 	const float scale = 1./(1. + z);
