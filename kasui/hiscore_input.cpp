@@ -638,7 +638,7 @@ public:
 
 	void set_score(int score);
 
-	void on_check_hiscore_response(bool ok, bool is_hiscore);
+	void on_check_hiscore_response(bool ok, bool is_hiscore) override;
 
 private:
 	void back_to_hiscore_list();

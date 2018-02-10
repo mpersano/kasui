@@ -74,7 +74,7 @@ struct glyph_animation : game_animation
 {
 	glyph_animation(const g2d::font *font, float glyph_spacing, const wchar_t *message, float x_base, float y_base, const gradient *g);
 
-	void draw() const;
+	void draw() const override;
 
 	struct glyph_state {
 		glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center, const gradient *g);
@@ -116,7 +116,7 @@ struct abunai_animation : game_animation
 {
 	abunai_animation();
 
-	void draw() const;
+	void draw() const override;
 
 	float x, alpha;
 	const g2d::sprite *abunai_bb_;
@@ -126,7 +126,7 @@ struct game_over_animation_base : glyph_animation
 {
 	game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str, const gradient *g);
 
-	void draw() const;
+	void draw() const override;
 
 	float billboard_x, overlay_alpha;
 	const g2d::sprite *game_over_bb_;
@@ -146,7 +146,7 @@ struct countdown_digit : game_animation
 {
 	countdown_digit(const g2d::glyph_info *gi, float x_center, float y_center);
 
-	void draw() const;
+	void draw() const override;
 
 	const g2d::texture *texture;
 	g2d::vertex_array_texuv gv;
@@ -579,11 +579,11 @@ public:
 	void on_back_key();
 	void on_menu_key();
 
-	void set_jukugo_left(int jukugo_left);
-	void set_score(int score);
-	void set_next_falling_blocks(wchar_t left, wchar_t right);
+	void set_jukugo_left(int jukugo_left) override;
+	void set_score(int score) override;
+	void set_next_falling_blocks(wchar_t left, wchar_t right) override;
 	void show_hint(const jukugo *hint);
-	void on_falling_blocks_started();
+	void on_falling_blocks_started() override;
 
 	void  set_enable_hints(bool enable);
 

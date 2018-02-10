@@ -192,10 +192,10 @@ class resolving_state : public http_request_impl::state
 {
 public:
 	resolving_state();
-	~resolving_state();
+	~resolving_state() override;
 
-	void initialize(http_request_impl& req);
-	void poll(http_request_impl& req);
+	void initialize(http_request_impl& req) override;
+	void poll(http_request_impl& req) override;
 
 private:
 	void send_request(http_request_impl& req);
@@ -212,8 +212,8 @@ class resolved_state : public http_request_impl::state
 public:
 	resolved_state(int fd);
 
-	virtual void initialize(http_request_impl&) { }
-	void poll(http_request_impl&);
+	void initialize(http_request_impl&) override { }
+	void poll(http_request_impl&) override;
 
 	virtual int is_ready() const = 0;
 	virtual void on_ready(http_request_impl&) = 0;
@@ -234,14 +234,14 @@ class connecting_state : public resolved_state
 public:
 	connecting_state(const std::vector<in_addr_t>& addr);
 
-	void initialize(http_request_impl& req);
+	void initialize(http_request_impl& req) override;
 
-	int is_ready() const
+	int is_ready() const override
 	{ return is_writeable(fd_); }
 
-	void on_ready(http_request_impl& req);
+	void on_ready(http_request_impl& req) override;
 
-	unsigned timeout() const
+	unsigned timeout() const override
 	{ return CONNECT_TIMEOUT; }
 
 private:
@@ -253,12 +253,12 @@ class writing_request_state : public resolved_state
 public:
 	writing_request_state(int fd, const std::string& host, int port, const std::string& path);
 
-	int is_ready() const
+	int is_ready() const override
 	{ return is_writeable(fd_); }
 
-	void on_ready(http_request_impl& req);
+	void on_ready(http_request_impl& req) override;
 
-	unsigned timeout() const
+	unsigned timeout() const override
 	{ return 0; }
 
 private:
@@ -271,12 +271,12 @@ class reading_response_state : public resolved_state
 public:
 	reading_response_state(int fd);
 
-	int is_ready() const
+	int is_ready() const override
 	{ return is_readable(fd_); }
 
-	void on_ready(http_request_impl& req);
+	void on_ready(http_request_impl& req) override;
 
-	unsigned timeout() const
+	unsigned timeout() const override
 	{ return 0; }
 
 private:
@@ -597,7 +597,7 @@ writing_request_state::on_ready(http_request_impl& req)
 			break;
 		}
 
-		log_debug("wrote %d bytes", n);
+		log_debug("wrote %zd bytes", n);
 
 		bytes_written_ += n;
 	}
@@ -639,7 +639,7 @@ reading_response_state::on_ready(http_request_impl& req)
 			return;
 		}
 
-		log_debug("read %d bytes", n);
+		log_debug("read %zd bytes", n);
 
 		if (!on_read(buf, n)) {
 			req.on_error();

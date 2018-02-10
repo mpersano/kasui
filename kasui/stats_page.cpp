@@ -48,18 +48,18 @@ class kanji_info_item : public stats_page_item
 public:
 	kanji_info_item(const kanji_info *kanji);
 
-	void draw(const g2d::mat4& proj_modelview, float alpha) const;
+	void draw(const g2d::mat4& proj_modelview, float alpha) const override;
 
-	int get_height() const
+	int get_height() const override
 	{ return 116; }
 
-	int get_left_border() const
+	int get_left_border() const override
 	{ return 0; }
 
-	float get_frame_alpha() const
+	float get_frame_alpha() const override
 	{ return .75; }
 
-	void reset_contents()
+	void reset_contents() override
 	{ }
 
 private:
@@ -71,18 +71,18 @@ class jukugo_info_item : public stats_page_item
 public:
 	jukugo_info_item(const jukugo *jukugo);
 
-	void draw(const g2d::mat4& proj_modelview, float alpha) const;
+	void draw(const g2d::mat4& proj_modelview, float alpha) const override;
 
-	int get_height() const
+	int get_height() const override
 	{ return height_; }
 
-	int get_left_border() const
+	int get_left_border() const override
 	{ return 20; }
 
-	float get_frame_alpha() const
+	float get_frame_alpha() const override
 	{ return .5; }
 
-	void reset_contents();
+	void reset_contents() override;
 
 private:
 	void draw_text(const g2d::mat4& proj_modelview) const;

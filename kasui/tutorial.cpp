@@ -117,7 +117,7 @@ public:
 	, row_kanji_(row_kanji)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.set_grid_row(row_index_, row_kanji_);
 	}
@@ -136,7 +136,7 @@ public:
 	, right_(right)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.set_falling_blocks(left_, right_);
 	}
@@ -155,7 +155,7 @@ public:
 	, tics_(tics)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.start_finger_animation(from_x_, from_y_, to_x_, to_y_, tics_);
 	}
@@ -174,7 +174,7 @@ public:
 	, text_(text)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.set_text(text_);
 	}
@@ -190,7 +190,7 @@ public:
 	: tutorial_cmd(tutorial)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.hide_text();
 	}
@@ -204,7 +204,7 @@ public:
 	, tics_(tics)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{ tutorial_.wait(tics_); }
 
 private:
@@ -218,7 +218,7 @@ public:
 	: tutorial_cmd(tutorial)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.press_left();
 	}
@@ -231,7 +231,7 @@ public:
 	: tutorial_cmd(tutorial)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.press_right();
 	}
@@ -244,7 +244,7 @@ public:
 	: tutorial_cmd(tutorial)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.press_up();
 	}
@@ -257,7 +257,7 @@ public:
 	: tutorial_cmd(tutorial)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.press_down();
 	}
@@ -271,7 +271,7 @@ public:
 	, tics_(tics)
 	{ }
 
-	void execute() const
+	void execute() const override
 	{
 		tutorial_.update_world(tics_);
 	}

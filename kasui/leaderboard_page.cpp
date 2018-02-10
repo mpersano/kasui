@@ -406,9 +406,9 @@ class local_leaderboard : public leaderboard_page
 public:
 	local_leaderboard(const std::string& title, const std::string& cache_path);
 
-	void draw(const g2d::mat4& mat, float alpha) const;
-	bool async_check_hiscore(leaderboard_event_listener *listener, int score);
-	bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score);
+	void draw(const g2d::mat4& mat, float alpha) const override;
+	bool async_check_hiscore(leaderboard_event_listener *listener, int score) override;
+	bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score) override;
 };
 
 class net_leaderboard : public leaderboard_page
@@ -416,14 +416,14 @@ class net_leaderboard : public leaderboard_page
 public:
 	net_leaderboard(const std::string& title, const std::string& cache_path, const std::string& url);
 
-	void reset();
+	void reset() override;
 
 	void on_request_error();
 	void on_request_completed(int status, const char *content, size_t content_len);
 
-	void draw(const g2d::mat4& mat, float alpha) const;
-	bool async_check_hiscore(leaderboard_event_listener *listener, int score);
-	bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score);
+	void draw(const g2d::mat4& mat, float alpha) const override;
+	bool async_check_hiscore(leaderboard_event_listener *listener, int score) override;
+	bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score) override;
 
 private:
 	static const time_t MAX_CACHE_AGE = 30*60; // in seconds

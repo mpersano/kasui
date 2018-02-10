@@ -98,8 +98,8 @@ public:
 		speed_.set_length(10.f/MS_PER_TIC);
 	}
 
-	bool update(uint32_t dt);
-	void draw() const;
+	bool update(uint32_t dt) override;
+	void draw() const override;
 
 private:
 	g2d::vec2 pos_;
@@ -170,8 +170,8 @@ public:
 	, tics_(0)
 	{ }
 
-	bool update(uint32_t dt);
-	void draw() const;
+	bool update(uint32_t dt) override;
+	void draw() const override;
 
 private:
 	g2d::vec2 pos_;
@@ -241,8 +241,8 @@ class explosion_particles : public sprite
 public:
 	explosion_particles(const g2d::vec2& pos, const gradient *g);
 
-	bool update(uint32_t dt);
-	void draw() const;
+	bool update(uint32_t dt) override;
+	void draw() const override;
 
 private:
 	struct particle {

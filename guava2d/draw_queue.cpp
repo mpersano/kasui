@@ -104,7 +104,7 @@ public:
 	: texture_(tex)
 	{ }
 
-	void execute(const draw_queue_impl&) const
+	void execute(const draw_queue_impl&) const override
 	{
 		glEnable(GL_TEXTURE_2D);
 		texture_->bind();
@@ -117,7 +117,7 @@ private:
 class disable_texture_entry : public draw_queue_entry
 {
 public:
-	void execute(const draw_queue_impl&) const
+	void execute(const draw_queue_impl&) const override
 	{ glDisable(GL_TEXTURE_2D); }
 };
 
@@ -128,7 +128,7 @@ public:
 	: program_(prog)
 	{ }
 
-	void execute(const draw_queue_impl&) const
+	void execute(const draw_queue_impl&) const override
 	{ program_->use(); }
 
 private:
@@ -143,7 +143,7 @@ public:
 	: mode_(mode)
 	{ }
 
-	void execute(const draw_queue_impl&) const
+	void execute(const draw_queue_impl&) const override
 	{ vertex_array_.draw(mode_); }
 
 	VertexArray& vertex_array()
