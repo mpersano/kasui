@@ -1,5 +1,7 @@
-#ifndef ACTION_H_
-#define ACTION_H_
+#pragma once
+
+#include <vector>
+#include <memory>
 
 struct abstract_action
 {
@@ -43,7 +45,7 @@ struct delay_action : timed_action
 template <class tweening_functor>
 struct property_change_action : timed_action
 {
-    typedef typename tweening_functor::type type;
+    using type = typename tweening_functor::type;
 
     property_change_action(type *property, const type &from, const type &to, int tics)
         : timed_action(tics)
@@ -66,43 +68,12 @@ struct property_change_action : timed_action
 
 struct action_group : abstract_action
 {
-    action_group()
-        : head(0)
-        , tail(&head)
-    {
-    }
-
-    ~action_group()
-    {
-        if (head)
-            delete head;
-    }
-
     action_group *add(abstract_action *action);
 
     bool done() const;
     void reset();
 
-    struct action_list_node
-    {
-        action_list_node(abstract_action *action)
-            : action(action)
-            , next(0)
-        {
-        }
-
-        virtual ~action_list_node()
-        {
-            delete action;
-            if (next)
-                delete next;
-        }
-
-        abstract_action *action;
-        action_list_node *next;
-    };
-
-    action_list_node *head, **tail;
+    std::vector<std::unique_ptr<abstract_action>> actions_;
 };
 
 struct parallel_action_group : action_group
@@ -116,5 +87,3 @@ struct sequential_action_group : action_group
     void step(int dt);
     void set_properties() const;
 };
-
-#endif // ACTION_H_

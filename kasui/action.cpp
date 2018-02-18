@@ -15,24 +15,20 @@ bool timed_action::done() const
 
 action_group *action_group::add(abstract_action *action)
 {
-    action_list_node *p = new action_list_node(action);
-
-    *tail = p;
-    tail = &p->next;
-
+    actions_.emplace_back(action);
     return this;
 }
 
 void action_group::reset()
 {
-    for (action_list_node *p = head; p; p = p->next)
-        p->action->reset();
+    for (auto &p : actions_)
+        p->reset();
 }
 
 bool action_group::done() const
 {
-    for (action_list_node *p = head; p; p = p->next) {
-        if (!p->action->done())
+    for (auto &p : actions_) {
+        if (!p->done())
             return false;
     }
 
@@ -41,23 +37,23 @@ bool action_group::done() const
 
 void parallel_action_group::step(int dt)
 {
-    for (action_list_node *p = head; p; p = p->next)
-        p->action->step(dt);
+    for (auto &p : actions_)
+        p->step(dt);
 }
 
 void parallel_action_group::set_properties() const
 {
-    for (action_list_node *p = head; p; p = p->next) {
-        if (!p->action->done())
-            p->action->set_properties();
+    for (auto &p : actions_) {
+        if (!p->done())
+            p->set_properties();
     }
 }
 
 void sequential_action_group::step(int dt)
 {
-    for (action_list_node *p = head; p; p = p->next) {
-        if (!p->action->done()) {
-            p->action->step(dt);
+    for (auto &p : actions_) {
+        if (!p->done()) {
+            p->step(dt);
             break;
         }
     }
@@ -65,9 +61,9 @@ void sequential_action_group::step(int dt)
 
 void sequential_action_group::set_properties() const
 {
-    for (action_list_node *p = head; p; p = p->next) {
-        if (!p->action->done()) {
-            p->action->set_properties();
+    for (auto &p : actions_) {
+        if (!p->done()) {
+            p->set_properties();
             break;
         }
     }
