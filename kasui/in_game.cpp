@@ -262,16 +262,15 @@ void glyph_animation::glyph_state::draw(const g2d::program *program, float alpha
     render::translate(x_center, y_center);
     render::scale(c * scale, scale);
 
+    const g2d::rgba top_outline{top_color_outline.r, top_color_outline.g, top_color_outline.b, alpha};
+    const g2d::rgba bottom_outline{bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b, alpha};
+    const g2d::rgba top_text{top_color_text.r, top_color_text.g, top_color_text.b, alpha};
+    const g2d::rgba bottom_text{bottom_color_text.r, bottom_color_text.g, bottom_color_text.b, alpha};
+
     render::draw_quad(program, texture, {{p0.x, p0.y}, {p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}},
                       {{t0.x, t0.y}, {t1.x, t1.y}, {t2.x, t2.y}, {t3.x, t3.y}},
-                      {{top_color_outline.r, top_color_outline.g, top_color_outline.b, alpha},
-                       {top_color_outline.r, top_color_outline.g, top_color_outline.b, alpha},
-                       {bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b, alpha},
-                       {bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b, alpha}},
-                      {{top_color_text.r, top_color_text.g, top_color_text.b, alpha},
-                       {top_color_text.r, top_color_text.g, top_color_text.b, alpha},
-                       {bottom_color_text.r, bottom_color_text.g, bottom_color_text.b, alpha},
-                       {bottom_color_text.r, bottom_color_text.g, bottom_color_text.b, alpha}},
+                      {top_outline, top_outline, bottom_outline, bottom_outline},
+                      {top_text, top_text, bottom_text, bottom_text},
                       100);
 
     render::pop_matrix();
