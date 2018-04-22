@@ -390,8 +390,6 @@ void kasui_impl::initialize(int width, int height)
     get_credits_state();
     get_tutorial_state();
 
-    themes_initialize();
-
     start_main_menu();
 // start_hiscore_list();
 

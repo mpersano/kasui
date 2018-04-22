@@ -634,7 +634,7 @@ private:
 
     wchar_t next_falling_blocks_[3];
 
-    theme *theme_;
+    std::unique_ptr<theme> theme_;
     const color_scheme *colors_;
 };
 
@@ -691,8 +691,10 @@ void in_game_state_impl::set_cur_game_animation(game_animation *p)
 
 void in_game_state_impl::reset_level()
 {
-    theme_ = themes[cur_level % NUM_THEMES];
-    colors_ = cur_settings.color_schemes[cur_level % NUM_THEMES];
+    int theme_index = cur_level % NUM_THEMES;
+
+    theme_ = make_theme(theme_index);
+    colors_ = cur_settings.color_schemes[theme_index];
 
     theme_->reset();
 
@@ -1010,9 +1012,9 @@ void in_game_state_impl::redraw() const
 
     background_draw_gradient();
 
-#ifdef FIX_ME
     theme_->draw();
 
+#ifdef FIX_ME
     if (cur_state_ == STATE_LEVEL_COMPLETED || cur_state_ == STATE_LEVEL_INTRO)
         draw_fade_overlay(1. - get_level_transition_alpha());
 

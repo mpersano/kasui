@@ -4,9 +4,11 @@
 #include "guava2d/texture_manager.h"
 #include "guava2d/vertex_array.h"
 
+#include "gl_check.h"
 #include "clouds_theme.h"
 #include "common.h"
 #include "program_registry.h"
+#include "render.h"
 
 enum
 {
@@ -18,8 +20,7 @@ enum
 
 struct cloud
 {
-    typedef g2d::indexed_vertex_array<GLubyte, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLfloat, 2>>
-        vertex_array_type;
+    using vertex_array_type = g2d::indexed_vertex_array<GLubyte, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLfloat, 2>>;
 
     float depth;
     g2d::vec2 pos;
@@ -86,19 +87,25 @@ static int cloud_depth_compare(const void *foo, const void *bar)
     return d0 > d1 ? -1 : 1;
 }
 
-static void initialize()
+clouds_theme::clouds_theme()
 {
     clouds_texture = g2d::texture_manager::get_instance().load("images/clouds.png");
 }
 
-static void reset()
+void clouds_theme::reset()
 {
-    for (cloud *p = clouds; p != &clouds[NUM_CLOUDS]; p++)
-        p->reset();
+    for (auto& cloud : clouds)
+        cloud.reset();
 }
 
-static void draw()
+void clouds_theme::draw() const
 {
+    render::end_batch();
+
+    // HACK
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GL_CHECK(glBindVertexArray(0));
+
     static cloud::vertex_array_type gv(NUM_CLOUDS * 4, NUM_CLOUDS * 6);
 
     cloud *sorted_clouds[NUM_CLOUDS];
@@ -109,8 +116,8 @@ static void draw()
     qsort(sorted_clouds, NUM_CLOUDS, sizeof *sorted_clouds, cloud_depth_compare);
 
     gv.reset();
-    for (auto &sorted_cloud : sorted_clouds)
-        sorted_cloud->draw(gv);
+    for (auto cloud : sorted_clouds)
+        cloud->draw(gv);
 
     const g2d::mat4 proj_modelview =
         get_ortho_projection() * g2d::mat4::translation(.5 * window_width, .5 * window_height, 0);
@@ -126,14 +133,13 @@ static void draw()
     prog.set_texture(0);
 
     gv.draw(GL_TRIANGLES);
+
+    render::begin_batch();
+    render::set_viewport(0, window_width, 0, window_height);
 }
 
-static void update(uint32_t dt)
+void clouds_theme::update(uint32_t dt)
 {
-    for (cloud *p = clouds; p != &clouds[NUM_CLOUDS]; p++)
-        p->update(dt);
+    for (auto& cloud : clouds)
+        cloud.update(dt);
 }
-
-theme clouds_theme = {
-    initialize, reset, draw, update,
-};

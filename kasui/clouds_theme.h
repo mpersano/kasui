@@ -1,8 +1,13 @@
-#ifndef CLOUDS_THEME_H_
-#define CLOUDS_THEME_H_
+#pragma once
 
 #include "theme.h"
 
-extern theme clouds_theme;
+class clouds_theme : public theme
+{
+public:
+    clouds_theme();
 
-#endif // CLOUDS_THEME_H_
+    void reset() override;
+    void draw() const override;
+    void update(uint32_t dt) override;
+};

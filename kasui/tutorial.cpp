@@ -65,7 +65,7 @@ private:
 
     world world_;
     text_box text_box_;
-    theme *theme_;
+    std::unique_ptr<theme> theme_;
     const color_scheme *colors_;
     float grid_base_x_, grid_base_y_;
 
@@ -377,7 +377,7 @@ void tutorial_state_impl::reset()
 {
     const auto theme_index = rand() % NUM_THEMES;
 
-    theme_ = themes[theme_index];
+    theme_ = make_theme(theme_index);
     colors_ = cur_settings.color_schemes[theme_index];
 
     theme_->reset();

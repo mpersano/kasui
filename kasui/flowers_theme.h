@@ -1,8 +1,13 @@
-#ifndef FLOWERS_THEME_H_
-#define FLOWERS_THEME_H_
+#pragma once
 
 #include "theme.h"
 
-extern theme flowers_theme;
+class flowers_theme : public theme
+{
+public:
+    flowers_theme();
 
-#endif // FLOWERS_THEME_H_
+    void reset() override;
+    void draw() const override;
+    void update(uint32_t dt) override;
+};

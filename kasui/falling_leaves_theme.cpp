@@ -6,9 +6,11 @@
 #include "guava2d/vec3.h"
 #include "guava2d/vertex_array.h"
 
+#include "gl_check.h"
 #include "common.h"
 #include "falling_leaves_theme.h"
 #include "program_registry.h"
+#include "render.h"
 
 enum
 {
@@ -24,7 +26,7 @@ static const g2d::texture *leaf_texture;
 
 using namespace g2d::vertex;
 
-typedef g2d::indexed_vertex_array<GLubyte, attrib<GLfloat, 3>, attrib<GLshort, 2>, attrib<GLubyte, 4>> vertex_array;
+using vertex_array = g2d::indexed_vertex_array<GLubyte, attrib<GLfloat, 3>, attrib<GLshort, 2>, attrib<GLubyte, 4>>;
 
 static void initialize_perspective_matrix(GLfloat matrix[16], float fovy, float aspect, float close,
                                           float phar) // far/near are defined on windoze!
@@ -164,21 +166,21 @@ void leaf::update(uint32_t dt)
         reset();
 }
 
-static void initialize()
+falling_leaves_theme::falling_leaves_theme()
 {
     leaf_texture = g2d::texture_manager::get_instance().load("images/leaf.png");
 }
 
-static void reset()
+void falling_leaves_theme::reset()
 {
-    for (leaf *p = leaves; p != &leaves[NUM_LEAVES]; p++)
-        p->reset();
+    for (auto& leaf : leaves)
+        leaf.reset();
 }
 
-static void update(uint32_t dt)
+void falling_leaves_theme::update(uint32_t dt)
 {
-    for (leaf *p = leaves; p != &leaves[NUM_LEAVES]; p++)
-        p->update(dt);
+    for (auto& leaf : leaves)
+        leaf.update(dt);
 }
 
 static int leaf_z_compare(const void *foo, const void *bar)
@@ -188,15 +190,20 @@ static int leaf_z_compare(const void *foo, const void *bar)
     return z0 < z1 ? -1 : 1;
 }
 
-static void draw()
+void falling_leaves_theme::draw() const
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    render::end_batch();
+
+    // HACK
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GL_CHECK(glBindVertexArray(0));
+
+    GL_CHECK(glEnable(GL_BLEND));
+    GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
     leaf_texture->bind();
 
     static const leaf *sorted_leaves[NUM_LEAVES];
-
     for (int i = 0; i < NUM_LEAVES; i++)
         sorted_leaves[i] = &leaves[i];
 
@@ -206,8 +213,8 @@ static void draw()
 
     gv.reset();
 
-    for (auto &sorted_leave : sorted_leaves)
-        sorted_leave->draw(gv);
+    for (auto& leaf : sorted_leaves)
+        leaf->draw(gv);
 
     GLfloat matrix[16];
     initialize_perspective_matrix(matrix, FOV, window_width / window_height, Z_NEAR, Z_FAR);
@@ -218,6 +225,7 @@ static void draw()
     prog.set_texture(0);
 
     gv.draw(GL_TRIANGLES);
-}
 
-theme falling_leaves_theme = {initialize, reset, draw, update};
+    render::begin_batch();
+    render::set_viewport(0, window_width, 0, window_height);
+}

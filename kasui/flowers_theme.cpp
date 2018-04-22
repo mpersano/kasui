@@ -5,9 +5,11 @@
 #include "guava2d/vec2.h"
 #include "guava2d/vertex_array.h"
 
+#include "gl_check.h"
 #include "common.h"
 #include "flowers_theme.h"
 #include "program_registry.h"
+#include "render.h"
 
 enum
 {
@@ -17,9 +19,8 @@ enum
 
 struct flower
 {
-    typedef g2d::indexed_vertex_array<GLubyte, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLshort, 2>,
-                                      g2d::vertex::attrib<GLfloat, 1>>
-        vertex_array_type;
+    using vertex_array_type = g2d::indexed_vertex_array<GLubyte, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLshort, 2>,
+                                      g2d::vertex::attrib<GLfloat, 1>>;
 
     float size;
     g2d::vec2 pos, speed;
@@ -107,21 +108,21 @@ void flower::update(uint32_t dt)
         reset();
 }
 
-static void initialize()
+flowers_theme::flowers_theme()
 {
     ume_texture = g2d::texture_manager::get_instance().load("images/ume.png");
 }
 
-static void reset()
+void flowers_theme::reset()
 {
-    for (flower *p = flowers; p != &flowers[NUM_FLOWERS]; p++)
-        p->reset();
+    for (auto& flower : flowers)
+        flower.reset();
 }
 
-static void update(uint32_t dt)
+void flowers_theme::update(uint32_t dt)
 {
-    for (flower *p = flowers; p != &flowers[NUM_FLOWERS]; p++)
-        p->update(dt);
+    for (auto& flower : flowers)
+        flower.update(dt);
 }
 
 static int flower_z_compare(const void *foo, const void *bar)
@@ -131,8 +132,14 @@ static int flower_z_compare(const void *foo, const void *bar)
     return s0 < s1 ? -1 : 1;
 }
 
-static void draw()
+void flowers_theme::draw() const
 {
+    render::end_batch();
+
+    // HACK
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GL_CHECK(glBindVertexArray(0));
+
     static flower *sorted_flowers[NUM_FLOWERS];
 
     for (int i = 0; i < NUM_FLOWERS; i++)
@@ -161,6 +168,7 @@ static void draw()
     prog.set_texture(0);
 
     gv.draw(GL_TRIANGLES);
-}
 
-theme flowers_theme = {initialize, reset, draw, update};
+    render::begin_batch();
+    render::set_viewport(0, window_width, 0, window_height);
+}

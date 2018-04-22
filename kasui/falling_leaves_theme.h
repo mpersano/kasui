@@ -1,8 +1,13 @@
-#ifndef FALLING_LEAVES_THEME_H_
-#define FALLING_LEAVES_THEME_H_
+#pragma once
 
 #include "theme.h"
 
-extern theme falling_leaves_theme;
+class falling_leaves_theme : public theme
+{
+public:
+    falling_leaves_theme();
 
-#endif // FALLING_LEAVES_THEME_H_
+    void reset() override;
+    void draw() const override;
+    void update(uint32_t dt) override;
+};

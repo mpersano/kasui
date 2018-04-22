@@ -1,14 +1,16 @@
-#ifndef THEME_H_
-#define THEME_H_
+#pragma once
 
 #include <cstdint>
+#include <memory>
 
-struct theme
+class theme
 {
-    void (*initialize)();
-    void (*reset)();
-    void (*draw)();
-    void (*update)(uint32_t dt);
+public:
+    virtual ~theme();
+
+    virtual void reset() = 0;
+    virtual void draw() const = 0;
+    virtual void update(uint32_t dt) = 0;
 };
 
 enum
@@ -19,8 +21,4 @@ enum
     NUM_THEMES,
 };
 
-extern theme *themes[NUM_THEMES];
-
-void themes_initialize();
-
-#endif // THEME_H_
+std::unique_ptr<theme> make_theme(int index);
