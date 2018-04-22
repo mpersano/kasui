@@ -58,6 +58,12 @@ set(KASUI_SOURCES
     utf8.cpp
     world.cpp)
 
+find_package(BISON REQUIRED)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.cpp ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.h
+                   COMMAND ${BISON_EXECUTABLE} --defines=${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.h -t ${CMAKE_CURRENT_SOURCE_DIR}/settings.y -o ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.cpp
+                   MAIN_DEPENDENCY settings.y
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_executable(kasui ${KASUI_SOURCES})
 
 target_link_libraries(
