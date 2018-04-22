@@ -163,4 +163,4 @@ static void draw()
     gv.draw(GL_TRIANGLES);
 }
 
-theme flowers_theme = {nullptr, initialize, reset, draw, update};
+theme flowers_theme = {initialize, reset, draw, update};

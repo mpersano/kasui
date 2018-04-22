@@ -135,5 +135,5 @@ static void update(uint32_t dt)
 }
 
 theme clouds_theme = {
-    nullptr, initialize, reset, draw, update,
+    initialize, reset, draw, update,
 };

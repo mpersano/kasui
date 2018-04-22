@@ -22,6 +22,7 @@
 #include "tween.h"
 #include "utf8.h"
 #include "world.h"
+#include "settings.h"
 
 enum
 {
@@ -65,6 +66,7 @@ private:
     world world_;
     text_box text_box_;
     theme *theme_;
+    const color_scheme *colors_;
     float grid_base_x_, grid_base_y_;
 
     bool show_text_box_;
@@ -373,15 +375,18 @@ void tutorial_state_impl::load_script()
 
 void tutorial_state_impl::reset()
 {
-    theme_ = themes[rand() % NUM_THEMES];
+    const auto theme_index = rand() % NUM_THEMES;
+
+    theme_ = themes[theme_index];
+    colors_ = cur_settings.color_schemes[theme_index];
 
     theme_->reset();
 
-    const gradient *gradient = theme_->colors->background_gradient;
+    const gradient *gradient = colors_->background_gradient;
     background_initialize_gradient(*gradient->from, *gradient->to);
 
-    world_.set_theme_colors(*theme_->colors->main_color, *theme_->colors->alternate_color);
-    world_.set_text_gradient(theme_->colors->text_gradient);
+    world_.set_theme_colors(*colors_->main_color, *colors_->alternate_color);
+    world_.set_text_gradient(colors_->text_gradient);
 
     cur_cmd_ = script_.begin();
 

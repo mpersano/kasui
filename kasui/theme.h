@@ -3,11 +3,8 @@
 
 #include <cstdint>
 
-#include "settings.h"
-
 struct theme
 {
-    color_scheme *colors;
     void (*initialize)();
     void (*reset)();
     void (*draw)();

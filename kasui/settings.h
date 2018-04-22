@@ -1,6 +1,6 @@
-#ifndef SETTINGS_H_
-#define SETTINGS_H_
+#pragma once
 
+#include "theme.h"
 #include "guava2d/rgb.h"
 
 struct gradient
@@ -42,10 +42,9 @@ struct settings
 {
     game_settings game;
     animation_settings animation;
+    color_scheme *color_schemes[NUM_THEMES];
 };
 
 extern settings cur_settings;
 
 void load_settings();
-
-#endif // SETTINGS_H_

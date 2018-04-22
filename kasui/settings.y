@@ -68,7 +68,7 @@ set_color_scheme(const char *name, color_scheme *cs)
 
 	for (name_to_theme *p = name_to_themes; p != &name_to_themes[NUM_THEMES]; p++) {
 		if (!strcmp(p->name, name)) {
-			themes[p->index]->colors = cs;
+			cur_settings.color_schemes[p->index] = cs;
 			break;
 		}
 	}

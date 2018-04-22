@@ -220,4 +220,4 @@ static void draw()
     gv.draw(GL_TRIANGLES);
 }
 
-theme falling_leaves_theme = {nullptr, initialize, reset, draw, update};
+theme falling_leaves_theme = {initialize, reset, draw, update};

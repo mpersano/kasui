@@ -39,6 +39,7 @@
 #include "timer_display.h"
 #include "tween.h"
 #include "world.h"
+#include "settings.h"
 
 float grid_base_x, grid_base_y;
 
@@ -634,6 +635,7 @@ private:
     wchar_t next_falling_blocks_[3];
 
     theme *theme_;
+    const color_scheme *colors_;
 };
 
 in_game_state_impl::in_game_state_impl()
@@ -690,6 +692,8 @@ void in_game_state_impl::set_cur_game_animation(game_animation *p)
 void in_game_state_impl::reset_level()
 {
     theme_ = themes[cur_level % NUM_THEMES];
+    colors_ = cur_settings.color_schemes[cur_level % NUM_THEMES];
+
     theme_->reset();
 
     world_.set_level(cur_level, practice_mode, cur_options->enable_hints);
@@ -698,15 +702,15 @@ void in_game_state_impl::reset_level()
 
 #if 1
     set_state(STATE_LEVEL_INTRO);
-    set_cur_game_animation(new level_intro_animation(theme_->colors->text_gradient));
+    set_cur_game_animation(new level_intro_animation(colors_->text_gradient));
 #else
     set_state(STATE_IN_GAME);
 #endif
 
-    world_.set_theme_colors(*theme_->colors->main_color, *theme_->colors->alternate_color);
-    world_.set_text_gradient(theme_->colors->text_gradient);
+    world_.set_theme_colors(*colors_->main_color, *colors_->alternate_color);
+    world_.set_text_gradient(colors_->text_gradient);
 
-    const gradient *gradient = theme_->colors->background_gradient;
+    const gradient *gradient = colors_->background_gradient;
     background_initialize_gradient(*gradient->from, *gradient->to);
 
     if (!practice_mode && cur_level > cur_options->max_unlocked_level)
@@ -729,7 +733,7 @@ void in_game_state_impl::finish_level()
 {
     set_state(STATE_LEVEL_COMPLETED);
     start_sound(SOUND_LEVEL_COMPLETED, false);
-    set_cur_game_animation(new level_completed_animation(theme_->colors->text_gradient));
+    set_cur_game_animation(new level_completed_animation(colors_->text_gradient));
 }
 
 void in_game_state_impl::set_state_game_over(bool time_up)
@@ -739,9 +743,9 @@ void in_game_state_impl::set_state_game_over(bool time_up)
 
     if (time_up) {
         world_.set_game_over();
-        set_cur_game_animation(new time_up_animation(theme_->colors->text_gradient));
+        set_cur_game_animation(new time_up_animation(colors_->text_gradient));
     } else {
-        set_cur_game_animation(new game_over_animation(theme_->colors->text_gradient));
+        set_cur_game_animation(new game_over_animation(colors_->text_gradient));
     }
 }
 
@@ -995,11 +999,11 @@ void in_game_state_impl::redraw() const
 
     if (cur_state_ == STATE_LEVEL_COMPLETED || cur_state_ == STATE_LEVEL_INTRO) {
         const float alpha = get_level_transition_alpha();
-        theme_color = *theme_->colors->main_color * alpha + g2d::rgb(255, 255, 255) * (1. - alpha);
-        theme_opposite_color = *theme_->colors->alternate_color * alpha + g2d::rgb(255, 255, 255) * (1. - alpha);
+        theme_color = *colors_->main_color * alpha + g2d::rgb(255, 255, 255) * (1. - alpha);
+        theme_opposite_color = *colors_->alternate_color * alpha + g2d::rgb(255, 255, 255) * (1. - alpha);
     } else {
-        theme_color = *theme_->colors->main_color;
-        theme_opposite_color = *theme_->colors->alternate_color;
+        theme_color = *colors_->main_color;
+        theme_opposite_color = *colors_->alternate_color;
     }
 
     const_cast<world *>(&world_)->set_theme_colors(theme_color, theme_opposite_color);

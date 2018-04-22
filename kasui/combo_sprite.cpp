@@ -5,7 +5,7 @@
 #include "combo_sprite.h"
 #include "common.h"
 #include "render.h"
-#include "theme.h"
+#include "settings.h"
 
 combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient *g)
     : x_origin_(x)
