@@ -2,7 +2,7 @@
 
 #include "theme.h"
 
-class flowers_theme : public theme
+class flowers_theme : public theme_animation
 {
 public:
     flowers_theme();

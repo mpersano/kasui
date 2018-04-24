@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <memory>
 
-class theme
+class theme_animation
 {
 public:
-    virtual ~theme();
+    virtual ~theme_animation();
 
     virtual void reset() = 0;
     virtual void draw() const = 0;
@@ -21,4 +21,4 @@ enum
     NUM_THEMES,
 };
 
-std::unique_ptr<theme> make_theme(int index);
+std::unique_ptr<theme_animation> make_theme(int index);

@@ -634,7 +634,7 @@ private:
 
     wchar_t next_falling_blocks_[3];
 
-    std::unique_ptr<theme> theme_;
+    std::unique_ptr<theme_animation> theme_;
     const color_scheme *colors_;
 };
 

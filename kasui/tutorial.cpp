@@ -65,7 +65,7 @@ private:
 
     world world_;
     text_box text_box_;
-    std::unique_ptr<theme> theme_;
+    std::unique_ptr<theme_animation> theme_;
     const color_scheme *colors_;
     float grid_base_x_, grid_base_y_;
 

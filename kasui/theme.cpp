@@ -2,13 +2,13 @@
 #include "falling_leaves_theme.h"
 #include "flowers_theme.h"
 
-theme::~theme()
+theme_animation::~theme_animation()
 {
 }
 
-std::unique_ptr<theme> make_theme(int index)
+std::unique_ptr<theme_animation> make_theme(int index)
 {
-    return std::unique_ptr<theme>([index]() -> theme * {
+    return std::unique_ptr<theme_animation>([index]() -> theme_animation * {
         switch (index)
         {
         case THEME_CLOUDS:
