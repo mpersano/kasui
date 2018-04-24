@@ -19,6 +19,7 @@ public:
     void draw() const override;
     void update(uint32_t dt) override;
 
+private:
     struct cloud
     {
         float depth;
@@ -30,7 +31,6 @@ public:
         void update(uint32_t dt);
     };
 
-private:
     const g2d::texture *texture_;
 
     static constexpr int NUM_CLOUDS = 16;
