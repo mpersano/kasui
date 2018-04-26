@@ -1531,27 +1531,10 @@ void world::draw_block(int type, float x, float y, float alpha, const g2d::rgb &
     const float v0 = sv * t.v0;
     const float v1 = sv * t.v1;
 
-#if 0
-	const int r = color.r;
-	const int g = color.g;
-	const int b = color.b;
-	const int a = alpha*255;
-
-	const int vert_index = gv.get_num_verts();
-
-	gv << x, y, v0, u1, r, g, b, a;
-	gv << x + cell_size_, y, v1, u1, r, g, b, a;
-	gv << x + cell_size_, y + cell_size_, v1, u0, r, g, b, a;
-	gv << x, y + cell_size_, v0, u0, r, g, b, a;
-
-	gv < vert_index + 0, vert_index + 1, vert_index + 2,
-	     vert_index + 2, vert_index + 3, vert_index + 0;
-#else
-    render::set_color({color.r / 255.f, color.g / 255.f, color.b / 255.f, alpha});
-    render::draw_quad(blocks_texture_,
-                      {{x, y}, {x + cell_size_, y}, {x + cell_size_, y + cell_size_}, {x, y + cell_size_}},
-                      {{v0, u1}, {v1, u1}, {v1, u0}, {v0, u0}}, 0);
-#endif
+    render::set_color({(1.0 / 255.) * color, alpha});
+    render::draw_box(blocks_texture_,
+                      {{x, y}, {x + cell_size_, y + cell_size_}},
+                      {{v0, u1}, {v1, u0}}, 0);
 }
 
 void world::spawn_drop_trail(int row, int col, int type)
