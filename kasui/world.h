@@ -10,6 +10,7 @@ class gradient;
 namespace g2d {
 class mat4;
 class texture;
+class program;
 };
 
 enum
@@ -217,9 +218,7 @@ public:
 private:
     bool get_hint(hint &h) const;
 
-    void init_background_va();
-
-    void draw_background(const g2d::mat4 &mat) const;
+    void draw_background() const;
     void draw_blocks() const;
     void draw_flares() const;
 
@@ -271,7 +270,7 @@ private:
     const g2d::texture *blocks_texture_;
     const g2d::texture *flare_texture_;
 
-    g2d::indexed_vertex_array_texuv background_va_;
+    const g2d::program *program_grid_background_;
 
     game_state cur_state_;
     int state_tics_;

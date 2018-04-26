@@ -349,31 +349,3 @@ void program_timer_text::set_outline_color(const g2d::rgba &color) const
 {
     g2d::program::set_uniform(outline_color_location_, color);
 }
-
-program_grid_background::program_grid_background()
-    : program_texture_base("shaders/vert_grid_background.glsl", "shaders/frag_texture_color.glsl")
-{
-}
-
-void program_grid_background::initialize_uniform_locations()
-{
-    program_texture_base::initialize_uniform_locations();
-    theme_color_location_ = program_->get_uniform_location("theme_color");
-    highlight_position_location_ = program_->get_uniform_location("highlight_position");
-    highlight_fade_factor_location_ = program_->get_uniform_location("highlight_fade_factor");
-}
-
-void program_grid_background::set_theme_color(const g2d::rgb &color) const
-{
-    g2d::program::set_uniform(theme_color_location_, color);
-}
-
-void program_grid_background::set_highlight_position(const g2d::vec2 &position) const
-{
-    g2d::program::set_uniform(highlight_position_location_, position);
-}
-
-void program_grid_background::set_highlight_fade_factor(float value) const
-{
-    g2d::program::set_uniform_f(highlight_fade_factor_location_, value);
-}

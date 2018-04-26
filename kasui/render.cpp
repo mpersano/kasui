@@ -646,6 +646,11 @@ void draw_quad(const g2d::texture *texture, const quad &verts, const quad &texco
 
 void draw_box(const g2d::texture *texture, const box &verts, const box &texcoords, int layer)
 {
+    draw_box(nullptr, texture, verts, texcoords, layer);
+}
+
+void draw_box(const g2d::program *program, const g2d::texture *texture, const box &verts, const box &texcoords, int layer)
+{
     const float x0 = verts.v0.x;
     const float y0 = verts.v0.y;
 
@@ -658,7 +663,7 @@ void draw_box(const g2d::texture *texture, const box &verts, const box &texcoord
     const float u1 = texcoords.v1.x;
     const float v1 = texcoords.v1.y;
 
-    g_sprite_batch.add_quad(nullptr, texture, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
+    g_sprite_batch.add_quad(program, texture, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
                             {{u0, v0}, {u1, v0}, {u1, v1}, {u0, v1}}, layer);
 }
 

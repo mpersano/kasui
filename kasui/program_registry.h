@@ -8,7 +8,7 @@ typedef singleton::registry<program_flat, program_color, program_texture_decal, 
                             program_texture_alpha, program_texture_uniform_alpha, program_texture_uniform_color,
                             program_text, program_text_outline, program_text_alpha, program_text_outline_alpha,
                             program_text_gradient, program_text_outline_gradient, program_intro_text,
-                            program_timer_text, program_3d_texture_color, program_grid_background>
+                            program_timer_text, program_3d_texture_color>
     program_registry;
 
 template <typename T>

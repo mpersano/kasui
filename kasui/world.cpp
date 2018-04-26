@@ -26,6 +26,7 @@
 #include "sounds.h"
 #include "tween.h"
 #include "world.h"
+#include "program_manager.h"
 
 #include "block_info.cpp"
 
@@ -612,6 +613,7 @@ world::world(int rows, int cols, int wanted_height)
     , matches_(new bool[rows_ * cols_])
     , blocks_texture_(g2d::texture_manager::get_instance().load("images/blocks.png"))
     , flare_texture_(g2d::texture_manager::get_instance().load("images/flare.png"))
+    , program_grid_background_(load_program("shaders/grid_background.vert", "shaders/sprite.frag"))
     , falling_block_queue_{*this, *this}
     , event_listener_(nullptr)
 {
@@ -620,8 +622,6 @@ world::world(int rows, int cols, int wanted_height)
     cell_size_ = wanted_cell_size < max_cell_size ? wanted_cell_size : max_cell_size;
 
     memset(grid_, 0, rows_ * cols_ * sizeof *grid_);
-
-    init_background_va();
 
     reset();
 }
@@ -1217,9 +1217,7 @@ void world::update(uint32_t dt)
 void world::draw() const
 {
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
-#ifdef FIX_ME
-    draw_background(mat);
-#endif
+    draw_background();
     draw_blocks();
 
     if (cur_state_ == STATE_FLARES)
@@ -1476,8 +1474,14 @@ void world::drop_hanging_blocks()
     }
 }
 
-void world::init_background_va()
+void world::draw_background() const
 {
+    program_grid_background_->use();
+    program_grid_background_->set_uniform("highlight_position", g2d::vec2(-.1 * cols_ * cell_size_, 1.1 * rows_ * cell_size_));
+    program_grid_background_->set_uniform_f("highlight_fade_factor", .5f * cols_ * cell_size_);
+
+    render::set_color({(1. / 255) * .8 * theme_color_, 1});
+
     const block_info &bi = block_infos[NUM_BLOCK_TYPES];
     assert(bi.kanji == L'\0');
 
@@ -1498,29 +1502,14 @@ void world::init_background_va()
         for (int c = 0; c < cols_; c++) {
             const float x = c * cell_size_;
 
-            background_va_ << x, y, v0, u1;
-            background_va_ << x + cell_size_, y, v1, u1;
-            background_va_ << x + cell_size_, y + cell_size_, v1, u0;
-            background_va_ << x, y + cell_size_, v0, u0;
-
-            const int vert_index = (r * cols_ + c) * 4;
-            background_va_ < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3,
-                vert_index + 0;
+            render::draw_box(
+                    program_grid_background_,
+                    blocks_texture_,
+                    {{x, y}, {x + cell_size_, y + cell_size_}},
+                    {{v0, u1}, {v1, u0}},
+                    -20);
         }
     }
-}
-
-void world::draw_background(const g2d::mat4 &mat) const
-{
-    program_grid_background &prog = get_program_instance<program_grid_background>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
-    prog.set_theme_color((1. / 255) * .8 * theme_color_);
-    prog.set_highlight_position(g2d::vec2(-.1 * cols_ * cell_size_, 1.1 * rows_ * cell_size_));
-    prog.set_highlight_fade_factor(.5f * cols_ * cell_size_);
-
-    background_va_.draw(GL_TRIANGLES);
 }
 
 void world::draw_block(int type, float x, float y, float alpha) const

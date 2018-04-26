@@ -255,21 +255,4 @@ protected:
     GLint outline_color_location_;
 };
 
-class program_grid_background : public program_texture_base
-{
-public:
-    program_grid_background();
-
-    void set_theme_color(const g2d::rgb &color) const;
-    void set_highlight_position(const g2d::vec2 &pos) const;
-    void set_highlight_fade_factor(float value) const;
-
-protected:
-    void initialize_uniform_locations();
-
-    GLint theme_color_location_;
-    GLint highlight_position_location_;
-    GLint highlight_fade_factor_location_;
-};
-
 #endif // PROGRAM_WRAPPERS_H_
