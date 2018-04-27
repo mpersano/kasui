@@ -10,7 +10,6 @@
 #include <guava2d/program.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
-#include <guava2d/vertex_array.h>
 #include <guava2d/xwchar.h>
 
 #include "bakudan_sprite.h"
@@ -186,9 +185,6 @@ void drop_trail_sprite::draw() const
     float lerp_factor = 1. - static_cast<float>(tics_) / TTL;
     if (lerp_factor < 0)
         lerp_factor = 0;
-
-    static g2d::vertex_array_texuv_color gv(NUM_COMPONENTS * 6);
-    gv.reset();
 
     float alpha = .5 * lerp_factor;
 

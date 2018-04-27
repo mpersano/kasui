@@ -3,7 +3,6 @@
 #include <list>
 
 #include <guava2d/rgb.h>
-#include <guava2d/vertex_array.h>
 
 class gradient;
 
