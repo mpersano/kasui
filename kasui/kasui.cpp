@@ -269,7 +269,6 @@ static void preload_resources()
     get_program_instance<program_intro_text>();
     get_program_instance<program_timer_text>();
     get_program_instance<program_3d_texture_color>();
-    get_program_instance<program_grid_background>();
 
     // sprites
 
