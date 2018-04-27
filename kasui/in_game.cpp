@@ -1,3 +1,5 @@
+#include "in_game.h"
+
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -23,7 +25,6 @@
 #include "background.h"
 #include "common.h"
 #include "hiscore_input.h"
-#include "in_game.h"
 #include "jukugo.h"
 #include "line_splitter.h"
 #include "main_menu.h"

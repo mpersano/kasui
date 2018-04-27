@@ -1,10 +1,4 @@
-#include <cassert>
-
-#include <algorithm>
-
-#include <stdlib.h>
-#include <string.h>
-#include <wchar.h>
+#include "world.h"
 
 #include <guava2d/font_manager.h>
 #include <guava2d/program.h>
@@ -24,10 +18,16 @@
 #include "settings.h"
 #include "sounds.h"
 #include "tween.h"
-#include "world.h"
 #include "program_manager.h"
-
 #include "block_info.cpp"
+
+#include <cassert>
+
+#include <algorithm>
+
+#include <stdlib.h>
+#include <string.h>
+#include <wchar.h>
 
 namespace {
 

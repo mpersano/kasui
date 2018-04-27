@@ -1,8 +1,14 @@
 #pragma once
 
+#include <guava2d/rgb.h>
+#include <guava2d/vec2.h>
+
 #include <list>
 
-#include <guava2d/rgb.h>
+#include <cassert>
+#include <cstdint>
+
+#include <cassert>
 
 class gradient;
 
