@@ -2,6 +2,12 @@
 
 #include <guava2d/vec2.h>
 
+#include <array>
+
+namespace g2d {
+class texture;
+}
+
 struct sakura_petal
 {
     float size;
@@ -17,10 +23,6 @@ struct sakura_petal
     void update(uint32_t dt);
 };
 
-namespace g2d {
-class texture;
-}
-
 class sakura_fubuki
 {
 public:
@@ -32,7 +34,7 @@ public:
 
 private:
     static constexpr int NUM_PETALS = 20;
-    sakura_petal petals_[NUM_PETALS];
+    std::array<sakura_petal, NUM_PETALS> petals_;
 
     const g2d::texture *petal_texture_;
 };

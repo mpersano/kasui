@@ -1,9 +1,9 @@
-#include <guava2d/texture_manager.h>
+#include "sakura.h"
 
 #include "render.h"
-
 #include "common.h"
-#include "sakura.h"
+
+#include <guava2d/texture_manager.h>
 
 namespace {
 
@@ -92,13 +92,7 @@ void sakura_petal::draw(const g2d::texture *texture) const
     render::set_color({1.f, 1.f, 1.f, w * alpha});
 
     render::draw_quad(texture, {{p0.x, p0.y}, {p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}},
-                      {{
-                           0, 0,
-                       },
-                       {1, 0},
-                       {1, 1},
-                       {0, 1}},
-                      -1);
+                      {{0, 0}, {1, 0}, {1, 1}, {0, 1}}, -1);
 }
 
 void sakura_petal::update(uint32_t dt)
