@@ -1,32 +1,20 @@
-#include <stdlib.h>
+#include "falling_leaves_theme.h"
 
 #include "guava2d/g2dgl.h"
-#include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
-#include "guava2d/vec3.h"
-#include "guava2d/vertex_array.h"
 
 #include "gl_check.h"
 #include "common.h"
-#include "falling_leaves_theme.h"
 #include "program_registry.h"
 #include "render.h"
 
-enum
-{
-    NUM_LEAVES = 30,
-    FADE_TTL = 30 * MS_PER_TIC,
-};
+#include <algorithm>
 
-static const float FOV = 45.f;
-static const float Z_NEAR = 1.f;
-static const float Z_FAR = 5000.f;
+static constexpr auto FADE_TTL = 30 * MS_PER_TIC;
 
-static const g2d::texture *leaf_texture;
-
-using namespace g2d::vertex;
-
-using vertex_array = g2d::indexed_vertex_array<GLubyte, attrib<GLfloat, 3>, attrib<GLshort, 2>, attrib<GLubyte, 4>>;
+static constexpr float FOV = 45.f;
+static constexpr float Z_NEAR = 1.f;
+static constexpr float Z_FAR = 5000.f;
 
 static void initialize_perspective_matrix(GLfloat matrix[16], float fovy, float aspect, float close,
                                           float phar) // far/near are defined on windoze!
@@ -53,40 +41,21 @@ static void initialize_perspective_matrix(GLfloat matrix[16], float fovy, float 
     matrix[15] = 0;
 }
 
-struct leaf
-{
-    float size;
-    g2d::vec3 pos, speed;
-    g2d::rgb color;
-    g2d::mat4 dir;
-    g2d::vec3 axis;
-    float rot;
-    float phase_0, phase_1, phi_0, phi_1;
-    float radius_0, radius_1;
-    int tics, ttl;
-
-    void reset();
-    void draw(vertex_array &gv) const;
-    void update(uint32_t dt);
-};
-
-static leaf leaves[NUM_LEAVES];
-
-void leaf::reset()
+void falling_leaves_theme::leaf::reset()
 {
     const float f = 1.f / MS_PER_TIC;
 
-    static const float MIN_X = -150, MAX_X = 150;
-    static const float MIN_Y = 150, MAX_Y = 300;
-    static const float MIN_Z = -700, MAX_Z = -200;
+    static constexpr float MIN_X = -150, MAX_X = 150;
+    static constexpr float MIN_Y = 150, MAX_Y = 300;
+    static constexpr float MIN_Z = -700, MAX_Z = -200;
 
-    static const float MIN_THETA = .03, MAX_THETA = .08;
-    static const float SPEED_FUZZ = .1;
-    static const float MIN_SPEED = 1, MAX_SPEED = 1.5;
-    static const float MIN_PHI = .025, MAX_PHI = .05;
-    static const float MIN_PHASE = 0, MAX_PHASE = M_PI;
-    static const float MIN_RADIUS = 15, MAX_RADIUS = 30;
-    static const int MIN_TTL = 200, MAX_TTL = 250;
+    static constexpr float MIN_THETA = .03, MAX_THETA = .08;
+    static constexpr float SPEED_FUZZ = .1;
+    static constexpr float MIN_SPEED = 1, MAX_SPEED = 1.5;
+    static constexpr float MIN_PHI = .025, MAX_PHI = .05;
+    static constexpr float MIN_PHASE = 0, MAX_PHASE = M_PI;
+    static constexpr float MIN_RADIUS = 15, MAX_RADIUS = 30;
+    static constexpr int MIN_TTL = 200, MAX_TTL = 250;
 
     static const g2d::rgb min_color(255, 0, 0), max_color(255, 255, 0);
 
@@ -118,7 +87,7 @@ void leaf::reset()
     tics = 0;
 }
 
-void leaf::draw(vertex_array &gv) const
+void falling_leaves_theme::leaf::draw(vertex_array &gv) const
 {
     float alpha_scale;
 
@@ -156,7 +125,7 @@ void leaf::draw(vertex_array &gv) const
     gv < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3, vert_index + 0;
 }
 
-void leaf::update(uint32_t dt)
+void falling_leaves_theme::leaf::update(uint32_t dt)
 {
     g2d::mat4 r = g2d::mat4::rotation_from_axis_and_angle(axis, dt * rot);
     dir *= r;
@@ -167,27 +136,20 @@ void leaf::update(uint32_t dt)
 }
 
 falling_leaves_theme::falling_leaves_theme()
+    : texture_{g2d::texture_manager::get_instance().load("images/leaf.png")}
 {
-    leaf_texture = g2d::texture_manager::get_instance().load("images/leaf.png");
 }
 
 void falling_leaves_theme::reset()
 {
-    for (auto& leaf : leaves)
+    for (auto& leaf : leaves_)
         leaf.reset();
 }
 
 void falling_leaves_theme::update(uint32_t dt)
 {
-    for (auto& leaf : leaves)
+    for (auto& leaf : leaves_)
         leaf.update(dt);
-}
-
-static int leaf_z_compare(const void *foo, const void *bar)
-{
-    const float z0 = (*(leaf **)foo)->pos.z;
-    const float z1 = (*(leaf **)bar)->pos.z;
-    return z0 < z1 ? -1 : 1;
 }
 
 void falling_leaves_theme::draw() const
@@ -201,15 +163,16 @@ void falling_leaves_theme::draw() const
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
-    leaf_texture->bind();
+    texture_->bind();
 
-    static const leaf *sorted_leaves[NUM_LEAVES];
+    std::array<const leaf *, NUM_LEAVES> sorted_leaves;
     for (int i = 0; i < NUM_LEAVES; i++)
-        sorted_leaves[i] = &leaves[i];
+        sorted_leaves[i] = &leaves_[i];
+    std::sort(std::begin(sorted_leaves), std::end(sorted_leaves), [](const leaf *a, const leaf *b) {
+        return a->pos.z < b->pos.z;
+    });
 
-    qsort(sorted_leaves, NUM_LEAVES, sizeof *sorted_leaves, leaf_z_compare);
-
-    static vertex_array gv(NUM_LEAVES * 4, NUM_LEAVES * 6);
+    static leaf::vertex_array gv(NUM_LEAVES * 4, NUM_LEAVES * 6);
 
     gv.reset();
 
