@@ -134,8 +134,8 @@ void dead_block_sprite::draw() const
     const float alpha = static_cast<float>(ttl_) / DEAD_BLOCK_TTL;
 
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
-    render::set_color({color_.r / 255.f, color_.g / 255.f, color_.b / 255.f, alpha});
-    render::draw_quad(texture_, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}}, {{u0, v1}, {u1, v1}, {u1, v0}, {u0, v0}}, 10);
+    render::set_color({(1. / 255.) * color_, alpha});
+    render::draw_box(texture_, {{x0, y0}, {x1, y1}}, {{u0, v1}, {u1, v0}}, 10);
 }
 
 class drop_trail_sprite : public sprite
@@ -208,8 +208,7 @@ void drop_trail_sprite::draw() const
         const float y1 = y0 + cell_size_;
 
         render::set_color({r, g, b, alpha});
-        render::draw_quad(texture_, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}}, {{u0, v1}, {u1, v1}, {u1, v0}, {u0, v0}},
-                          10);
+        render::draw_box(texture_, {{x0, y0}, {x1, y1}}, {{u0, v1}, {u1, v0}}, 10);
 
         alpha *= .8;
     }
