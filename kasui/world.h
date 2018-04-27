@@ -3,7 +3,9 @@
 #include <guava2d/rgb.h>
 #include <guava2d/vec2.h>
 
+#include <memory>
 #include <list>
+#include <vector>
 
 #include <cassert>
 #include <cstdint>
@@ -265,8 +267,8 @@ private:
     bool enable_hints_;
 
     int rows_, cols_;
-    int *grid_;
-    bool *matches_;
+    std::vector<int> grid_;
+    std::vector<bool> matches_;
     int num_level_block_types_;
     float cell_size_;
     g2d::rgb theme_color_, theme_opposite_color_;
@@ -302,7 +304,7 @@ private:
 
     int hint_r_, hint_c_;
 
-    std::list<sprite *> sprites_;
+    std::list<std::unique_ptr<sprite>> sprites_;
 
     world_event_listener *event_listener_;
 

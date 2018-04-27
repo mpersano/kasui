@@ -605,8 +605,8 @@ world::world(int rows, int cols, int wanted_height)
     : practice_mode_(false)
     , rows_(rows)
     , cols_(cols)
-    , grid_(new int[rows_ * cols_])
-    , matches_(new bool[rows_ * cols_])
+    , grid_(rows_ * cols_, 0)
+    , matches_(rows_ * cols_, false)
     , blocks_texture_(g2d::texture_manager::get_instance().load("images/blocks.png"))
     , flare_texture_(g2d::texture_manager::get_instance().load("images/flare.png"))
     , program_grid_background_(load_program("shaders/grid_background.vert", "shaders/sprite.frag"))
@@ -617,15 +617,11 @@ world::world(int rows, int cols, int wanted_height)
     const float max_cell_size = .9 * window_width / cols_;
     cell_size_ = wanted_cell_size < max_cell_size ? wanted_cell_size : max_cell_size;
 
-    memset(grid_, 0, rows_ * cols_ * sizeof *grid_);
-
     reset();
 }
 
 world::~world()
 {
-    delete[] grid_;
-    delete[] matches_;
 }
 
 #include "theme.h"
@@ -633,8 +629,6 @@ world::~world()
 void world::reset()
 {
     score_ = 0;
-
-    std::for_each(sprites_.begin(), sprites_.end(), [](sprite *p) { delete p; });
 
     sprites_.clear();
 }
@@ -704,7 +698,7 @@ void world::set_row(int row_index, const wchar_t *kanji)
 
 void world::initialize_grid(int num_filled_rows)
 {
-    memset(grid_, 0, rows_ * cols_ * sizeof *grid_);
+    std::fill(grid_.begin(), grid_.end(), 0);
 
     for (int i = 0; i < num_filled_rows; i++) {
         for (int j = 0; j < cols_; j++) {
@@ -785,7 +779,7 @@ bool world::find_matches()
 {
     float y_offset = 0;
 
-    memset(matches_, 0, rows_ * cols_ * sizeof *matches_);
+    std::fill(matches_.begin(), matches_.end(), false);
 
     bool found = false;
 
@@ -805,7 +799,7 @@ bool world::find_matches()
 
                         const float x = (c + 1) * cell_size_;
                         const float y = (r + .5) * cell_size_ + y_offset;
-                        sprites_.push_front(new jukugo_info_sprite(p, x, y, text_gradient_));
+                        sprites_.emplace_front(new jukugo_info_sprite(p, x, y, text_gradient_));
 
                         if (!practice_mode_)
                             p->hits++;
@@ -822,7 +816,7 @@ bool world::find_matches()
 
                         const float x = (c + .5) * cell_size_;
                         const float y = r * cell_size_ + y_offset;
-                        sprites_.push_front(new jukugo_info_sprite(p, x, y, text_gradient_));
+                        sprites_.emplace_front(new jukugo_info_sprite(p, x, y, text_gradient_));
 
                         if (!practice_mode_)
                             p->hits++;
@@ -849,9 +843,9 @@ bool world::find_matches()
                 const float y = (r + .5) * cell_size_;
 
                 if ((grid_[i] & BAKUDAN_FLAG))
-                    sprites_.push_front(new bakudan_sprite(x, y));
+                    sprites_.emplace_front(new bakudan_sprite(x, y));
 
-                sprites_.push_front(new explosion_particles(g2d::vec2(x, y), text_gradient_));
+                sprites_.emplace_front(new explosion_particles(g2d::vec2(x, y), text_gradient_));
             }
         }
 
@@ -937,12 +931,12 @@ void world::solve_matches()
     }
 
     if (combo_size_ > 1)
-        sprites_.push_back(new combo_sprite(combo_size_, 0, .6 * rows_ * cell_size_, text_gradient_));
+        sprites_.emplace_back(new combo_sprite(combo_size_, 0, .6 * rows_ * cell_size_, text_gradient_));
 }
 
 bool world::has_hanging_blocks() const
 {
-    for (int *p = grid_; p != &grid_[(rows_ - 1) * cols_]; p++) {
+    for (const int *p = &grid_[0]; p != &grid_[(rows_ - 1) * cols_]; p++) {
         if (p[0] == 0 && p[cols_])
             return true;
     }
@@ -1028,7 +1022,7 @@ void world::set_state_falling_block_or_hint()
         else
             box->set_pos(g2d::vec2(base_x, to_pos.y - cell_size_ - .5 * box->get_height()));
 
-        sprites_.push_front(box);
+        sprites_.emplace_front(box);
 
         set_state(STATE_HINT);
     } else {
@@ -1065,7 +1059,7 @@ bool world::on_up_pressed()
     if (cur_state_ == STATE_FALLING_BLOCK) {
         return CUR_FALLING_BLOCK->on_up_pressed();
     } else if (cur_state_ == STATE_HINT) {
-        return static_cast<hint_text_box *>(sprites_.front())->close();
+        return static_cast<hint_text_box *>(sprites_.front().get())->close();
     } else {
         return false;
     }
@@ -1098,10 +1092,7 @@ void world::update_animations(uint32_t dt)
     auto it = sprites_.begin();
 
     while (it != sprites_.end()) {
-        sprite *p = *it;
-
-        if (!p->update(dt)) {
-            delete p;
+        if (!(*it)->update(dt)) {
             it = sprites_.erase(it);
         } else {
             ++it;
@@ -1219,7 +1210,7 @@ void world::draw() const
     if (cur_state_ == STATE_FLARES)
         draw_flares();
 
-    for (const auto p : sprites_)
+    for (const auto& p : sprites_)
         p->draw();
 }
 
@@ -1234,7 +1225,7 @@ void world::draw_blocks() const
             if (int t = get_block_at(r, c)) {
                 if (cur_state_ == STATE_HINT && r == hint_r_ && c == hint_c_) {
                     // OMG HACK
-                    const float alpha = static_cast<hint_text_box *>(sprites_.front())->get_alpha();
+                    const float alpha = static_cast<hint_text_box *>(sprites_.front().get())->get_alpha();
                     const g2d::rgb base_color = !(t & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_;
                     const g2d::rgb color = (1. - alpha) * base_color + alpha * g2d::rgb(255, 255, 255);
                     draw_block(t - 1, x, y, 1, color);
@@ -1544,7 +1535,7 @@ void world::spawn_drop_trail(int row, int col, int type)
     g2d::vec2 uv0(su * t.u0, sv * t.v0);
     g2d::vec2 uv1(su * t.u1, sv * t.v1);
 
-    sprites_.push_front(new drop_trail_sprite(cell_size_ * g2d::vec2(col, row), cell_size_, blocks_texture_, uv0, uv1,
+    sprites_.emplace_front(new drop_trail_sprite(cell_size_ * g2d::vec2(col, row), cell_size_, blocks_texture_, uv0, uv1,
                                               !(type & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_));
 }
 
@@ -1559,6 +1550,6 @@ void world::spawn_dead_block_sprite(const g2d::vec2 &pos, int type)
     g2d::vec2 uv0(su * t.u0, sv * t.v0);
     g2d::vec2 uv1(su * t.u1, sv * t.v1);
 
-    sprites_.push_front(new dead_block_sprite(pos, cell_size_, blocks_texture_, uv0, uv1,
+    sprites_.emplace_front(new dead_block_sprite(pos, cell_size_, blocks_texture_, uv0, uv1,
                                               !(type & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_));
 }
