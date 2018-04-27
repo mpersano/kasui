@@ -1,12 +1,12 @@
-#include <algorithm>
+#include "flowers_theme.h"
 
 #include "guava2d/g2dgl.h"
 #include "guava2d/texture_manager.h"
-#include "guava2d/vec2.h"
 
 #include "common.h"
-#include "flowers_theme.h"
 #include "render.h"
+
+#include <algorithm>
 
 constexpr auto FADE_TTL = 30 * MS_PER_TIC;
 

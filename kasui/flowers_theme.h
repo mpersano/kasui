@@ -2,7 +2,14 @@
 
 #include "theme.h"
 
+#include "guava2d/vec2.h"
+
 #include <array>
+
+namespace g2d
+{
+class texture;
+};
 
 class flowers_theme : public theme_animation
 {
