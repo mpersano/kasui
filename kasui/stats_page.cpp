@@ -392,16 +392,14 @@ stats_page::stats_page(int level, float top_y)
             kanji_jukugos.push_back(kanji_jukugo(ki));
     });
 
-    for (size_t i = 0; i < jukugo_list_size; i++) {
-        const jukugo *ji = jukugo_list[i];
-
-        if (ji->level != level)
+    for (const auto& jukugo : jukugo_list) {
+        if (jukugo.level != level)
             continue;
 
         kanji_jukugo *p = nullptr;
 
         for (auto &q : kanji_jukugos) {
-            if (q.ki->code == ji->kanji[0] || q.ki->code == ji->kanji[1]) {
+            if (q.ki->code == jukugo.kanji[0] || q.ki->code == jukugo.kanji[1]) {
                 if (p == nullptr || q.jukugo_list.size() < p->jukugo_list.size())
                     p = &q;
             }
@@ -409,7 +407,7 @@ stats_page::stats_page(int level, float top_y)
 
         assert(p);
 
-        p->jukugo_list.push_back(ji);
+        p->jukugo_list.push_back(&jukugo);
     }
 
     for (auto &kanji_jukugo : kanji_jukugos) {

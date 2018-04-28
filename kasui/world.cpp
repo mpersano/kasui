@@ -58,14 +58,12 @@ int get_block_index_by_kanji(wchar_t ch)
 
 void initialize_match_map()
 {
-    for (unsigned i = 0; i < jukugo_list_size; i++) {
-        jukugo *p = jukugo_list[i];
-
-        const int i0 = get_block_index_by_kanji(p->kanji[0]);
-        const int i1 = get_block_index_by_kanji(p->kanji[1]);
+    for (auto& jukugo : jukugo_list) {
+        const int i0 = get_block_index_by_kanji(jukugo.kanji[0]);
+        const int i1 = get_block_index_by_kanji(jukugo.kanji[1]);
         assert(i0 != -1 && i1 != -1);
 
-        match_map[i0][i1] = p;
+        match_map[i0][i1] = &jukugo;
     }
 }
 
