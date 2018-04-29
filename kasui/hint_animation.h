@@ -53,8 +53,8 @@ private:
     g2d::vec2 from_pos_, to_pos_;
 
     const g2d::texture *block_texture_;
-    render::quad block_quad_;
-    render::quad block_texuv_;
+    render::box block_quad_;
+    render::box block_texuv_;
 
     const g2d::texture *arrow_texture_;
     render::quad arrow_quad_;

@@ -1,3 +1,5 @@
+#include "hint_animation.h"
+
 #include <guava2d/font_manager.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/vec3.h>
@@ -5,7 +7,6 @@
 
 #include "action.h"
 #include "block_info.h"
-#include "hint_animation.h"
 #include "jukugo.h"
 #include "settings.h" // for gradient
 #include "tween.h"
@@ -44,8 +45,8 @@ hint_text_box::hint_text_box(const hint &h, float cell_size, float width, const 
     g2d::vec2 dir = cell_size * g2d::vec2(h.match_c, h.match_r) - to_pos_;
     from_pos_ = to_pos_ - .5 * dir;
 
-    block_quad_ = {{0, 0}, {cell_size, 0}, {cell_size, cell_size}, {0, cell_size}};
-    block_texuv_ = {{uv0.y, uv1.x}, {uv1.y, uv1.x}, {uv1.y, uv0.x}, {uv0.y, uv0.x}};
+    block_quad_ = {{0, 0}, {cell_size, cell_size}};
+    block_texuv_ = {{uv0.y, uv1.x}, {uv1.y, uv0.x}};
 
     const g2d::vec2 u = .5 * cell_size * (to_pos_ - from_pos_).normalize();
     const g2d::vec2 v(-u.y, u.x);
@@ -79,7 +80,7 @@ void hint_text_box::draw() const
     render::push_matrix();
     render::translate(p.x, p.y);
     render::set_color({1.f, 1.f, 1.f, (.5f + .5f * t * t) * alpha});
-    render::draw_quad(block_texture_, block_quad_, block_texuv_, 50);
+    render::draw_box(block_texture_, block_quad_, block_texuv_, 50);
     render::pop_matrix();
 
     // text box
@@ -95,13 +96,11 @@ void hint_text_box::draw() const
     const g2d::rgba text_color(base_color, alpha);
     const g2d::rgba outline_color(.5 * base_color, alpha);
 
-    const wchar_t *TITLE = L"hint!";
-
     render::set_text_align(text_align::CENTER);
     render::set_color({1.f, 1.f, 1.f, alpha});
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-    render::draw_text(title_font_, {0, .5f * text_box_.get_height()}, 55, outline_color, text_color, TITLE);
+    render::draw_text(title_font_, {0, .5f * text_box_.get_height()}, 55, outline_color, text_color, L"hint!");
 
     render::pop_matrix();
 }

@@ -1,11 +1,12 @@
-#include <guava2d/texture_manager.h>
+#include "title_background.h"
 
 #include "action.h"
 #include "common.h"
 #include "render.h"
 #include "sprite_manager.h"
-#include "title_background.h"
 #include "tween.h"
+
+#include <guava2d/texture_manager.h>
 
 class title_background::widget
 {
@@ -326,8 +327,7 @@ void title_background::draw_background_quad() const
     const float y1 = .5 * (window_height - scaled_height);
     const float y0 = y1 + scaled_height;
 
-    render::draw_quad(bg_texture_, {{0, y0}, {0, y1}, {window_width, y1}, {window_width, y0}},
-                      {{0, 0}, {0, dv}, {du, dv}, {du, 0}}, -20);
+    render::draw_box(bg_texture_, {{0, y0}, {window_width, y1}}, {{0, 0}, {du, dv}}, -20);
 }
 
 void title_background::show_billboard()
