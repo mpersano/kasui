@@ -368,43 +368,23 @@ abunai_animation::abunai_animation()
 
 void abunai_animation::draw() const
 {
-#ifdef FIX_ME
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
     // draw fade out overlay
 
-    static g2d::vertex_array_flat gv(4);
-
-    gv.reset();
-    gv << 0, 0;
-    gv << 0, window_height;
-    gv << window_width, 0;
-    gv << window_width, window_height;
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    {
-        program_flat &prog = get_program_instance<program_flat>();
-        prog.use();
-        prog.set_proj_modelview_matrix(proj_modelview);
-        prog.set_color(g2d::rgba(0, 0, 0, alpha));
-
-        gv.draw(GL_TRIANGLE_STRIP);
-    }
+    render::set_color({0, 0, 0, alpha});
+    render::draw_quad({{0, 0}, {0, window_height}, {window_width, window_height}, {window_width, 0}}, 99);
 
     // draw billboard
 
-    {
-        const float scale = window_width / abunai_bb_->get_width();
-        g2d::mat4 mat = proj_modelview * g2d::mat4::translation(x, 0, 0) * g2d::mat4::scale(scale);
+    const float scale = window_width / abunai_bb_->get_width();
 
-        program_texture_decal &prog = get_program_instance<program_texture_decal>();
-        prog.use();
-        prog.set_proj_modelview_matrix(mat);
-        prog.set_texture(0);
-
-        abunai_bb_->draw(0, 0);
-    }
-#endif
+    render::set_color({1, 1, 1, 1});
+    render::push_matrix();
+    render::translate(x, 0);
+    render::scale(scale, scale);
+    abunai_bb_->draw(0, 0, 100);
+    render::pop_matrix();
 }
 
 game_over_animation_base::game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str,
@@ -446,50 +426,27 @@ game_over_animation_base::game_over_animation_base(const g2d::font *font, float 
 
 void game_over_animation_base::draw() const
 {
-#ifdef FIX_ME
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
     // draw fade out overlay
 
-    static g2d::vertex_array_flat gv(4);
-
-    gv.reset();
-    gv << 0, 0;
-    gv << 0, window_height;
-    gv << window_width, 0;
-    gv << window_width, window_height;
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    {
-        program_flat &prog = get_program_instance<program_flat>();
-        prog.use();
-        prog.set_proj_modelview_matrix(proj_modelview);
-        prog.set_color(g2d::rgba(0, 0, 0, overlay_alpha));
-
-        gv.draw(GL_TRIANGLE_STRIP);
-    }
+    render::set_color({0, 0, 0, overlay_alpha});
+    render::draw_quad({{0, 0}, {0, window_height}, {window_width, window_height}, {window_width, 0}}, 99);
 
     // draw billboard
 
-    {
-        const float scale = window_width / game_over_bb_->get_width();
-        g2d::mat4 mat = proj_modelview * g2d::mat4::translation(billboard_x, 0, 0) * g2d::mat4::scale(scale);
+    const float scale = window_width / game_over_bb_->get_width();
 
-        program_texture_decal &prog = get_program_instance<program_texture_decal>();
-        prog.use();
-        prog.set_proj_modelview_matrix(mat);
-        prog.set_texture(0);
-
-        game_over_bb_->draw(0, 0);
-    }
+    render::set_color({1, 1, 1, 1});
+    render::push_matrix();
+    render::translate(billboard_x, 0);
+    render::scale(scale, scale);
+    game_over_bb_->draw(0, 0, 100);
+    render::pop_matrix();
 
     // draw characters
 
-    glyph_animation::draw(proj_modelview);
-#endif
+    glyph_animation::draw();
 }
 
 time_up_animation::time_up_animation(const gradient *g)
