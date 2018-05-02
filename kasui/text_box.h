@@ -2,6 +2,8 @@
 
 #include "render.h"
 
+#include <vector>
+
 namespace g2d {
 class texture;
 };
