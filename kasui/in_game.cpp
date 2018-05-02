@@ -157,11 +157,12 @@ struct countdown_digit : game_animation
     void draw() const override;
 
     const g2d::texture *texture;
-    g2d::vertex_array_texuv gv;
 
     float x_center, y_center;
     float z;
     float alpha;
+    render::quad verts;
+    render::quad texcoords;
 };
 
 bool game_animation::update(uint32_t dt)
@@ -461,7 +462,6 @@ game_over_animation::game_over_animation(const gradient *g)
 
 countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, float y_center)
     : texture(gi->texture_)
-    , gv(4)
     , x_center(x_center)
     , y_center(y_center)
     , z(-.7)
@@ -469,21 +469,9 @@ countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, floa
 {
     const float dx = .5 * gi->width;
     const float dy = .5 * gi->height;
+    verts = {{-dx, dy}, {dx, dy}, {dx, -dy}, {-dx, -dy}};
 
-    const g2d::vec2 p0 = g2d::vec2(-dx, dy);
-    const g2d::vec2 p1 = g2d::vec2(dx, dy);
-    const g2d::vec2 p2 = g2d::vec2(dx, -dy);
-    const g2d::vec2 p3 = g2d::vec2(-dx, -dy);
-
-    const g2d::vec2 &t0 = gi->texuv[0];
-    const g2d::vec2 &t1 = gi->texuv[1];
-    const g2d::vec2 &t2 = gi->texuv[2];
-    const g2d::vec2 &t3 = gi->texuv[3];
-
-    gv << p0.x, p0.y, t0.x, t0.y;
-    gv << p1.x, p1.y, t1.x, t1.y;
-    gv << p3.x, p3.y, t3.x, t3.y;
-    gv << p2.x, p2.y, t2.x, t2.y;
+    texcoords = {gi->texuv[0], gi->texuv[1], gi->texuv[2], gi->texuv[3]};
 
     action = (new parallel_action_group)
                  ->add((new sequential_action_group)
@@ -498,25 +486,18 @@ countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, floa
 
 void countdown_digit::draw() const
 {
-#ifdef FIX_ME
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
     const float scale = 1. / (1. + z);
 
-    const g2d::mat4 mat =
-        proj_modelview * g2d::mat4::translation(x_center, y_center, 0) * g2d::mat4::scale(scale, scale, 0);
+    render::set_color({1, 0, 0, alpha});
+    render::push_matrix();
+    render::translate(x_center, y_center);
+    render::scale(scale, scale);
 
-    program_texture_uniform_color &prog = get_program_instance<program_texture_uniform_color>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
-    prog.set_color(g2d::rgba(1, 0, 0, alpha));
+    render::draw_quad(texture, verts, texcoords, 120);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    texture->bind();
-
-    gv.draw(GL_TRIANGLE_STRIP);
-#endif
+    render::pop_matrix();
 }
 
 class in_game_state_impl : public world_event_listener
