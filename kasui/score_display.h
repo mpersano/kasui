@@ -1,7 +1,11 @@
 #pragma once
 
+#include <cstdint>
+
 namespace g2d {
 class glyph_info;
+class texture;
+class program;
 };
 
 class score_display
@@ -40,4 +44,5 @@ private:
 
     const g2d::glyph_info *digit_glyphs_[10];
     const g2d::texture *texture_;
+    const g2d::program *program_;
 };

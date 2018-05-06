@@ -1,12 +1,14 @@
-#include <cassert>
-
-#include <guava2d/font_manager.h>
-#include <guava2d/rgb.h>
+#include "score_display.h"
 
 #include "common.h"
 #include "in_game.h"
 #include "render.h"
-#include "score_display.h"
+#include "program_manager.h"
+
+#include <guava2d/font_manager.h>
+#include <guava2d/rgb.h>
+
+#include <cassert>
 
 enum
 {
@@ -16,6 +18,7 @@ enum
 };
 
 score_display::score_display()
+    : program_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
 {
     reset();
 
@@ -82,7 +85,9 @@ void score_display::draw(float x_center, float y_center) const
     constexpr float SCORE_SCALE = .8;
 
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
-    render::set_color({1.f, 1.f, 1.f, 1.f});
+
+	const g2d::rgba outline_color{1, 1, 1, 1};
+	const g2d::rgba text_color{0, 0, 0, 1};
 
     int num_digits = NUM_DIGITS;
 
@@ -105,21 +110,12 @@ void score_display::draw(float x_center, float y_center) const
         const float y0 = y_center + dy;
         const float y1 = y_center - dy;
 
-        render::draw_quad(texture_, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
-                          {g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3]}, 50);
+        render::draw_quad(program_, texture_, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
+                          {g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3]},
+                          {outline_color, outline_color, outline_color, outline_color},
+                          {text_color, text_color, text_color, text_color},
+                          50);
 
         x_center -= DIGIT_WIDTH * SCORE_SCALE;
     }
-
-#if 0
-	program_timer_text& prog = get_program_instance<program_timer_text>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-	prog.set_outline_color(g2d::rgba(1, 1, 1, 1));
-	prog.set_text_color(g2d::rgba(0, 0, 0, 1));
-	prog.set_texture(0);
-
-	texture_->bind();
-	gv.draw(GL_TRIANGLES);
-#endif
 }
