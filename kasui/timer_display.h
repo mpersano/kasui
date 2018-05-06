@@ -1,5 +1,14 @@
 #pragma once
 
+#include <cstdint>
+
+namespace g2d {
+class glyph_info;
+class texture;
+class program;
+class rgba;
+}
+
 class timer_display
 {
 public:
@@ -16,7 +25,7 @@ public:
     bool blinking() const { return tics_left <= MIN_SAFE_SECS * 1000; }
 
 private:
-    void draw_glyph(const g2d::glyph_info *g, float x, float y, float scale) const;
+    void draw_glyph(const g2d::glyph_info *g, float x, float y, float scale, const g2d::rgba& outline_color, const g2d::rgba& text_color) const;
 
     enum
     {
@@ -27,4 +36,5 @@ private:
     const g2d::glyph_info *digit_glyphs_[10];
     const g2d::glyph_info *byou_;
     const g2d::texture *texture_;
+    const g2d::program *program_;
 };
