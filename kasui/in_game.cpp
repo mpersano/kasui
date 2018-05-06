@@ -18,7 +18,6 @@
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
 #include "guava2d/vec2.h"
-#include "guava2d/vertex_array.h"
 #include "guava2d/xwchar.h"
 
 #include "action.h"
