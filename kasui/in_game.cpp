@@ -953,13 +953,8 @@ void in_game_state_impl::redraw() const
 
     theme_->draw();
 
-#ifdef FIX_ME
     if (cur_state_ == STATE_LEVEL_COMPLETED || cur_state_ == STATE_LEVEL_INTRO)
         draw_fade_overlay(1. - get_level_transition_alpha());
-
-    const g2d::mat4 ortho = get_ortho_projection();
-    const g2d::mat4 grid_mv = ortho * g2d::mat4::translation(grid_base_x, grid_base_y, 0);
-#endif
 
     pause_button_.draw(1);
 
