@@ -2,7 +2,6 @@
 #include <set>
 #include <vector>
 
-#include "guava2d/draw_queue.h"
 #include "guava2d/font_manager.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
@@ -59,7 +58,9 @@ public:
     void reset_contents() override {}
 
 private:
+#ifdef FIX_ME
     g2d::draw_queue text_;
+#endif
 };
 
 class jukugo_info_item : public stats_page_item
@@ -83,8 +84,10 @@ private:
     const jukugo *jukugo_;
 
     int height_;
+#ifdef FIX_ME
     g2d::draw_queue text_;
     g2d::draw_queue hits_text_;
+#endif
 };
 
 class stats_page
@@ -108,7 +111,9 @@ private:
     void draw_title(const g2d::mat4 &mat, float alpha) const;
     void update_y_offset(float dy);
 
+#ifdef FIX_ME
     g2d::draw_queue title_text_;
+#endif
     std::vector<stats_page_item *> items_;
     float y_offset_;
     float top_y_;
@@ -249,6 +254,7 @@ kanji_info_item::kanji_info_item(const kanji_info *kanji)
     const g2d::font *micro_font = g2d::font_manager::get_instance().load("fonts/micro");
     const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/small");
 
+#ifdef FIX_ME
     text_.text_program(get_program_instance<program_text>().get_raw())
         .push_matrix()
         .translate(10, -.5 * height - 28)
@@ -265,6 +271,7 @@ kanji_info_item::kanji_info_item(const kanji_info *kanji)
         .align_right()
         .translate(window_width - 20, -.5 * height - 12)
         .render_text(small_font, L"%s", kanji->meaning);
+#endif
 }
 
 void kanji_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
@@ -280,12 +287,16 @@ void kanji_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
     prog.set_texture(0);
     prog.set_color(g2d::rgba(0., 0., 0., .5 * alpha));
 
+#ifdef FIX_ME
     text_.draw();
+#endif
 
     prog.set_proj_modelview_matrix(proj_modelview);
     prog.set_color(g2d::rgba(1, 1, 1, alpha));
 
+#ifdef FIX_ME
     text_.draw();
+#endif
 }
 
 jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
@@ -321,9 +332,11 @@ jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
 
     // text
 
+#ifdef FIX_ME
     text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw());
 
     text_.push_matrix().translate(30, -.5 * height_ - 16).render_text(medium_font, L"%s", jukugo->kanji).pop_matrix();
+#endif
 
 #ifdef FIX_ME
     line_splitter ls(micro_font, meaning_buf);
@@ -345,12 +358,14 @@ void jukugo_info_item::reset_contents()
 {
     const g2d::font *micro_font = g2d::font_manager::get_instance().load("fonts/micro");
 
+#ifdef FIX_ME
     hits_text_.reset();
 
     hits_text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
         .translate(window_width - 20, -.5 * height_ - 8)
         .align_right()
         .render_text(micro_font, L"%d", jukugo_->hits);
+#endif
 }
 
 void jukugo_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
@@ -366,8 +381,10 @@ void jukugo_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
     prog.set_texture(0);
     prog.set_color(g2d::rgba(alpha, alpha, alpha, 1));
 
+#ifdef FIX_ME
     text_.draw();
     hits_text_.draw();
+#endif
 }
 
 stats_page::stats_page(int level, float top_y)
@@ -426,12 +443,14 @@ stats_page::stats_page(int level, float top_y)
 
     const g2d::font *font = g2d::font_manager::get_instance().load("fonts/medium");
 
+#ifdef FIX_ME
     title_text_.reset();
 
     title_text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
         .translate(.5 * window_width, window_height - .5 * TITLE_HEIGHT - 14)
         .align_center()
         .render_text(font, L"level %d", level + 1);
+#endif
 }
 
 void stats_page::reset()
@@ -491,7 +510,9 @@ void stats_page::draw_title(const g2d::mat4 &mat, float alpha) const
     prog.set_texture(0);
     prog.set_color(g2d::rgba(alpha, alpha, alpha, 1.));
 
+#ifdef FIX_ME
     title_text_.draw();
+#endif
 }
 
 void stats_page::update(uint32_t dt)

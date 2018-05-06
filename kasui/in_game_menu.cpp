@@ -1,7 +1,6 @@
 #include <cassert>
 #include <cstdio>
 
-#include "guava2d/draw_queue.h"
 #include "guava2d/font_manager.h"
 #include "guava2d/g2dgl.h"
 #include "guava2d/rgb.h"

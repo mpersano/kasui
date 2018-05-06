@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <guava2d/draw_queue.h>
-
 namespace g2d {
 class mat4;
 };
@@ -57,7 +55,9 @@ protected:
 
     std::string cache_path_;
 
+#ifdef FIX_ME
     g2d::draw_queue title_text_;
+#endif
     std::vector<item *> items_;
     float y_offset_;
     int touch_start_tic_;

@@ -797,7 +797,9 @@ private:
     input_buffer input_area_;
     int score_;
     score_text score_text_;
+#ifdef FIX_ME
     g2d::draw_queue text_;
+#endif
 
     enum state
     {
@@ -988,12 +990,14 @@ hiscore_input_state_impl::hiscore_input_state_impl()
     const float y_input_area = .6 * window_height;
 
     auto font = g2d::font_manager::get_instance().load("fonts/small");
+#ifdef FIX_ME
     text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
         .translate(.5 * window_width, y_input_area + 240)
         .align_center()
         .render_text(font, L"New high score!")
         .translate(0, -(240 - 48))
         .render_text(font, L"Please enter your name:");
+#endif
 }
 
 void hiscore_input_state_impl::reset()
@@ -1036,7 +1040,9 @@ void hiscore_input_state_impl::draw_input() const
     prog.set_texture(0);
     prog.set_color(g2d::rgba(1, 1, 1, 1));
 
+#ifdef FIX_ME
     text_.draw();
+#endif
 }
 
 void hiscore_input_state_impl::redraw() const

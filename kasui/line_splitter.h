@@ -1,6 +1,8 @@
 #ifndef LINE_SPLITTER_H_
 #define LINE_SPLITTER_H_
 
+#include <string>
+
 #include <wchar.h>
 
 namespace g2d {

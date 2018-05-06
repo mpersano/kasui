@@ -4,7 +4,6 @@
 #include <stdarg.h>
 
 #include "g2dgl.h"
-#include "draw_queue.h"
 #include "vec2.h"
 
 namespace g2d {

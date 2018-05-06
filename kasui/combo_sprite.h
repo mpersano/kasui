@@ -1,7 +1,5 @@
 #pragma once
 
-#include <guava2d/draw_queue.h>
-
 #include "common.h"
 #include "world.h"
 

@@ -11,7 +11,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include <guava2d/draw_queue.h>
 #include <guava2d/font_manager.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
@@ -41,6 +40,7 @@ void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
     prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
     prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
 
+#ifdef FIX_ME
     g2d::draw_queue()
         .text_program(prog.get_raw())
         .translate(.5 * window_width, .5 * window_height)
@@ -48,6 +48,7 @@ void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
         .align_center()
         .render_text(small_font, L"%s", text)
         .draw();
+#endif
 }
 
 namespace {
@@ -209,7 +210,9 @@ private:
     wchar_t *name_;
     int score_;
     bool highlight_;
+#ifdef FIX_ME
     g2d::draw_queue text_; // , score_text_;
+#endif
     const g2d::texture *frame_texture_;
     g2d::vertex_array_texuv frame_va_[3];
     score_text score_text_;
@@ -244,6 +247,7 @@ void item::initialize_text()
     auto gi_tiny = tiny_font->find_glyph(L'X');
     const float y_tiny = .5 * (-HEIGHT + gi_tiny->height) - gi_tiny->top;
 
+#ifdef FIX_ME
     text_.reset();
 
     text_
@@ -261,6 +265,7 @@ void item::initialize_text()
         .align_left()
         .render_text(tiny_font, L"%s", name_);
 // .pop_matrix()
+#endif
 
 #if 0
 	score_text_.reset();
@@ -383,7 +388,9 @@ void item::draw(const g2d::mat4 &mat, float alpha) const
         prog.set_texture(0);
         prog.set_color(g2d::rgba(alpha, alpha, alpha, 1));
 
+#ifdef FIX_ME
         text_.draw();
+#endif
     }
 }
 
@@ -442,6 +449,7 @@ leaderboard_page::leaderboard_page(const std::string &title, const std::string &
 {
     const g2d::font *font = g2d::font_manager::get_instance().load("fonts/medium");
 
+#ifdef FIX_ME
     title_text_.reset();
 
     wchar_t *title_wchar = utf8_to_wchar(title.c_str());
@@ -452,6 +460,7 @@ leaderboard_page::leaderboard_page(const std::string &title, const std::string &
         .render_text(font, L"%s", title_wchar);
 
     delete[] title_wchar;
+#endif
 }
 
 leaderboard_page::~leaderboard_page()
@@ -521,7 +530,9 @@ void leaderboard_page::draw_title(const g2d::mat4 &mat, float alpha) const
     prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
     prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
 
+#ifdef FIX_ME
     title_text_.draw();
+#endif
 }
 
 void leaderboard_page::draw_items(const g2d::mat4 &mat, float alpha) const

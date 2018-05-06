@@ -8,7 +8,6 @@ include_directories(
 	${PNG_INCLUDE_DIR})
 
 set(GUAVA2D_SOURCES
-    draw_queue.cpp
     file.cpp
     font.cpp
     font_manager.cpp
