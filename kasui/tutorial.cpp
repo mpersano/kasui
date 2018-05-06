@@ -402,9 +402,7 @@ void tutorial_state_impl::redraw() const
 {
     background_draw_gradient();
 
-#ifdef FIX_ME
     theme_->draw();
-#endif
 
     render::push_matrix();
     render::translate(grid_base_x_, grid_base_y_);
