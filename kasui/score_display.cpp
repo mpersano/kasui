@@ -31,9 +31,9 @@ score_display::score_display()
 
 void score_display::reset()
 {
-    for (digit *p = digits; p != &digits[NUM_DIGITS]; p++) {
-        p->value = 0;
-        p->bump = 0;
+    for (auto& digit : digits_) {
+        digit.value = 0;
+        digit.bump = 0;
     }
 
     queue_head = queue_tail = queue_size = 0;
@@ -41,13 +41,17 @@ void score_display::reset()
 
 void score_display::set_value(int value)
 {
-    for (digit *p = digits; p != &digits[NUM_DIGITS] && value; p++, value /= 10) {
+    for (auto& digit : digits_) {
         int d = value % 10;
 
-        if (d != p->value) {
-            p->value = d;
-            p->bump = START_DIGIT_BUMP;
+        if (d != digit.value) {
+            digit.value = d;
+            digit.bump = START_DIGIT_BUMP;
         }
+
+        value /= 10;
+        if (value == 0)
+            break;
     }
 }
 
@@ -55,8 +59,8 @@ void score_display::enqueue_value(int value)
 {
     assert(queue_size < MAX_QUEUE_SIZE);
 
-    queue[queue_tail].tics = VALUE_DEQUEUE_TICS;
-    queue[queue_tail].value = value;
+    queue_[queue_tail].tics = VALUE_DEQUEUE_TICS;
+    queue_[queue_tail].value = value;
 
     if (++queue_tail == MAX_QUEUE_SIZE)
         queue_tail = 0;
@@ -65,14 +69,14 @@ void score_display::enqueue_value(int value)
 
 void score_display::update(uint32_t dt)
 {
-    for (digit *p = digits; p != &digits[NUM_DIGITS]; p++) {
-        if (p->bump)
-            p->bump -= dt;
+    for (auto& digit : digits_) {
+        if (digit.bump)
+            digit.bump -= dt;
     }
 
     if (queue_size > 0) {
-        if ((queue[queue_head].tics -= dt) <= 0) {
-            set_value(queue[queue_head].value);
+        if ((queue_[queue_head].tics -= dt) <= 0) {
+            set_value(queue_[queue_head].value);
             if (++queue_head == MAX_QUEUE_SIZE)
                 queue_head = 0;
             --queue_size;
@@ -91,10 +95,10 @@ void score_display::draw(float x_center, float y_center) const
 
     int num_digits = NUM_DIGITS;
 
-    while (num_digits > 1 && digits[num_digits - 1].value == 0)
+    while (num_digits > 1 && digits_[num_digits - 1].value == 0)
         --num_digits;
 
-    for (const digit *p = digits; p != &digits[num_digits]; p++) {
+    for (const auto *p = &digits_[0]; p != &digits_[num_digits]; p++) {
         const float fbump = p->bump > 0 ? static_cast<float>(p->bump) / MS_PER_TIC : 0;
 
         const float scale = SCORE_SCALE / (1. - .05 * fbump);

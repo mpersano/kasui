@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 namespace g2d {
@@ -21,28 +22,24 @@ public:
     void update(uint32_t dt);
 
 private:
-    enum
-    {
-        NUM_DIGITS = 6,
-    };
+    static constexpr int NUM_DIGITS = 6;
     struct digit
     {
         int value;
         int bump;
-    } digits[NUM_DIGITS];
-
-    enum
-    {
-        MAX_QUEUE_SIZE = 16
     };
-    struct
+    std::array<digit, NUM_DIGITS> digits_;
+
+    static constexpr int MAX_QUEUE_SIZE = 16;
+    struct value_change
     {
         int tics;
         int value;
-    } queue[MAX_QUEUE_SIZE];
+    };
+    std::array<value_change, MAX_QUEUE_SIZE> queue_;
     int queue_head, queue_tail, queue_size;
 
-    const g2d::glyph_info *digit_glyphs_[10];
+    std::array<const g2d::glyph_info *, 10> digit_glyphs_;
     const g2d::texture *texture_;
     const g2d::program *program_;
 };
