@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 
 namespace g2d {
@@ -27,13 +28,10 @@ public:
 private:
     void draw_glyph(const g2d::glyph_info *g, float x, float y, float scale, const g2d::rgba& outline_color, const g2d::rgba& text_color) const;
 
-    enum
-    {
-        MIN_SAFE_SECS = 10
-    };
+    static constexpr int MIN_SAFE_SECS = 10;
     int tics_left;
 
-    const g2d::glyph_info *digit_glyphs_[10];
+    std::array<const g2d::glyph_info *, 10> digit_glyphs_;
     const g2d::glyph_info *byou_;
     const g2d::texture *texture_;
     const g2d::program *program_;

@@ -69,21 +69,21 @@ void timer_display::draw(float alpha) const
 
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-    float mix;
+    const float mix = [this]() {
+        if (tics_left < MIN_SAFE_SECS * 1000 + ALARM_FADE_IN_TICS) {
+            float s = .5;
 
-    if (tics_left < MIN_SAFE_SECS * 1000 + ALARM_FADE_IN_TICS) {
-        float s = .5;
+            if (tics_left >= MIN_SAFE_SECS * 1000)
+                s *= 1. - static_cast<float>(tics_left - MIN_SAFE_SECS * 1000) / ALARM_FADE_IN_TICS;
 
-        if (tics_left >= MIN_SAFE_SECS * 1000)
-            s *= 1. - static_cast<float>(tics_left - MIN_SAFE_SECS * 1000) / ALARM_FADE_IN_TICS;
+            return (1. - s) + s * sin(.2 * total_tics / MS_PER_TIC);
+        } else {
+            return 1.0;
+        }
+    }();
 
-        mix = (1. - s) + s * sin(.2 * total_tics / MS_PER_TIC);
-    } else {
-        mix = 1;
-    }
-
-	const g2d::rgba outline_color{1, mix, mix, alpha};
-	const g2d::rgba text_color{0, 0, 0, alpha};
+    const g2d::rgba outline_color{1, mix, mix, alpha};
+    const g2d::rgba text_color{0, 0, 0, alpha};
 
     float x = .5 * window_width - .5 * width + .5 * DIGIT_WIDTH;
 
@@ -100,16 +100,4 @@ void timer_display::draw(float alpha) const
     x += FRACTIONAL_DIGITS_SCALE * DIGIT_WIDTH;
 
     draw_glyph(digit_glyphs_[csecs % 10], x, 0, FRACTIONAL_DIGITS_SCALE, outline_color, text_color);
-
-#if 0
-	program_timer_text& prog = get_program_instance<program_timer_text>();
-	prog.use();
-	prog.set_proj_modelview_matrix(proj_modelview);
-	prog.set_texture(0);
-	prog.set_outline_color(g2d::rgba(1, mix, mix, alpha));
-	prog.set_text_color(g2d::rgba(0, 0, 0, alpha));
-
-	texture_->bind();
-	va.draw(GL_TRIANGLES);
-#endif
 }
