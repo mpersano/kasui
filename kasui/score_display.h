@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <deque>
 #include <cstdint>
 
 namespace g2d {
@@ -30,14 +31,12 @@ private:
     };
     std::array<digit, NUM_DIGITS> digits_;
 
-    static constexpr int MAX_QUEUE_SIZE = 16;
     struct value_change
     {
         int tics;
         int value;
     };
-    std::array<value_change, MAX_QUEUE_SIZE> queue_;
-    int queue_head, queue_tail, queue_size;
+    std::deque<value_change> queue_;
 
     std::array<const g2d::glyph_info *, 10> digit_glyphs_;
     const g2d::texture *texture_;

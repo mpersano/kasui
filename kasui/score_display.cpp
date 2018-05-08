@@ -35,8 +35,6 @@ void score_display::reset()
         digit.value = 0;
         digit.bump = 0;
     }
-
-    queue_head = queue_tail = queue_size = 0;
 }
 
 void score_display::set_value(int value)
@@ -57,14 +55,7 @@ void score_display::set_value(int value)
 
 void score_display::enqueue_value(int value)
 {
-    assert(queue_size < MAX_QUEUE_SIZE);
-
-    queue_[queue_tail].tics = VALUE_DEQUEUE_TICS;
-    queue_[queue_tail].value = value;
-
-    if (++queue_tail == MAX_QUEUE_SIZE)
-        queue_tail = 0;
-    ++queue_size;
+    queue_.push_back({VALUE_DEQUEUE_TICS, value});
 }
 
 void score_display::update(uint32_t dt)
@@ -74,12 +65,12 @@ void score_display::update(uint32_t dt)
             digit.bump -= dt;
     }
 
-    if (queue_size > 0) {
-        if ((queue_[queue_head].tics -= dt) <= 0) {
-            set_value(queue_[queue_head].value);
-            if (++queue_head == MAX_QUEUE_SIZE)
-                queue_head = 0;
-            --queue_size;
+    if (!queue_.empty()) {
+        auto& front = queue_.front();
+        front.tics -= dt;
+        if (front.tics <= 0) {
+            set_value(front.value);
+            queue_.pop_front();
         }
     }
 }
