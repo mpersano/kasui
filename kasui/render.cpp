@@ -74,6 +74,10 @@ public:
     void add_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const wchar_t *str);
     void add_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const g2d::rgba &outline_color,
                   const g2d::rgba &text_color, const wchar_t *str);
+    void add_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
+                  const g2d::rgba &top_outline_color, const g2d::rgba &top_text_color,
+                  const g2d::rgba &bottom_outline_color, const g2d::rgba &bottom_text_color,
+                  const wchar_t *str);
 
 private:
     struct sprite
@@ -313,6 +317,37 @@ void sprite_batch::add_text(const g2d::font *font, const g2d::vec2 &pos, int lay
                  {g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3]},
                  {outline_color, outline_color, outline_color, outline_color},
                  {text_color, text_color, text_color, text_color}, layer);
+
+        x += g->advance_x;
+    }
+}
+
+void sprite_batch::add_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
+                            const g2d::rgba &top_outline_color, const g2d::rgba &top_text_color,
+                            const g2d::rgba &bottom_outline_color, const g2d::rgba &bottom_text_color,
+                            const wchar_t *str)
+{
+    float x = pos.x;
+
+    if (text_align_ == text_align::RIGHT)
+        x -= font->get_string_width(str);
+    else if (text_align_ == text_align::CENTER)
+        x -= .5f * font->get_string_width(str);
+
+    const auto texture = font->get_texture();
+
+    for (const wchar_t *p = str; *p; ++p) {
+        const auto g = font->find_glyph(*p);
+
+        const float x0 = x + g->left;
+        const float x1 = x0 + g->width;
+        const float y0 = pos.y + g->top;
+        const float y1 = y0 - g->height;
+
+        add_quad(program_text_outline_, texture, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
+                 {g->texuv[0], g->texuv[1], g->texuv[2], g->texuv[3]},
+                 {top_outline_color, top_outline_color, bottom_outline_color, bottom_outline_color},
+                 {top_text_color, top_text_color, bottom_text_color, bottom_text_color}, layer);
 
         x += g->advance_x;
     }
@@ -705,9 +740,19 @@ void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const wch
     g_sprite_batch.add_text(font, pos, layer, str);
 }
 
-void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const g2d::rgba &outline_color,
-               const g2d::rgba &text_color, const wchar_t *str)
+void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
+               const g2d::rgba &outline_color, const g2d::rgba &text_color,
+               const wchar_t *str)
 {
     g_sprite_batch.add_text(font, pos, layer, outline_color, text_color, str);
+}
+
+void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
+               const g2d::rgba &top_outline_color, const g2d::rgba &top_text_color,
+               const g2d::rgba &bottom_outline_color, const g2d::rgba &bottom_text_color,
+               const wchar_t *str)
+{
+    g_sprite_batch.add_text(font, pos, layer, top_outline_color, top_text_color,
+            bottom_outline_color, bottom_text_color, str);
 }
 }

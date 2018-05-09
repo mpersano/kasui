@@ -12,7 +12,7 @@ struct gradient;
 
 namespace g2d {
 class font;
-class texture;
+class program;
 };
 
 class jukugo_info_sprite : public sprite
@@ -42,4 +42,6 @@ private:
     g2d::vec2 pos_kanji_;
     g2d::vec2 pos_furigana_;
     std::vector<std::pair<g2d::vec2, std::wstring>> eigo_lines_;
+
+    const g2d::program *program_;
 };

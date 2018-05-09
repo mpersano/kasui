@@ -1,18 +1,21 @@
+#include "jukugo_info_sprite.h"
+
 #include <guava2d/font_manager.h>
 
 #include "common.h"
+#include "settings.h"
 #include "jukugo.h"
-#include "jukugo_info_sprite.h"
 #include "line_splitter.h"
 #include "program_manager.h"
 #include "render.h"
 #include "tween.h"
 
 jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g)
-    : jukugo_(jukugo_info)
-    , x_base_(x)
-    , y_base_(y)
-    , gradient_(g)
+    : jukugo_{jukugo_info}
+    , x_base_{x}
+    , y_base_{y}
+    , gradient_{g}
+    , program_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
 {
     action_.reset(
         (new parallel_action_group)
@@ -55,6 +58,15 @@ bool jukugo_info_sprite::update(uint32_t dt)
 
 void jukugo_info_sprite::draw() const
 {
+    const auto top_color = *gradient_->to * (1./255.);
+    const auto bottom_color = *gradient_->from * (1./255.);
+
+    const g2d::rgba top_color_text{top_color, alpha_};
+    const g2d::rgba bottom_color_text{bottom_color, alpha_};
+
+    const g2d::rgba top_color_outline{.5*top_color, alpha_};
+    const g2d::rgba bottom_color_outline{.5*bottom_color, alpha_};
+
     const float scale = 1. / (1. + z_);
     const float sy = sinf(flip_);
 
@@ -65,64 +77,14 @@ void jukugo_info_sprite::draw() const
     render::translate(x_base_, y_base_);
     render::scale(scale, scale * sy);
 
-    render::set_color({1.f, 1.f, 1.f, alpha_});
     render::set_text_align(text_align::LEFT);
 
-    render::draw_text(kanji_font_, pos_kanji_, 50, jukugo_->kanji);
-    render::draw_text(furigana_font_, pos_furigana_, 50, jukugo_->reading);
+    render::draw_text(furigana_font_, pos_furigana_, 50, top_color_outline, top_color_text, jukugo_->reading);
+    render::draw_text(kanji_font_, pos_kanji_, 50, top_color_outline, top_color_text, bottom_color_outline,
+            bottom_color_text, jukugo_->kanji);
 
     for (const auto &p : eigo_lines_)
-        render::draw_text(eigo_font_, p.first, 50, p.second.c_str());
+        render::draw_text(eigo_font_, p.first, 50, bottom_color_outline, bottom_color_text, p.second.c_str());
 
     render::pop_matrix();
-
-#if 0
-	const float scale = 1./(1. + z);
-	const float sy = sinf(flip);
-
-	const g2d::mat4 mat =
-		proj_modelview*
-		g2d::mat4::translation(x_base, y_base, 0)*
-		g2d::mat4::scale(scale, scale*sy, 0);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	const g2d::rgb& top_color = *gradient_->from;
-	const g2d::rgb& bottom_color = *gradient_->to;
-
-	const g2d::rgb top_color_text = top_color*(1./255);
-	const g2d::rgb bottom_color_text = bottom_color*(1./255);
-
-	const g2d::rgb top_color_outline = .5*top_color_text;
-	const g2d::rgb bottom_color_outline = .5*bottom_color_text;
-
-	// outline
-
-	{
-	program_text_outline_gradient& prog = get_program_instance<program_text_outline_gradient>();
-
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-	prog.set_top_color(g2d::rgba(top_color_outline, alpha));
-	prog.set_bottom_color(g2d::rgba(bottom_color_outline, alpha));
-
-	draw_quads();
-	}
-
-	// text
-
-	{
-	program_text_gradient& prog = get_program_instance<program_text_gradient>();
-
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
-	prog.set_top_color(g2d::rgba(top_color_text, alpha));
-	prog.set_bottom_color(g2d::rgba(bottom_color_text, alpha));
-
-	draw_quads();
-	}
-#endif
 }
