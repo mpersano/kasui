@@ -38,7 +38,7 @@ void combo_sprite::draw() const
     float alpha = sinf(ttl_ * M_PI / TTL);
     alpha *= alpha;
 
-    const g2d::rgb base_color = *gradient_->to * (1. / 255.);
+    const g2d::rgb base_color = gradient_->to * (1. / 255.);
     const g2d::rgba text_color(base_color, alpha);
     const g2d::rgba outline_color(.5 * base_color, alpha);
 

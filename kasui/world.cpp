@@ -254,7 +254,7 @@ explosion_particles::explosion_particles(const g2d::vec2 &pos, const gradient *g
         p.angle = frand(0., 2. * M_PI);
         p.delta_angle = f * frand(-.15, .15);
 
-        g2d::rgb color = frand(*g->from, *g->to) + g2d::rgb(60, 60, 60);
+        g2d::rgb color = frand(g->from, g->to) + g2d::rgb(60, 60, 60);
 
         p.color.r = std::min(static_cast<int>(color.r), 255);
         p.color.g = std::min(static_cast<int>(color.g), 255);

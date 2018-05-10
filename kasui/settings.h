@@ -3,23 +3,19 @@
 #include "theme.h"
 #include "guava2d/rgb.h"
 
+#include <array>
+
 struct gradient
 {
-    gradient(g2d::rgb *from, g2d::rgb *to)
-        : from(from)
-        , to(to)
-    {
-    }
-
-    g2d::rgb *from, *to;
+    g2d::rgb from, to;
 };
 
 struct color_scheme
 {
-    g2d::rgb *main_color;
-    g2d::rgb *alternate_color;
-    gradient *background_gradient;
-    gradient *text_gradient;
+    g2d::rgb main_color;
+    g2d::rgb alternate_color;
+    gradient background_gradient;
+    gradient text_gradient;
 };
 
 struct game_settings
@@ -42,7 +38,7 @@ struct settings
 {
     game_settings game;
     animation_settings animation;
-    color_scheme *color_schemes[NUM_THEMES];
+    std::array<color_scheme, NUM_THEMES> color_schemes;
 };
 
 extern settings cur_settings;

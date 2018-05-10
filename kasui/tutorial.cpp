@@ -378,15 +378,15 @@ void tutorial_state_impl::reset()
     const auto theme_index = rand() % NUM_THEMES;
 
     theme_ = make_theme(theme_index);
-    colors_ = cur_settings.color_schemes[theme_index];
+    colors_ = &cur_settings.color_schemes[theme_index];
 
     theme_->reset();
 
-    const gradient *gradient = colors_->background_gradient;
-    background_initialize_gradient(*gradient->from, *gradient->to);
+    const auto& gradient = colors_->background_gradient;
+    background_initialize_gradient(gradient.from, gradient.to);
 
-    world_.set_theme_colors(*colors_->main_color, *colors_->alternate_color);
-    world_.set_text_gradient(colors_->text_gradient);
+    world_.set_theme_colors(colors_->main_color, colors_->alternate_color);
+    world_.set_text_gradient(&colors_->text_gradient);
 
     cur_cmd_ = script_.begin();
 

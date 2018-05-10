@@ -1,16 +1,17 @@
 %{
+#include "settings.h"
+
+#include "guava2d/rgb.h"
+#include "guava2d/file.h"
+
+#include "theme.h"
+#include "panic.h"
+
 #include <cstdio>
 #include <cstring>
 #include <cassert>
 
 #include <ctype.h>
-
-#include "guava2d/rgb.h"
-#include "guava2d/file.h"
-
-#include "settings.h"
-#include "theme.h"
-#include "panic.h"
 
 int yylex();
 void yyerror(const char *str);
@@ -55,7 +56,7 @@ struct field_list {
 };
 
 static void
-set_color_scheme(const char *name, color_scheme *cs)
+set_color_scheme(const char *name, const color_scheme& cs)
 {
 	struct name_to_theme {
 		const char *name;
@@ -66,37 +67,37 @@ set_color_scheme(const char *name, color_scheme *cs)
 		{ "flowers", THEME_FLOWERS },
 	};
 
-	for (name_to_theme *p = name_to_themes; p != &name_to_themes[NUM_THEMES]; p++) {
-		if (!strcmp(p->name, name)) {
-			cur_settings.color_schemes[p->index] = cs;
+    for (const auto& p : name_to_themes) {
+		if (!strcmp(p.name, name)) {
+			cur_settings.color_schemes[p.index] = cs;
 			break;
 		}
 	}
 }
 
-static color_scheme *
+color_scheme
 parse_color_scheme(field_list *fields)
 {
-	color_scheme *cs = new color_scheme;
+	color_scheme cs;
 
 	for (field_list *p = fields; p; p = p->next) {
 		field *f = p->value;
 
 		switch (f->type) {
 			case FT_MAIN_COLOR:
-				cs->main_color = static_cast<rgb_field *>(f)->value;
+				cs.main_color = *static_cast<rgb_field *>(f)->value;
 				break;
 
 			case FT_ALT_COLOR:
-				cs->alternate_color = static_cast<rgb_field *>(f)->value;
+				cs.alternate_color = *static_cast<rgb_field *>(f)->value;
 				break;
 
 			case FT_BG_GRADIENT:
-				cs->background_gradient = static_cast<gradient_field *>(f)->value;
+				cs.background_gradient = *static_cast<gradient_field *>(f)->value;
 				break;
 
 			case FT_TEXT_GRADIENT:
-				cs->text_gradient = static_cast<gradient_field *>(f)->value;
+				cs.text_gradient = *static_cast<gradient_field *>(f)->value;
 				break;
 
 			default:
@@ -195,7 +196,7 @@ color_scheme
 
 color_scheme_fields
 : color_scheme_fields color_scheme_field	{ $$ = new field_list($2, $1); }
-| color_scheme_field				{ $$ = new field_list($1, 0); }
+| color_scheme_field				{ $$ = new field_list($1, nullptr); }
 ;
 
 color_scheme_field
@@ -222,7 +223,7 @@ alt_color_field
 ;
 
 gradient
-: rgb rgb 					{ $$ = new gradient($1, $2); }
+: rgb rgb 					{ $$ = new gradient{*$1, *$2}; }
 ;
 
 rgb
