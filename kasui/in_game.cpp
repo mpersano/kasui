@@ -30,7 +30,6 @@
 #include "options.h"
 #include "pause_button.h"
 #include "program_manager.h"
-#include "program_registry.h"
 #include "render.h"
 #include "score_display.h"
 #include "sounds.h"

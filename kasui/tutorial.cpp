@@ -12,7 +12,6 @@
 #include "main_menu.h"
 #include "panic.h"
 #include "pause_button.h"
-#include "program_registry.h"
 #include "render.h"
 #include "sprite.h"
 #include "sprite_manager.h"

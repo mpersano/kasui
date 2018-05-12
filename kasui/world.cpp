@@ -13,7 +13,6 @@
 #include "jukugo.h"
 #include "jukugo_info_sprite.h"
 #include "panic.h"
-#include "program_registry.h"
 #include "render.h"
 #include "settings.h"
 #include "sounds.h"
@@ -1246,10 +1245,6 @@ void world::draw_blocks() const
             draw_block(p.type_, p.col_ * cell_size_, y, 1.);
         }
     }
-
-#if 0
-	block_sprite::draw_all(gv, lerp_dt);
-#endif
 }
 
 void world::draw_flares() const

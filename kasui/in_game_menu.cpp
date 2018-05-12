@@ -12,7 +12,6 @@
 #include "main_menu.h"
 #include "menu.h"
 #include "options.h"
-#include "program_registry.h"
 #include "render.h"
 #include "sounds.h"
 #include "sprite_manager.h"
