@@ -41,6 +41,14 @@ void gl_set_blend_mode(blend_mode mode)
     }
 }
 
+void gl_set_scissor_test(bool enabled)
+{
+    if (enabled)
+        GL_CHECK(glEnable(GL_SCISSOR_TEST));
+    else
+        GL_CHECK(glDisable(GL_SCISSOR_TEST));
+}
+
 class sprite_batch : private noncopyable
 {
 public:
@@ -49,6 +57,8 @@ public:
     void init();
 
     void set_viewport(int x_min, int x_max, int y_min, int y_max);
+
+    void set_scissor_box(int x, int y, int width, int height);
 
     void begin_batch();
     void end_batch();
@@ -61,6 +71,7 @@ public:
     void rotate(float a);
 
     void set_blend_mode(blend_mode mode);
+    void set_scissor_test(bool enabled);
     void set_color(const g2d::rgba &color);
 
     void add_quad(const g2d::program *program, const g2d::texture *texture, const quad &verts, const quad &texcoords,
@@ -90,6 +101,7 @@ private:
         quad texcoords;
         vert_colors colors[2];
         blend_mode blend;
+        bool scissor_test;
     };
 
     void load_programs();
@@ -101,12 +113,20 @@ private:
     void render_sprites_texture_2c(const sprite *const *sprites, int num_sprites) const;
     void render_sprites_flat(const sprite *const *sprites, int num_sprites) const;
 
-    static const int SPRITE_QUEUE_CAPACITY = 1024;
+    struct scissor_box
+    {
+        int x, y;
+        int width, height;
+    };
+    scissor_box scissor_box_;
+
+    static constexpr int SPRITE_QUEUE_CAPACITY = 1024;
 
     int sprite_queue_size_;
     sprite sprite_queue_[SPRITE_QUEUE_CAPACITY];
 
     blend_mode blend_mode_;
+    bool scissor_test_;
     g2d::rgba color_;
     g2d::mat3 matrix_;
     text_align text_align_;
@@ -153,6 +173,14 @@ void sprite_batch::set_viewport(int x_min, int x_max, int y_min, int y_max)
     program_flat_->set_uniform_matrix4("proj_modelview", &proj_matrix_[0]);
 }
 
+void sprite_batch::set_scissor_box(int x, int y, int width, int height)
+{
+    scissor_box_.x = x;
+    scissor_box_.y = y;
+    scissor_box_.width = width;
+    scissor_box_.height = height;
+}
+
 void sprite_batch::begin_batch()
 {
     sprite_queue_size_ = 0;
@@ -161,6 +189,7 @@ void sprite_batch::begin_batch()
     text_align_ = text_align::LEFT;
     matrix_ = g2d::mat3::identity();
     matrix_stack_ = std::stack<g2d::mat3>();
+    scissor_test_ = false;
 }
 
 void sprite_batch::end_batch()
@@ -200,6 +229,11 @@ void sprite_batch::set_blend_mode(blend_mode mode)
     blend_mode_ = mode;
 }
 
+void sprite_batch::set_scissor_test(bool enabled)
+{
+    scissor_test_ = enabled;
+}
+
 void sprite_batch::set_color(const g2d::rgba &color)
 {
     color_ = color;
@@ -225,6 +259,7 @@ void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *tex
 
     s.layer = layer;
     s.blend = blend_mode_;
+    s.scissor_test = scissor_test_;
 
     s.num_vert_colors = 2;
     s.colors[0] = colors0;
@@ -251,6 +286,7 @@ void sprite_batch::add_quad(const g2d::program *program, const g2d::texture *tex
 
     s.layer = layer;
     s.blend = blend_mode_;
+    s.scissor_test = scissor_test_;
 
     s.num_vert_colors = 1;
     s.colors[0] = colors;
@@ -413,6 +449,8 @@ void sprite_batch::flush_queue()
             return s0->layer < s1->layer;
         } else if (s0->blend != s1->blend) {
             return static_cast<int>(s0->blend) < static_cast<int>(s1->blend);
+        } else if (s0->scissor_test != s1->scissor_test) {
+            return static_cast<int>(s0->scissor_test) < static_cast<int>(s1->scissor_test);
         } else if (s0->program != s1->program) {
             return s0->program < s1->program;
         } else {
@@ -441,9 +479,13 @@ void sprite_batch::flush_queue()
     auto cur_texture = sorted_sprites[0]->texture;
     auto cur_blend_mode = sorted_sprites[0]->blend;
     auto cur_num_vert_colors = sorted_sprites[0]->num_vert_colors;
+    auto cur_scissor_test = sorted_sprites[0]->scissor_test;
+
+    GL_CHECK(glScissor(scissor_box_.x, scissor_box_.y, scissor_box_.width, scissor_box_.height));
 
     bind_texture(cur_program, cur_texture);
     gl_set_blend_mode(cur_blend_mode);
+    gl_set_scissor_test(cur_scissor_test);
 
     int batch_start = 0;
 
@@ -461,8 +503,8 @@ void sprite_batch::flush_queue()
     for (int i = 1; i < sprite_queue_size_; ++i) {
         const auto p = sorted_sprites[i];
 
-        if (p->blend != cur_blend_mode || p->texture != cur_texture || p->program != cur_program ||
-            p->num_vert_colors != cur_num_vert_colors) {
+        if (p->blend != cur_blend_mode || p->scissor_test != cur_scissor_test || p->texture != cur_texture ||
+            p->program != cur_program || p->num_vert_colors != cur_num_vert_colors) {
             render_sprites(i);
 
             batch_start = i;
@@ -476,6 +518,11 @@ void sprite_batch::flush_queue()
             if (p->blend != cur_blend_mode) {
                 cur_blend_mode = p->blend;
                 gl_set_blend_mode(cur_blend_mode);
+            }
+
+            if (p->scissor_test != cur_scissor_test) {
+                cur_scissor_test = p->scissor_test;
+                gl_set_scissor_test(cur_scissor_test);
             }
 
             cur_num_vert_colors = p->num_vert_colors;
@@ -618,6 +665,11 @@ void set_viewport(int x_min, int x_max, int y_min, int y_max)
     g_sprite_batch.set_viewport(x_min, x_max, y_min, y_max);
 }
 
+void set_scissor_box(int x, int y, int width, int height)
+{
+    g_sprite_batch.set_scissor_box(x, y, width, height);
+}
+
 void begin_batch()
 {
     g_sprite_batch.begin_batch();
@@ -661,6 +713,11 @@ void rotate(float a)
 void set_blend_mode(blend_mode mode)
 {
     g_sprite_batch.set_blend_mode(mode);
+}
+
+void set_scissor_test(bool enabled)
+{
+    g_sprite_batch.set_scissor_test(enabled);
 }
 
 void set_color(const g2d::rgba &color)

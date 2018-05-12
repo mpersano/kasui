@@ -406,10 +406,7 @@ void stats_page::reset_contents()
 
 void stats_page::draw(float alpha) const
 {
-#ifdef FIX_ME
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(0, 0, viewport_width, top_y_ * viewport_height / window_height);
-#endif
+    render::set_scissor_test(true);
 
     float y = top_y_ + y_offset_;
     if (y < top_y_)
@@ -431,9 +428,7 @@ void stats_page::draw(float alpha) const
             break;
     }
 
-#ifdef FIX_ME
-    glDisable(GL_SCISSOR_TEST);
-#endif
+    render::set_scissor_test(false);
 
     draw_title(alpha);
 }
@@ -519,6 +514,9 @@ void stats_state_impl::reset()
 void stats_state_impl::redraw() const
 {
     get_main_menu_state()->redraw(); // draw main menu background
+
+    const auto top_y = window_height - stats_page::TITLE_HEIGHT;
+    render::set_scissor_box(0, 0, viewport_width, top_y * viewport_height / window_height);
 
     float pause_alpha = 1;
 

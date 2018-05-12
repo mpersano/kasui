@@ -49,6 +49,8 @@ void init();
 
 void set_viewport(int x_min, int x_max, int y_min, int y_max);
 
+void set_scissor_box(int x, int y, int width, int height);
+
 void begin_batch();
 void end_batch();
 
@@ -61,6 +63,7 @@ void scale(float sx, float sy);
 void rotate(float a);
 
 void set_blend_mode(blend_mode mode);
+void set_scissor_test(bool enable);
 void set_color(const g2d::rgba &color);
 
 void draw_quad(const quad &verts, int layer);
