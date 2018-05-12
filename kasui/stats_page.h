@@ -1,5 +1,4 @@
-#ifndef STATS_PAGE_H_
-#define STATS_PAGE_H_
+#pragma once
 
 #include "state.h"
 
@@ -23,5 +22,3 @@ public:
 private:
     stats_state_impl *impl_;
 };
-
-#endif // STATS_H_

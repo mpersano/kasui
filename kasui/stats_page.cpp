@@ -1,12 +1,9 @@
-#include <algorithm>
-#include <set>
-#include <vector>
+#include "stats_page.h"
 
 #include "guava2d/font_manager.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
 #include "guava2d/vec3.h"
-#include "guava2d/vertex_array.h"
 #include "guava2d/xwchar.h"
 
 #include "background.h"
@@ -16,12 +13,19 @@
 #include "line_splitter.h"
 #include "main_menu.h"
 #include "pause_button.h"
-#include "program_registry.h"
 #include "sprite_manager.h"
-#include "stats_page.h"
 #include "theme.h"
+#include "render.h"
+
+#include <algorithm>
+#include <set>
+#include <vector>
+#include <cassert>
 
 extern state *get_main_menu_state();
+
+static constexpr int FRAME_LAYER = 99;
+static constexpr int TEXT_LAYER = 100;
 
 class stats_page_item
 {
@@ -29,14 +33,14 @@ public:
     stats_page_item(const g2d::texture *frame_texture);
     virtual ~stats_page_item() {}
 
-    virtual void draw(const g2d::mat4 &proj_modelview, float alpha) const = 0;
+    virtual void draw(float alpha) const = 0;
     virtual int get_height() const = 0;
     virtual int get_left_border() const = 0;
     virtual float get_frame_alpha() const = 0;
 
     virtual void reset_contents() = 0;
 
-    void draw_frame(const g2d::mat4 &proj_modelview, float alpha) const;
+    void draw_frame(float alpha) const;
 
 private:
     const g2d::texture *frame_texture_;
@@ -47,7 +51,7 @@ class kanji_info_item : public stats_page_item
 public:
     kanji_info_item(const kanji_info *kanji);
 
-    void draw(const g2d::mat4 &proj_modelview, float alpha) const override;
+    void draw(float alpha) const override;
 
     int get_height() const override { return 116; }
 
@@ -68,7 +72,7 @@ class jukugo_info_item : public stats_page_item
 public:
     jukugo_info_item(const jukugo *jukugo);
 
-    void draw(const g2d::mat4 &proj_modelview, float alpha) const override;
+    void draw(float alpha) const override;
 
     int get_height() const override { return height_; }
 
@@ -83,11 +87,15 @@ private:
 
     const jukugo *jukugo_;
 
+    const g2d::font *micro_font_;
+    const g2d::font *medium_font_;
+
     int height_;
-#ifdef FIX_ME
-    g2d::draw_queue text_;
-    g2d::draw_queue hits_text_;
-#endif
+    std::vector<std::wstring> meaning_text_;
+    std::wstring hits_text_;
+
+    static constexpr int MAX_MEANING_WIDTH = 360;
+    static constexpr int LINE_HEIGHT = 30;
 };
 
 class stats_page
@@ -98,7 +106,7 @@ public:
     void reset();
     void reset_contents();
 
-    void draw(const g2d::mat4 &mat, float alpha) const;
+    void draw(float alpha) const;
     void update(uint32_t dt);
 
     void on_drag_start();
@@ -108,13 +116,12 @@ public:
     static const int TITLE_HEIGHT = 96;
 
 private:
-    void draw_title(const g2d::mat4 &mat, float alpha) const;
+    void draw_title(float alpha) const;
     void update_y_offset(float dy);
 
-#ifdef FIX_ME
-    g2d::draw_queue title_text_;
-#endif
+    const g2d::font *title_font_;
     std::vector<stats_page_item *> items_;
+    std::wstring title_text_;
     float y_offset_;
     float top_y_;
     int touch_start_tic_;
@@ -173,76 +180,42 @@ stats_page_item::stats_page_item(const g2d::texture *frame_texture)
 {
 }
 
-void stats_page_item::draw_frame(const g2d::mat4 &proj_modelview, float alpha) const
+void stats_page_item::draw_frame(float alpha) const
 {
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
+    render::set_color({1, 1, 1, alpha});
+
     static const int border_radius = 16;
 
     const int height = get_height(), left_border = get_left_border();
-
-    program_texture_uniform_alpha &prog = get_program_instance<program_texture_uniform_alpha>();
-    prog.use();
-    prog.set_proj_modelview_matrix(proj_modelview);
-    prog.set_texture(0);
-    prog.set_alpha(alpha);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    frame_texture_->bind();
 
     const float x0 = left_border, x1 = left_border + border_radius, x2 = window_width - border_radius,
                 x3 = window_width;
     const float y0 = 0, y1 = -border_radius, y2 = -(height - border_radius), y3 = -height;
 
-    static g2d::vertex_array_texuv va(8);
+    const auto draw_row = [this, x0, x1, x2, x3](float y0, float y1, float u0, float u1) {
+        render::draw_quad(
+                frame_texture_,
+                {{x0, y0}, {x0, y1}, {x1, y1}, {x1, y0}},
+                {{0, u0}, {0, u1}, {.25, u1}, {.25, u0}},
+                FRAME_LAYER);
 
-    va.reset();
+        render::draw_quad(
+                frame_texture_,
+                {{x1, y0}, {x1, y1}, {x2, y1}, {x2, y0}},
+                {{.25, u0}, {.25, u1}, {.75, u1}, {.75, u0}},
+                FRAME_LAYER);
 
-    va << x0, y0, 0, 0;
-    va << x0, y1, 0, .25;
+        render::draw_quad(
+                frame_texture_,
+                {{x2, y0}, {x2, y1}, {x3, y1}, {x3, y0}},
+                {{.75, u0}, {.75, u1}, {1, u1}, {1, u0}},
+                FRAME_LAYER);
+    };
 
-    va << x1, y0, .25, 0;
-    va << x1, y1, .25, .25;
-
-    va << x2, y0, .75, 0;
-    va << x2, y1, .75, .25;
-
-    va << x3, y0, 1, 0;
-    va << x3, y1, 1, .25;
-
-    va.draw(GL_TRIANGLE_STRIP);
-
-    va.reset();
-
-    va << x0, y1, 0, .25;
-    va << x0, y2, 0, .75;
-
-    va << x1, y1, .25, .25;
-    va << x1, y2, .25, .75;
-
-    va << x2, y1, .75, .25;
-    va << x2, y2, .75, .75;
-
-    va << x3, y1, 1, .25;
-    va << x3, y2, 1, .75;
-
-    va.draw(GL_TRIANGLE_STRIP);
-
-    va.reset();
-
-    va << x0, y2, 0, .75;
-    va << x0, y3, 0, 1;
-
-    va << x1, y2, .25, .75;
-    va << x1, y3, .25, 1;
-
-    va << x2, y2, .75, .75;
-    va << x2, y3, .75, 1;
-
-    va << x3, y2, 1, .75;
-    va << x3, y3, 1, 1;
-
-    va.draw(GL_TRIANGLE_STRIP);
+    draw_row(y0, y1, 0, .25);
+    draw_row(y1, y2, .25, .75);
+    draw_row(y2, y3, .75, 1);
 }
 
 kanji_info_item::kanji_info_item(const kanji_info *kanji)
@@ -274,10 +247,11 @@ kanji_info_item::kanji_info_item(const kanji_info *kanji)
 #endif
 }
 
-void kanji_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
+void kanji_info_item::draw(float alpha) const
 {
-    draw_frame(proj_modelview, alpha);
+    draw_frame(alpha);
 
+#ifdef FIX_ME
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -287,14 +261,11 @@ void kanji_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
     prog.set_texture(0);
     prog.set_color(g2d::rgba(0., 0., 0., .5 * alpha));
 
-#ifdef FIX_ME
     text_.draw();
-#endif
 
     prog.set_proj_modelview_matrix(proj_modelview);
     prog.set_color(g2d::rgba(1, 1, 1, alpha));
 
-#ifdef FIX_ME
     text_.draw();
 #endif
 }
@@ -302,94 +273,68 @@ void kanji_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
 jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
     : stats_page_item(g2d::texture_manager::get_instance().load("images/w-button-border.png"))
     , jukugo_(jukugo)
+    , medium_font_{g2d::font_manager::get_instance().load("fonts/medium")}
+    , micro_font_{g2d::font_manager::get_instance().load("fonts/micro")}
 {
-    static const int MAX_MEANING_WIDTH = 360;
-    static const int MIN_HEIGHT = 72;
-    static const int LINE_HEIGHT = 30;
-
-    const g2d::font *medium_font = g2d::font_manager::get_instance().load("fonts/medium");
-    const g2d::font *micro_font = g2d::font_manager::get_instance().load("fonts/micro");
-
     static wchar_t meaning_buf[512];
     xswprintf(meaning_buf, L"(%s) %s", jukugo->reading, jukugo->eigo);
 
-    int num_lines = 0;
-
-#ifdef FIX_ME
     {
-        line_splitter ls(micro_font, meaning_buf);
-
-        wchar_t *line;
-
-        while ((line = ls.next_line(MAX_MEANING_WIDTH))) {
-            ++num_lines;
-            delete[] line;
-        }
+        line_splitter ls(micro_font_, meaning_buf);
+        std::wstring line;
+        while (line = ls.next_line(MAX_MEANING_WIDTH), !line.empty())
+            meaning_text_.push_back(line);
     }
-#endif
 
-    height_ = std::max(MIN_HEIGHT, 14 + num_lines * LINE_HEIGHT);
-
-    // text
-
-#ifdef FIX_ME
-    text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw());
-
-    text_.push_matrix().translate(30, -.5 * height_ - 16).render_text(medium_font, L"%s", jukugo->kanji).pop_matrix();
-#endif
-
-#ifdef FIX_ME
-    line_splitter ls(micro_font, meaning_buf);
-
-    wchar_t *line;
-    int y = -.5 * height_ + .5 * num_lines * LINE_HEIGHT + 2;
-
-    while ((line = ls.next_line(MAX_MEANING_WIDTH))) {
-        text_.push_matrix().translate(160, y - 22).render_text(micro_font, L"%s", line).pop_matrix();
-        delete[] line;
-        y -= LINE_HEIGHT;
-    }
-#endif
+    static constexpr int MIN_HEIGHT = 72;
+    height_ = std::max(MIN_HEIGHT, 14 + static_cast<int>(meaning_text_.size()) * LINE_HEIGHT);
 
     reset_contents();
 }
 
 void jukugo_info_item::reset_contents()
 {
-    const g2d::font *micro_font = g2d::font_manager::get_instance().load("fonts/micro");
-
-#ifdef FIX_ME
-    hits_text_.reset();
-
-    hits_text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
-        .translate(window_width - 20, -.5 * height_ - 8)
-        .align_right()
-        .render_text(micro_font, L"%d", jukugo_->hits);
-#endif
+    wchar_t hits_buf[80];
+    xswprintf(hits_buf, L"%d", jukugo_->hits);
+    hits_text_ = hits_buf;
 }
 
-void jukugo_info_item::draw(const g2d::mat4 &proj_modelview, float alpha) const
+void jukugo_info_item::draw(float alpha) const
 {
-    draw_frame(proj_modelview, alpha);
+    draw_frame(alpha);
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+    render::set_blend_mode(blend_mode::INVERSE_BLEND);
+    render::set_color({alpha, alpha, alpha, 1.f});
 
-    program_texture_uniform_color &prog = get_program_instance<program_texture_uniform_color>();
-    prog.use();
-    prog.set_proj_modelview_matrix(proj_modelview);
-    prog.set_texture(0);
-    prog.set_color(g2d::rgba(alpha, alpha, alpha, 1));
+    render::set_text_align(text_align::LEFT);
 
-#ifdef FIX_ME
-    text_.draw();
-    hits_text_.draw();
-#endif
+    render::push_matrix();
+    render::translate(30, -.5 * height_ - 16);
+    render::draw_text(medium_font_, {}, TEXT_LAYER, jukugo_->kanji);
+    render::pop_matrix();
+
+    wchar_t *line;
+    int y = -.5 * height_ + .5 * meaning_text_.size() * LINE_HEIGHT + 2;
+
+    for (const auto& line : meaning_text_) {
+        render::push_matrix();
+        render::translate(160, y - 22);
+        render::draw_text(micro_font_, {}, TEXT_LAYER, line.c_str());
+        render::pop_matrix();
+        y -= LINE_HEIGHT;
+    }
+
+    render::push_matrix();
+    render::translate(window_width - 20, -.5 * height_ - 8);
+    render::set_text_align(text_align::RIGHT);
+    render::draw_text(micro_font_, {}, TEXT_LAYER, hits_text_.c_str());
+    render::pop_matrix();
 }
 
 stats_page::stats_page(int level, float top_y)
     : top_y_(top_y)
     , total_height_(0)
+    , title_font_{g2d::font_manager::get_instance().load("fonts/medium")}
 {
     struct kanji_jukugo
     {
@@ -441,16 +386,9 @@ stats_page::stats_page(int level, float top_y)
 
     // title
 
-    const g2d::font *font = g2d::font_manager::get_instance().load("fonts/medium");
-
-#ifdef FIX_ME
-    title_text_.reset();
-
-    title_text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
-        .translate(.5 * window_width, window_height - .5 * TITLE_HEIGHT - 14)
-        .align_center()
-        .render_text(font, L"level %d", level + 1);
-#endif
+    wchar_t title_buf[80];
+    xswprintf(title_buf, L"level %d", level + 1);
+    title_text_ = title_buf;
 }
 
 void stats_page::reset()
@@ -466,13 +404,12 @@ void stats_page::reset_contents()
         item->reset_contents();
 }
 
-void stats_page::draw(const g2d::mat4 &mat, float alpha) const
+void stats_page::draw(float alpha) const
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+#ifdef FIX_ME
     glEnable(GL_SCISSOR_TEST);
     glScissor(0, 0, viewport_width, top_y_ * viewport_height / window_height);
+#endif
 
     float y = top_y_ + y_offset_;
     if (y < top_y_)
@@ -481,8 +418,12 @@ void stats_page::draw(const g2d::mat4 &mat, float alpha) const
         y = total_height_;
 
     for (auto item : items_) {
-        if (y - item->get_height() < top_y_)
-            item->draw(mat * g2d::mat4::translation(0, y, 0), alpha);
+        if (y - item->get_height() < top_y_) {
+            render::push_matrix();
+            render::translate(0, y);
+            item->draw(alpha);
+            render::pop_matrix();
+        }
 
         y -= item->get_height();
 
@@ -490,29 +431,20 @@ void stats_page::draw(const g2d::mat4 &mat, float alpha) const
             break;
     }
 
+#ifdef FIX_ME
     glDisable(GL_SCISSOR_TEST);
+#endif
 
-    draw_title(mat, alpha);
+    draw_title(alpha);
 }
 
-void stats_page::draw_title(const g2d::mat4 &mat, float alpha) const
+void stats_page::draw_title(float alpha) const
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    // text
-
-    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-
-    program_texture_uniform_color &prog = get_program_instance<program_texture_uniform_color>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
-    prog.set_color(g2d::rgba(alpha, alpha, alpha, 1.));
-
-#ifdef FIX_ME
-    title_text_.draw();
-#endif
+    render::set_blend_mode(blend_mode::INVERSE_BLEND);
+    render::set_color({alpha, alpha, alpha, 1.f});
+    render::translate(.5 * window_width, window_height - .5 * TITLE_HEIGHT - 14);
+    render::set_text_align(text_align::CENTER);
+    render::draw_text(title_font_, {}, TEXT_LAYER, title_text_.c_str());
 }
 
 void stats_page::update(uint32_t dt)
@@ -594,7 +526,7 @@ void stats_state_impl::redraw() const
         case ACTIVE:
         case DRAG_START:
         case DRAG_VERT:
-            level_stats_[cur_level_]->draw(get_ortho_projection(), 1);
+            level_stats_[cur_level_]->draw(1);
             break;
 
         case DRAG_HORIZ:
@@ -659,8 +591,10 @@ void stats_state_impl::draw_page(const stats_page *page, float x_offset) const
 {
     float alpha = 1. - fabs(x_offset) / window_width;
 
-    const g2d::mat4 mat = get_ortho_projection() * g2d::mat4::translation(x_offset, 0, 0);
-    page->draw(mat, alpha);
+    render::push_matrix();
+    render::translate(x_offset, 0);
+    page->draw(alpha);
+    render::pop_matrix();
 }
 
 void stats_state_impl::update(uint32_t dt)
