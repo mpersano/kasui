@@ -1,5 +1,4 @@
-#ifndef BAKUDAN_CLIP_H_
-#define BAKUDAN_CLIP_H_
+#pragma once
 
 #include "world.h"
 
@@ -18,5 +17,3 @@ protected:
     int tics;
     const g2d::texture *glow_texture;
 };
-
-#endif // BAKUDAN_CLIP_H_

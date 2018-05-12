@@ -1,20 +1,16 @@
+#include "bakudan_sprite.h"
+
+#include "guava2d/rgb.h"
+#include "guava2d/texture_manager.h"
+
+#include "common.h"
+#include "render.h"
+
 #include <cassert>
 #include <cmath>
 
-#include "guava2d/g2dgl.h"
-#include "guava2d/rgb.h"
-#include "guava2d/texture_manager.h"
-#include "guava2d/vertex_array.h"
-
-#include "bakudan_sprite.h"
-#include "common.h"
-#include "program_registry.h"
-
-enum
-{
-    TTL = 70 * MS_PER_TIC,
-    GLOW_TEXTURE_SIZE = 64,
-};
+static constexpr int TTL = 70 * MS_PER_TIC;
+static constexpr int GLOW_TEXTURE_SIZE = 64;
 
 bakudan_sprite::bakudan_sprite(float x, float y)
     : x_center(x)
@@ -36,14 +32,10 @@ bool bakudan_sprite::update(uint32_t dt)
 
 void bakudan_sprite::draw() const
 {
-#ifdef FIX_ME
-    enum
-    {
-        NUM_RAYS = 9
-    };
+    constexpr int NUM_RAYS = 9;
 
-    static const float MIN_RADIUS = 100;
-    static const float MAX_RADIUS = 600;
+    constexpr float MIN_RADIUS = 100;
+    constexpr float MAX_RADIUS = 600;
 
     const float lerp_factor = sinf(static_cast<float>(tics) * M_PI / TTL);
 
@@ -55,10 +47,12 @@ void bakudan_sprite::draw() const
     const float delta_angle = 2. * M_PI / NUM_RAYS;
     const float fray = .6 - .4 * lerp_factor;
 
-    const int ray_alpha = 255 * powf(lerp_factor, 5);
+    const float ray_alpha = powf(lerp_factor, 5);
 
-    static g2d::vertex_array_color gv_rays(NUM_RAYS * 3);
-    gv_rays.reset();
+    render::set_blend_mode(blend_mode::ADDITIVE_BLEND);
+
+    const g2d::rgba center_color{ray_alpha, ray_alpha, ray_alpha, ray_alpha};
+    const g2d::rgba black{0, 0, 0, 0};
 
     for (int i = 0; i < NUM_RAYS; i++) {
         const float x0 = x_center + cosf(angle) * radius_rays;
@@ -67,28 +61,14 @@ void bakudan_sprite::draw() const
         const float x1 = x_center + cosf(angle + fray * delta_angle) * radius_rays;
         const float y1 = y_center + sinf(angle + fray * delta_angle) * radius_rays;
 
-        gv_rays << x_center, y_center, ray_alpha, ray_alpha, ray_alpha, ray_alpha;
-        gv_rays << x0, y0, 0, 0, 0, 0;
-        gv_rays << x1, y1, 0, 0, 0, 0;
+        render::draw_quad(
+                {{x_center, y_center}, {x0, y0}, {x1, y1}, {x_center, y_center}},
+                {center_color, black, black, center_color},
+                48);
 
         angle += delta_angle;
     }
 
-    assert(gv_rays.get_num_verts() == NUM_RAYS * 3);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-
-    {
-        program_color &prog = get_program_instance<program_color>();
-        prog.use();
-        prog.set_proj_modelview_matrix(proj_modelview);
-
-        gv_rays.draw(GL_TRIANGLES);
-    }
-
-    static g2d::vertex_array_texuv gv_glow(4);
-    gv_glow.reset();
 
     const float x0 = x_center - radius_glow;
     const float x1 = x_center + radius_glow;
@@ -101,21 +81,10 @@ void bakudan_sprite::draw() const
     const float du = glow_texture->get_u_scale();
     const float dv = glow_texture->get_v_scale();
 
-    gv_glow << x0, y0, 0, 0;
-    gv_glow << x1, y0, du, 0;
-    gv_glow << x0, y1, 0, dv;
-    gv_glow << x1, y1, du, dv;
-
-    glow_texture->bind();
-
-    {
-        program_texture_uniform_alpha &prog = get_program_instance<program_texture_uniform_alpha>();
-        prog.use();
-        prog.set_proj_modelview_matrix(proj_modelview);
-        prog.set_texture(0);
-        prog.set_alpha(glow_alpha);
-
-        gv_glow.draw(GL_TRIANGLE_STRIP);
-    }
-#endif
+    render::set_color({1, 1, 1, glow_alpha});
+    render::draw_quad(
+            glow_texture,
+            {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
+            {{0, 0}, {du, 0}, {du, dv}, {0, dv}},
+            48);
 }
