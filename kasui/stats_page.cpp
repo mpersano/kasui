@@ -16,6 +16,7 @@
 #include "sprite_manager.h"
 #include "theme.h"
 #include "render.h"
+#include "program_manager.h"
 
 #include <algorithm>
 #include <set>
@@ -62,9 +63,12 @@ public:
     void reset_contents() override {}
 
 private:
-#ifdef FIX_ME
-    g2d::draw_queue text_;
-#endif
+    const g2d::program *program_;
+    const kanji_info *kanji_;
+    const g2d::font *large_font_;
+    const g2d::font *micro_font_;
+    const g2d::font *small_font_;
+    std::wstring kanji_text_;
 };
 
 class jukugo_info_item : public stats_page_item
@@ -220,54 +224,56 @@ void stats_page_item::draw_frame(float alpha) const
 
 kanji_info_item::kanji_info_item(const kanji_info *kanji)
     : stats_page_item(g2d::texture_manager::get_instance().load("images/b-button-border.png"))
+    , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
+    , kanji_{kanji}
+    , large_font_{g2d::font_manager::get_instance().load("fonts/large")}
+    , micro_font_{g2d::font_manager::get_instance().load("fonts/micro")}
+    , small_font_{g2d::font_manager::get_instance().load("fonts/small")}
 {
-    const int height = get_height();
-
-    const g2d::font *large_font = g2d::font_manager::get_instance().load("fonts/large");
-    const g2d::font *micro_font = g2d::font_manager::get_instance().load("fonts/micro");
-    const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/small");
-
-#ifdef FIX_ME
-    text_.text_program(get_program_instance<program_text>().get_raw())
-        .push_matrix()
-        .translate(10, -.5 * height - 28)
-        .render_text(large_font, L"%c", kanji->code)
-        .pop_matrix()
-        .push_matrix()
-        .translate(110, -.5 * height + 6)
-        .render_text(micro_font, L"%s", kanji->on)
-        .pop_matrix()
-        .push_matrix()
-        .translate(110, -.5 * height - 24)
-        .render_text(micro_font, L"%s", kanji->kun)
-        .pop_matrix()
-        .align_right()
-        .translate(window_width - 20, -.5 * height - 12)
-        .render_text(small_font, L"%s", kanji->meaning);
-#endif
+    kanji_text_.push_back(kanji->code);
 }
 
 void kanji_info_item::draw(float alpha) const
 {
     draw_frame(alpha);
 
-#ifdef FIX_ME
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    const int height = get_height();
 
-    program_text &prog = get_program_instance<program_text>();
-    prog.use();
-    prog.set_proj_modelview_matrix(proj_modelview * g2d::mat4::translation(3, -3, 0));
-    prog.set_texture(0);
-    prog.set_color(g2d::rgba(0., 0., 0., .5 * alpha));
+    const auto draw_text = [this, height]() {
+        render::set_text_align(text_align::LEFT);
 
-    text_.draw();
+        render::push_matrix();
+        render::translate(10, -.5 * height - 28);
+        render::draw_text(program_, large_font_, {}, TEXT_LAYER, kanji_text_.c_str());
+        render::pop_matrix();
 
-    prog.set_proj_modelview_matrix(proj_modelview);
-    prog.set_color(g2d::rgba(1, 1, 1, alpha));
+        render::push_matrix();
+        render::translate(110, -.5 * height + 6);
+        render::draw_text(program_, micro_font_, {}, TEXT_LAYER, kanji_->on);
+        render::pop_matrix();
 
-    text_.draw();
-#endif
+        render::push_matrix();
+        render::translate(110, -.5 * height - 24);
+        render::draw_text(program_, micro_font_, {}, TEXT_LAYER, kanji_->kun);
+        render::pop_matrix();
+
+        render::push_matrix();
+        render::set_text_align(text_align::RIGHT);
+        render::translate(window_width - 20, -.5 * height - 12);
+        render::draw_text(program_, small_font_, {}, TEXT_LAYER, kanji_->meaning);
+        render::pop_matrix();
+    };
+
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
+    render::set_color({0, 0, 0, .5f * alpha});
+    render::push_matrix();
+    render::translate(3, -3);
+    draw_text();
+    render::pop_matrix();
+
+    render::set_color({1, 1, 1, alpha});
+    draw_text();
 }
 
 jukugo_info_item::jukugo_info_item(const jukugo *jukugo)

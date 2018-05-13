@@ -87,6 +87,7 @@ void draw_box(const g2d::program *program, const g2d::texture *texture, const bo
 
 void set_text_align(text_align align);
 void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const wchar_t *str);
+void draw_text(const g2d::program *program, const g2d::font *font, const g2d::vec2 &pos, int layer, const wchar_t *str);
 void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const g2d::rgba &outline_color,
                const g2d::rgba &text_color, const wchar_t *str);
 void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
