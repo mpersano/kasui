@@ -831,34 +831,6 @@ void in_game_state_impl::draw_hud() const
 {
     const float alpha = get_level_transition_alpha();
 
-#if 0
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	program_text& text_prog = get_program_instance<program_text>();
-	program_text_outline& text_outline_prog = get_program_instance<program_text_outline>();
-
-	text_prog.use();
-	text_prog.set_proj_modelview_matrix(mat);
-	text_prog.set_texture(0);
-	text_prog.set_color(g2d::rgba(1, 1, 1, 1));
-
-	text_outline_prog.use();
-	text_outline_prog.set_proj_modelview_matrix(mat);
-	text_outline_prog.set_texture(0);
-	text_outline_prog.set_color(g2d::rgba(.125, .125, .125, 1));
-
-	hud_text_no_alpha_.draw();
-
-	text_prog.use();
-	text_prog.set_color(g2d::rgba(1, 1, 1, alpha));
-
-	text_outline_prog.use();
-	text_outline_prog.set_color(g2d::rgba(.125, .125, .125, alpha));
-
-	hud_text_alpha_.draw();
-#endif
-
     const float grid_width = world_.get_width();
     const float grid_height = world_.get_height();
 
