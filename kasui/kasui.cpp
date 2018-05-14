@@ -34,7 +34,6 @@
 #include "menu.h"
 #include "options.h"
 #include "panic.h"
-#include "program_registry.h"
 #include "settings.h"
 #include "sprite_manager.h"
 #include "stats_page.h"
@@ -251,25 +250,6 @@ static void preload_resources()
     for (const char **p = fonts; *p; p++)
         g2d::font_manager::get_instance().load(*p);
 
-    // programs
-
-    get_program_instance<program_flat>();
-    get_program_instance<program_color>();
-    get_program_instance<program_texture_decal>();
-    get_program_instance<program_texture_color>();
-    get_program_instance<program_texture_alpha>();
-    get_program_instance<program_texture_uniform_alpha>();
-    get_program_instance<program_texture_uniform_color>();
-    get_program_instance<program_text>();
-    get_program_instance<program_text_outline>();
-    get_program_instance<program_text_alpha>();
-    get_program_instance<program_text_outline_alpha>();
-    get_program_instance<program_text_gradient>();
-    get_program_instance<program_text_outline_gradient>();
-    get_program_instance<program_intro_text>();
-    get_program_instance<program_timer_text>();
-    get_program_instance<program_3d_texture_color>();
-
     // sprites
 
     g2d::load_sprite_sheet("sprites/sprites");
@@ -335,7 +315,9 @@ void kasui_impl::resize(int width, int height)
         // resuming after pause
 
         g2d::texture_manager::get_instance().load_all();
+#ifdef FIX_ME
         reload_all_programs();
+#endif
     }
 
     glViewport(0, 0, viewport_width, viewport_height);

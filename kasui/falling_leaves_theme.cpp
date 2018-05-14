@@ -5,7 +5,7 @@
 
 #include "gl_check.h"
 #include "common.h"
-#include "program_registry.h"
+#include "program_manager.h"
 #include "render.h"
 
 #include <algorithm>
@@ -137,7 +137,12 @@ void falling_leaves_theme::leaf::update(uint32_t dt)
 
 falling_leaves_theme::falling_leaves_theme()
     : texture_{g2d::texture_manager::get_instance().load("images/leaf.png")}
+    , program_{load_program("shaders/vert_3d_texture_color.glsl", "shaders/frag_texture_color.glsl")}
 {
+    program_->use();
+    program_->bind_attrib_location(0, "position");
+    program_->bind_attrib_location(1, "texcoord");
+    program_->bind_attrib_location(2, "color");
 }
 
 void falling_leaves_theme::reset()
@@ -182,10 +187,9 @@ void falling_leaves_theme::draw() const
     GLfloat matrix[16];
     initialize_perspective_matrix(matrix, FOV, window_width / window_height, Z_NEAR, Z_FAR);
 
-    program_3d_texture_color &prog = get_program_instance<program_3d_texture_color>();
-    prog.use();
-    prog.set_proj_modelview_matrix(matrix);
-    prog.set_texture(0);
+    program_->use();
+    program_->set_uniform_matrix4("proj_modelview_matrix", matrix);
+    program_->set_uniform_i("texture", 0);
 
     gv.draw(GL_TRIANGLES);
 

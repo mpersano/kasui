@@ -15,7 +15,6 @@
 #include "leaderboard_page.h"
 #include "main_menu.h"
 #include "options.h"
-#include "program_registry.h"
 
 extern void draw_message(const g2d::mat4 &, float alpha, const wchar_t *);
 extern int total_tics;
@@ -155,6 +154,7 @@ void score_text::draw(const g2d::mat4 &mat, float alpha) const
     const g2d::rgb top_color_outline = .5 * top_color_text;
     const g2d::rgb bottom_color_outline = .5 * bottom_color_text;
 
+#ifdef FIX_ME
     program_intro_text &prog = get_program_instance<program_intro_text>();
     prog.use();
     prog.set_proj_modelview_matrix(mat * g2d::mat4::translation(-.5 * width_, 0, 0));
@@ -169,6 +169,7 @@ void score_text::draw(const g2d::mat4 &mat, float alpha) const
     prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, alpha));
 
     va_.draw(GL_TRIANGLES);
+#endif
 }
 
 class input_buffer
@@ -283,6 +284,7 @@ void input_buffer::draw() const
     const g2d::mat4 mat = get_ortho_projection();
 
     {
+#ifdef FIX_ME
         auto &prog = get_program_instance<program_flat>();
         prog.use();
         prog.set_proj_modelview_matrix(mat);
@@ -294,11 +296,13 @@ void input_buffer::draw() const
             prog.set_color(g2d::rgba(1, 1, 1, .25));
             cursor.draw(GL_TRIANGLE_STRIP);
         }
+#endif
     }
 
     font->get_texture()->bind();
 
     {
+#ifdef FIX_ME
         auto &prog = get_program_instance<program_text>();
         prog.use();
         prog.set_proj_modelview_matrix(mat * g2d::mat4::translation(3, -3, 0));
@@ -311,6 +315,7 @@ void input_buffer::draw() const
         prog.set_color(g2d::rgba(1, 1, 1, 1));
 
         chars.draw(GL_TRIANGLES);
+#endif
     }
 }
 
@@ -736,10 +741,12 @@ void keyboard_layout::draw(int selected_key) const
 
     texture_->bind();
 
+#ifdef FIX_ME
     auto &prog = get_program_instance<program_texture_decal>();
     prog.use();
     prog.set_proj_modelview_matrix(get_ortho_projection());
     prog.set_texture(0);
+#endif
 
     va.draw(GL_TRIANGLES);
 }
@@ -1034,11 +1041,13 @@ void hiscore_input_state_impl::draw_input() const
     glEnable(GL_BLEND);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
+#ifdef FIX_ME
     auto &prog = get_program_instance<program_texture_uniform_color>();
     prog.use();
     prog.set_proj_modelview_matrix(mat);
     prog.set_texture(0);
     prog.set_color(g2d::rgba(1, 1, 1, 1));
+#endif
 
 #ifdef FIX_ME
     text_.draw();

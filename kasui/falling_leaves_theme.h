@@ -9,6 +9,7 @@
 namespace g2d
 {
 class texture;
+class program;
 };
 
 class falling_leaves_theme : public theme_animation
@@ -44,4 +45,5 @@ private:
     std::array<leaf, NUM_LEAVES> leaves_;
 
     const g2d::texture *texture_;
+    const g2d::program *program_;
 };

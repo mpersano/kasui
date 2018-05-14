@@ -22,7 +22,6 @@
 #include "kasui.h"
 #include "leaderboard_page.h"
 #include "log.h"
-#include "program_registry.h"
 #include "utf8.h"
 
 void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
@@ -32,6 +31,7 @@ void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef FIX_ME
     auto &prog = get_program_instance<program_timer_text>();
     prog.use();
     prog.set_proj_modelview_matrix(mat);
@@ -39,6 +39,7 @@ void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
 
     prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
     prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
+#endif
 
 #ifdef FIX_ME
     g2d::draw_queue()
@@ -156,6 +157,7 @@ void score_text::draw(const g2d::mat4 &mat, float alpha) const
     const g2d::rgb top_color_outline = .5 * top_color_text;
     const g2d::rgb bottom_color_outline = .5 * bottom_color_text;
 
+#ifdef FIX_ME
     program_intro_text &prog = get_program_instance<program_intro_text>();
     prog.use();
     // prog.set_proj_modelview_matrix(mat*g2d::mat4::translation(-.5*width_, 0,
@@ -172,6 +174,7 @@ void score_text::draw(const g2d::mat4 &mat, float alpha) const
     prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, alpha));
 
     va_.draw(GL_TRIANGLES);
+#endif
 }
 
 } // namespace
@@ -351,11 +354,13 @@ void item::draw(const g2d::mat4 &mat, float alpha) const
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef FIX_ME
         auto &prog = get_program_instance<program_texture_uniform_color>();
         prog.use();
         prog.set_proj_modelview_matrix(mat);
         prog.set_texture(0);
         prog.set_color(color);
+#endif
 
         frame_texture_->bind();
 
@@ -382,11 +387,13 @@ void item::draw(const g2d::mat4 &mat, float alpha) const
     {
         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
+#ifdef FIX_ME
         auto &prog = get_program_instance<program_texture_uniform_color>();
         prog.use();
         prog.set_proj_modelview_matrix(mat);
         prog.set_texture(0);
         prog.set_color(g2d::rgba(alpha, alpha, alpha, 1));
+#endif
 
 #ifdef FIX_ME
         text_.draw();
@@ -522,6 +529,7 @@ void leaderboard_page::draw_title(const g2d::mat4 &mat, float alpha) const
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+#ifdef FIX_ME
     auto &prog = get_program_instance<program_timer_text>();
     prog.use();
     prog.set_proj_modelview_matrix(mat);
@@ -529,6 +537,7 @@ void leaderboard_page::draw_title(const g2d::mat4 &mat, float alpha) const
 
     prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
     prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
+#endif
 
 #ifdef FIX_ME
     title_text_.draw();

@@ -40,7 +40,6 @@ set(KASUI_SOURCES
     panic.cpp
     pause_button.cpp
     program_manager.cpp
-    program_wrapper.cpp
     render.cpp
     sakura.cpp
     score_display.cpp
