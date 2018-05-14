@@ -214,7 +214,7 @@ void drop_trail_sprite::draw() const
 class explosion_particles : public sprite
 {
 public:
-    explosion_particles(const g2d::vec2 &pos, const gradient *g);
+    explosion_particles(const g2d::vec2 &pos, const gradient& g);
 
     bool update(uint32_t dt) override;
     void draw() const override;
@@ -236,7 +236,7 @@ private:
     particle particles_[NUM_PARTICLES];
 };
 
-explosion_particles::explosion_particles(const g2d::vec2 &pos, const gradient *g)
+explosion_particles::explosion_particles(const g2d::vec2 &pos, const gradient& g)
     : texture_(g2d::texture_manager::get_instance().load("images/star.png"))
 {
     const float f = 1. / MS_PER_TIC;
@@ -253,7 +253,7 @@ explosion_particles::explosion_particles(const g2d::vec2 &pos, const gradient *g
         p.angle = frand(0., 2. * M_PI);
         p.delta_angle = f * frand(-.15, .15);
 
-        g2d::rgb color = frand(g->from, g->to) + g2d::rgb(60, 60, 60);
+        g2d::rgb color = frand(g.from, g.to) + g2d::rgb(60, 60, 60);
 
         p.color.r = std::min(static_cast<int>(color.r), 255);
         p.color.g = std::min(static_cast<int>(color.g), 255);
@@ -731,7 +731,7 @@ void world::set_theme_colors(const g2d::rgb &color, const g2d::rgb &opposite_col
     theme_opposite_color_ = opposite_color;
 }
 
-void world::set_text_gradient(const gradient *g)
+void world::set_text_gradient(const gradient& g)
 {
     text_gradient_ = g;
 }

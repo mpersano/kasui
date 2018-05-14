@@ -10,7 +10,7 @@
 #include "render.h"
 #include "tween.h"
 
-jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g)
+jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient& g)
     : jukugo_{jukugo_info}
     , x_base_{x}
     , y_base_{y}
@@ -58,8 +58,8 @@ bool jukugo_info_sprite::update(uint32_t dt)
 
 void jukugo_info_sprite::draw() const
 {
-    const auto top_color = gradient_->to * (1./255.);
-    const auto bottom_color = gradient_->from * (1./255.);
+    const auto top_color = gradient_.to * (1./255.);
+    const auto bottom_color = gradient_.from * (1./255.);
 
     const g2d::rgba top_color_text{top_color, alpha_};
     const g2d::rgba bottom_color_text{bottom_color, alpha_};

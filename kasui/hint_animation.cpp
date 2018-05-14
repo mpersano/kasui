@@ -11,7 +11,7 @@
 #include "settings.h" // for gradient
 #include "tween.h"
 
-hint_text_box::hint_text_box(const hint &h, float cell_size, float width, const gradient *g)
+hint_text_box::hint_text_box(const hint &h, float cell_size, float width, const gradient& g)
     : width_(width)
     , title_font_(g2d::font_manager::get_instance().load("fonts/medium"))
     , text_box_(width)
@@ -92,7 +92,7 @@ void hint_text_box::draw() const
 
     // title
 
-    const g2d::rgb base_color = gradient_->to * (1. / 255.);
+    const g2d::rgb base_color = gradient_.to * (1. / 255.);
     const g2d::rgba text_color(base_color, alpha);
     const g2d::rgba outline_color(.5 * base_color, alpha);
 

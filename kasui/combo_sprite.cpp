@@ -1,13 +1,14 @@
-#include <sstream>
+#include "combo_sprite.h"
 
 #include <guava2d/font_manager.h>
 
-#include "combo_sprite.h"
 #include "common.h"
 #include "render.h"
 #include "settings.h"
 
-combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient *g)
+#include <sstream>
+
+combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient& g)
     : x_origin_(x)
     , y_origin_(y)
     , gradient_(g)
@@ -38,7 +39,7 @@ void combo_sprite::draw() const
     float alpha = sinf(ttl_ * M_PI / TTL);
     alpha *= alpha;
 
-    const g2d::rgb base_color = gradient_->to * (1. / 255.);
+    const g2d::rgb base_color = gradient_.to * (1. / 255.);
     const g2d::rgba text_color(base_color, alpha);
     const g2d::rgba outline_color(.5 * base_color, alpha);
 

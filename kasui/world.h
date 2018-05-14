@@ -1,5 +1,7 @@
 #pragma once
 
+#include "settings.h"
+
 #include <guava2d/rgb.h>
 #include <guava2d/vec2.h>
 
@@ -212,7 +214,7 @@ public:
     const wchar_t *get_cur_falling_blocks() const;
 
     void set_theme_colors(const g2d::rgb &color, const g2d::rgb &opposite_color);
-    void set_text_gradient(const gradient *g);
+    void set_text_gradient(const gradient& g);
 
     void draw_block(int type, float x, float y, float alpha) const;
     void draw_block(int type, float x, float y, float alpha, const g2d::rgb &color) const;
@@ -272,7 +274,7 @@ private:
     int num_level_block_types_;
     float cell_size_;
     g2d::rgb theme_color_, theme_opposite_color_;
-    const gradient *text_gradient_;
+    gradient text_gradient_;
 
     const g2d::texture *blocks_texture_;
     const g2d::texture *flare_texture_;

@@ -385,7 +385,7 @@ void tutorial_state_impl::reset()
     background_initialize_gradient(gradient.from, gradient.to);
 
     world_.set_theme_colors(colors_->main_color, colors_->alternate_color);
-    world_.set_text_gradient(&colors_->text_gradient);
+    world_.set_text_gradient(colors_->text_gradient);
 
     cur_cmd_ = script_.begin();
 

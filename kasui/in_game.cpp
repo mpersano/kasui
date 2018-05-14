@@ -647,7 +647,7 @@ void in_game_state_impl::reset_level()
 #endif
 
     world_.set_theme_colors(colors_->main_color, colors_->alternate_color);
-    world_.set_text_gradient(&colors_->text_gradient);
+    world_.set_text_gradient(colors_->text_gradient);
 
     const auto& gradient = colors_->background_gradient;
     background_initialize_gradient(gradient.from, gradient.to);

@@ -17,7 +17,7 @@ class texture;
 class hint_text_box : public sprite
 {
 public:
-    hint_text_box(const hint &h, float cell_size, float width, const gradient *g);
+    hint_text_box(const hint &h, float cell_size, float width, const gradient& g);
     ~hint_text_box();
 
     float get_height() const { return text_box_.get_height(); }
@@ -48,7 +48,7 @@ private:
         ACTIVE,
         OUTRO
     } state_;
-    const gradient *gradient_;
+    gradient gradient_;
 
     g2d::vec2 from_pos_, to_pos_;
 

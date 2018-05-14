@@ -1,11 +1,12 @@
 #pragma once
 
+#include "action.h"
+#include "world.h"
+#include "settings.h"
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "action.h"
-#include "world.h"
 
 struct jukugo;
 struct gradient;
@@ -18,7 +19,7 @@ class program;
 class jukugo_info_sprite : public sprite
 {
 public:
-    jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient *g);
+    jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient& g);
 
     bool update(uint32_t dt) override;
     void draw() const override;
@@ -33,7 +34,7 @@ private:
     float z_ = 0;
     std::unique_ptr<abstract_action> action_;
 
-    const gradient *gradient_;
+    gradient gradient_;
 
     const g2d::font *kanji_font_;
     const g2d::font *furigana_font_;
