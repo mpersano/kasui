@@ -241,27 +241,12 @@ void kanji_info_item::draw(float alpha) const
 
     const auto draw_text = [this, height]() {
         render::set_text_align(text_align::LEFT);
+        render::draw_text(program_, large_font_, {10.f, -.5f * height - 28.f}, TEXT_LAYER, kanji_text_.c_str());
+        render::draw_text(program_, micro_font_, {110.f, -.5f * height + 6.f}, TEXT_LAYER, kanji_->on);
+        render::draw_text(program_, micro_font_, {110.f, -.5f * height - 24.f}, TEXT_LAYER, kanji_->kun);
 
-        render::push_matrix();
-        render::translate(10, -.5 * height - 28);
-        render::draw_text(program_, large_font_, {}, TEXT_LAYER, kanji_text_.c_str());
-        render::pop_matrix();
-
-        render::push_matrix();
-        render::translate(110, -.5 * height + 6);
-        render::draw_text(program_, micro_font_, {}, TEXT_LAYER, kanji_->on);
-        render::pop_matrix();
-
-        render::push_matrix();
-        render::translate(110, -.5 * height - 24);
-        render::draw_text(program_, micro_font_, {}, TEXT_LAYER, kanji_->kun);
-        render::pop_matrix();
-
-        render::push_matrix();
         render::set_text_align(text_align::RIGHT);
-        render::translate(window_width - 20, -.5 * height - 12);
-        render::draw_text(program_, small_font_, {}, TEXT_LAYER, kanji_->meaning);
-        render::pop_matrix();
+        render::draw_text(program_, small_font_, {window_width - 20.f, -.5f * height - 12.f}, TEXT_LAYER, kanji_->meaning);
     };
 
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
@@ -313,28 +298,18 @@ void jukugo_info_item::draw(float alpha) const
     render::set_color({alpha, alpha, alpha, 1.f});
 
     render::set_text_align(text_align::LEFT);
-
-    render::push_matrix();
-    render::translate(30, -.5 * height_ - 16);
-    render::draw_text(medium_font_, {}, TEXT_LAYER, jukugo_->kanji);
-    render::pop_matrix();
+    render::draw_text(medium_font_, {30.f, -.5f * height_ - 16.f}, TEXT_LAYER, jukugo_->kanji);
 
     wchar_t *line;
     int y = -.5 * height_ + .5 * meaning_text_.size() * LINE_HEIGHT + 2;
 
     for (const auto& line : meaning_text_) {
-        render::push_matrix();
-        render::translate(160, y - 22);
-        render::draw_text(micro_font_, {}, TEXT_LAYER, line.c_str());
-        render::pop_matrix();
+        render::draw_text(micro_font_, {160.f, y - 22.f}, TEXT_LAYER, line.c_str());
         y -= LINE_HEIGHT;
     }
 
-    render::push_matrix();
-    render::translate(window_width - 20, -.5 * height_ - 8);
     render::set_text_align(text_align::RIGHT);
-    render::draw_text(micro_font_, {}, TEXT_LAYER, hits_text_.c_str());
-    render::pop_matrix();
+    render::draw_text(micro_font_, {window_width - 20.f, -.5f * height_ - 8.f}, TEXT_LAYER, hits_text_.c_str());
 }
 
 stats_page::stats_page(int level, float top_y)
@@ -443,9 +418,8 @@ void stats_page::draw_title(float alpha) const
 {
     render::set_blend_mode(blend_mode::INVERSE_BLEND);
     render::set_color({alpha, alpha, alpha, 1.f});
-    render::translate(.5 * window_width, window_height - .5 * TITLE_HEIGHT - 14);
     render::set_text_align(text_align::CENTER);
-    render::draw_text(title_font_, {}, TEXT_LAYER, title_text_.c_str());
+    render::draw_text(title_font_, {.5f * window_width, window_height - .5f * TITLE_HEIGHT - 14.f}, TEXT_LAYER, title_text_.c_str());
 }
 
 void stats_page::update(uint32_t dt)
