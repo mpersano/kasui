@@ -58,9 +58,9 @@ void background_initialize_gradient(const g2d::rgb &from_color, const g2d::rgb &
                 s = 1;
 
             g2d::rgb color = from_color + (to_color - from_color) * s;
-            *bits++ = color.r;
-            *bits++ = color.g;
-            *bits++ = color.b;
+            *bits++ = color.r * 255;
+            *bits++ = color.g * 255;
+            *bits++ = color.b * 255;
         }
     }
 

@@ -77,13 +77,13 @@ struct game_animation
 struct glyph_animation : game_animation
 {
     glyph_animation(const g2d::font *font, float glyph_spacing, const wchar_t *message, float x_base, float y_base,
-                    const gradient *g);
+                    const gradient& g);
 
     void draw() const override;
 
     struct glyph_state
     {
-        glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center, const gradient *g);
+        glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center, const gradient& g);
 
         void draw(const g2d::program *program, float a) const;
 
@@ -104,18 +104,18 @@ struct glyph_animation : game_animation
     float scale;
     float x_base;
     float y_base;
-    const gradient *gradient_;
+    const gradient gradient_;
     const g2d::program *program_;
 };
 
 struct level_intro_animation : glyph_animation
 {
-    level_intro_animation(const gradient *g);
+    level_intro_animation(const gradient& g);
 };
 
 struct level_completed_animation : glyph_animation
 {
-    level_completed_animation(const gradient *g);
+    level_completed_animation(const gradient& g);
 };
 
 struct abunai_animation : game_animation
@@ -130,7 +130,7 @@ struct abunai_animation : game_animation
 
 struct game_over_animation_base : glyph_animation
 {
-    game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str, const gradient *g);
+    game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str, const gradient& g);
 
     void draw() const override;
 
@@ -140,12 +140,12 @@ struct game_over_animation_base : glyph_animation
 
 struct time_up_animation : game_over_animation_base
 {
-    time_up_animation(const gradient *g);
+    time_up_animation(const gradient& g);
 };
 
 struct game_over_animation : game_over_animation_base
 {
-    game_over_animation(const gradient *g);
+    game_over_animation(const gradient& g);
 };
 
 struct countdown_digit : game_animation
@@ -170,7 +170,7 @@ bool game_animation::update(uint32_t dt)
 }
 
 glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, const wchar_t *message, float x_base,
-                                 float y_base, const gradient *g)
+                                 float y_base, const gradient& g)
     : alpha(1)
     , scale(1)
     , x_base(x_base)
@@ -216,7 +216,7 @@ void glyph_animation::draw() const
 }
 
 glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, float x_center, float y_center,
-                                          const gradient *g)
+                                          const gradient& g)
     : texture(gi->texture_)
     , x_center(x_center)
     , y_center(y_center)
@@ -244,11 +244,8 @@ glyph_animation::glyph_state::glyph_state(const g2d::glyph_info *gi, bool flip, 
     t2 = gi->texuv[2];
     t3 = gi->texuv[3];
 
-    const g2d::rgb &top_color = g->from;
-    const g2d::rgb &bottom_color = g->to;
-
-    top_color_text = top_color * (1. / 255);
-    bottom_color_text = bottom_color * (1. / 255);
+    top_color_text = g.from;
+    bottom_color_text = g.to;
 
     top_color_outline = .5 * top_color_text;
     bottom_color_outline = .5 * bottom_color_text;
@@ -263,10 +260,10 @@ void glyph_animation::glyph_state::draw(const g2d::program *program, float alpha
     render::translate(x_center, y_center);
     render::scale(c * scale, scale);
 
-    const g2d::rgba top_outline{top_color_outline.r, top_color_outline.g, top_color_outline.b, alpha};
-    const g2d::rgba bottom_outline{bottom_color_outline.r, bottom_color_outline.g, bottom_color_outline.b, alpha};
-    const g2d::rgba top_text{top_color_text.r, top_color_text.g, top_color_text.b, alpha};
-    const g2d::rgba bottom_text{bottom_color_text.r, bottom_color_text.g, bottom_color_text.b, alpha};
+    const g2d::rgba top_outline{top_color_outline, alpha};
+    const g2d::rgba bottom_outline{bottom_color_outline, alpha};
+    const g2d::rgba top_text{top_color_text, alpha};
+    const g2d::rgba bottom_text{bottom_color_text, alpha};
 
     render::draw_quad(program, texture, {{p0.x, p0.y}, {p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}},
                       {{t0.x, t0.y}, {t1.x, t1.y}, {t2.x, t2.y}, {t3.x, t3.y}},
@@ -279,7 +276,7 @@ void glyph_animation::glyph_state::draw(const g2d::program *program, float alpha
 
 #define GLYPH_ANIMATION_SPACING 1.
 
-level_intro_animation::level_intro_animation(const gradient *g)
+level_intro_animation::level_intro_animation(const gradient& g)
     : glyph_animation(g2d::font_manager::get_instance().load("fonts/title"), GLYPH_ANIMATION_SPACING, L"用意",
                       .5 * window_width, .5 * window_height, g)
 {
@@ -314,7 +311,7 @@ level_intro_animation::level_intro_animation(const gradient *g)
     }
 }
 
-level_completed_animation::level_completed_animation(const gradient *g)
+level_completed_animation::level_completed_animation(const gradient& g)
     : glyph_animation(g2d::font_manager::get_instance().load("fonts/title"), GLYPH_ANIMATION_SPACING, L"成功",
                       .5 * window_width, .5 * window_height, g)
 {
@@ -387,7 +384,7 @@ void abunai_animation::draw() const
 }
 
 game_over_animation_base::game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str,
-                                                   const gradient *g)
+                                                   const gradient& g)
     : glyph_animation(font, spacing, str, .2 * window_width, .5 * window_height, g)
     , billboard_x(window_width)
     , overlay_alpha(0)
@@ -448,12 +445,12 @@ void game_over_animation_base::draw() const
     glyph_animation::draw();
 }
 
-time_up_animation::time_up_animation(const gradient *g)
+time_up_animation::time_up_animation(const gradient& g)
     : game_over_animation_base(g2d::font_manager::get_instance().load("fonts/title"), 1.1, L"時間切れ", g)
 {
 }
 
-game_over_animation::game_over_animation(const gradient *g)
+game_over_animation::game_over_animation(const gradient& g)
     : game_over_animation_base(g2d::font_manager::get_instance().load("fonts/gameover"), 1.1, L"げ〜むお〜ば〜", g)
 {
 }
@@ -641,7 +638,7 @@ void in_game_state_impl::reset_level()
 
 #if 1
     set_state(STATE_LEVEL_INTRO);
-    set_cur_game_animation(new level_intro_animation(&colors_->text_gradient));
+    set_cur_game_animation(new level_intro_animation(colors_->text_gradient));
 #else
     set_state(STATE_IN_GAME);
 #endif
@@ -672,7 +669,7 @@ void in_game_state_impl::finish_level()
 {
     set_state(STATE_LEVEL_COMPLETED);
     start_sound(SOUND_LEVEL_COMPLETED, false);
-    set_cur_game_animation(new level_completed_animation(&colors_->text_gradient));
+    set_cur_game_animation(new level_completed_animation(colors_->text_gradient));
 }
 
 void in_game_state_impl::set_state_game_over(bool time_up)
@@ -682,9 +679,9 @@ void in_game_state_impl::set_state_game_over(bool time_up)
 
     if (time_up) {
         world_.set_game_over();
-        set_cur_game_animation(new time_up_animation(&colors_->text_gradient));
+        set_cur_game_animation(new time_up_animation(colors_->text_gradient));
     } else {
-        set_cur_game_animation(new game_over_animation(&colors_->text_gradient));
+        set_cur_game_animation(new game_over_animation(colors_->text_gradient));
     }
 }
 
@@ -910,8 +907,8 @@ void in_game_state_impl::redraw() const
 
     if (cur_state_ == STATE_LEVEL_COMPLETED || cur_state_ == STATE_LEVEL_INTRO) {
         const float alpha = get_level_transition_alpha();
-        theme_color = colors_->main_color * alpha + g2d::rgb(255, 255, 255) * (1. - alpha);
-        theme_opposite_color = colors_->alternate_color * alpha + g2d::rgb(255, 255, 255) * (1. - alpha);
+        theme_color = colors_->main_color * alpha + g2d::rgb(1.f, 1.f, 1.f) * (1. - alpha);
+        theme_opposite_color = colors_->alternate_color * alpha + g2d::rgb(1.f, 1.f, 1.f) * (1. - alpha);
     } else {
         theme_color = colors_->main_color;
         theme_opposite_color = colors_->alternate_color;

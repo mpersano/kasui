@@ -227,7 +227,7 @@ gradient
 ;
 
 rgb
-: '<' INTEGER INTEGER INTEGER '>'		{ $$ = new g2d::rgb($2, $3, $4); }
+: '<' INTEGER INTEGER INTEGER '>'		{ $$ = new g2d::rgb($2 / 255.0f, $3 / 255.0f, $4 / 255.0f); }
 ;
 
 %%

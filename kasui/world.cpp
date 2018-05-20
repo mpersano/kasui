@@ -131,7 +131,7 @@ void dead_block_sprite::draw() const
     const float alpha = static_cast<float>(ttl_) / DEAD_BLOCK_TTL;
 
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
-    render::set_color({(1. / 255.) * color_, alpha});
+    render::set_color({color_, alpha});
     render::draw_box(texture_, {{x0, y0}, {x1, y1}}, {{u0, v1}, {u1, v0}}, 10);
 }
 
@@ -185,10 +185,6 @@ void drop_trail_sprite::draw() const
 
     float alpha = .5 * lerp_factor;
 
-    const float r = color_.r / 255.f;
-    const float g = color_.g / 255.f;
-    const float b = color_.b / 255.f;
-
     const float u0 = uv0_.y;
     const float u1 = uv1_.y;
 
@@ -204,7 +200,7 @@ void drop_trail_sprite::draw() const
         const float y0 = pos_.y + .5 * i * lerp_factor * cell_size_;
         const float y1 = y0 + cell_size_;
 
-        render::set_color({r, g, b, alpha});
+        render::set_color({color_, alpha});
         render::draw_box(texture_, {{x0, y0}, {x1, y1}}, {{u0, v1}, {u1, v0}}, 10);
 
         alpha *= .8;
@@ -253,11 +249,11 @@ explosion_particles::explosion_particles(const g2d::vec2 &pos, const gradient& g
         p.angle = frand(0., 2. * M_PI);
         p.delta_angle = f * frand(-.15, .15);
 
-        g2d::rgb color = frand(g.from, g.to) + g2d::rgb(60, 60, 60);
+        g2d::rgb color = frand(g.from, g.to) + g2d::rgb(.22f, .22f, .22f);
 
-        p.color.r = std::min(static_cast<int>(color.r), 255);
-        p.color.g = std::min(static_cast<int>(color.g), 255);
-        p.color.b = std::min(static_cast<int>(color.b), 255);
+        p.color.r = std::min(color.r, 1.0f);
+        p.color.g = std::min(color.g, 1.0f);
+        p.color.b = std::min(color.b, 1.0f);
     }
 }
 
@@ -311,11 +307,7 @@ void explosion_particles::draw() const
         const g2d::vec2 p2 = pos - up + right;
         const g2d::vec2 p3 = pos - up - right;
 
-        const float r = p.color.r / 255.f;
-        const float g = p.color.g / 255.f;
-        const float b = p.color.b / 255.f;
-
-        render::set_color({r, g, b, a});
+        render::set_color({p.color, a});
         render::draw_quad(texture_, {{p0.x, p0.y}, {p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}},
                           {{0, 0}, {0, 1}, {1, 1}, {1, 0}}, 5);
     }
@@ -1223,7 +1215,7 @@ void world::draw_blocks() const
                     // OMG HACK
                     const float alpha = static_cast<hint_text_box *>(sprites_.front().get())->get_alpha();
                     const g2d::rgb base_color = !(t & BAKUDAN_FLAG) ? theme_color_ : theme_opposite_color_;
-                    const g2d::rgb color = (1. - alpha) * base_color + alpha * g2d::rgb(255, 255, 255);
+                    const g2d::rgb color = (1. - alpha) * base_color + alpha * g2d::rgb(1, 1, 1);
                     draw_block(t - 1, x, y, 1, color);
                 } else {
                     draw_block(t - 1, x, y, 1);
@@ -1459,7 +1451,7 @@ void world::draw_background() const
     program_grid_background_->set_uniform("highlight_position", g2d::vec2(-.1 * cols_ * cell_size_, 1.1 * rows_ * cell_size_));
     program_grid_background_->set_uniform_f("highlight_fade_factor", .5f * cols_ * cell_size_);
 
-    render::set_color({(1. / 255) * .8 * theme_color_, 1});
+    render::set_color({.8 * theme_color_, 1});
 
     const block_info &bi = block_infos[NUM_BLOCK_TYPES];
     assert(bi.kanji == L'\0');
@@ -1510,7 +1502,7 @@ void world::draw_block(int type, float x, float y, float alpha, const g2d::rgb &
     const float v0 = sv * t.v0;
     const float v1 = sv * t.v1;
 
-    render::set_color({(1.0 / 255.) * color, alpha});
+    render::set_color({color, alpha});
     render::draw_box(blocks_texture_,
                       {{x, y}, {x + cell_size_, y + cell_size_}},
                       {{v0, u1}, {v1, u0}}, 0);
