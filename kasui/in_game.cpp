@@ -128,24 +128,14 @@ struct abunai_animation : game_animation
     const g2d::sprite *abunai_bb_;
 };
 
-struct game_over_animation_base : glyph_animation
+struct game_over_animation : glyph_animation
 {
-    game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str, const gradient& g);
+    game_over_animation(const g2d::font *font, float spacing, const wchar_t *str, const gradient& g);
 
     void draw() const override;
 
     float billboard_x, overlay_alpha;
     const g2d::sprite *game_over_bb_;
-};
-
-struct time_up_animation : game_over_animation_base
-{
-    time_up_animation(const gradient& g);
-};
-
-struct game_over_animation : game_over_animation_base
-{
-    game_over_animation(const gradient& g);
 };
 
 struct countdown_digit : game_animation
@@ -383,7 +373,7 @@ void abunai_animation::draw() const
     render::pop_matrix();
 }
 
-game_over_animation_base::game_over_animation_base(const g2d::font *font, float spacing, const wchar_t *str,
+game_over_animation::game_over_animation(const g2d::font *font, float spacing, const wchar_t *str,
                                                    const gradient& g)
     : glyph_animation(font, spacing, str, .2 * window_width, .5 * window_height, g)
     , billboard_x(window_width)
@@ -420,7 +410,7 @@ game_over_animation_base::game_over_animation_base(const g2d::font *font, float 
     }
 }
 
-void game_over_animation_base::draw() const
+void game_over_animation::draw() const
 {
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
@@ -443,16 +433,6 @@ void game_over_animation_base::draw() const
     // draw characters
 
     glyph_animation::draw();
-}
-
-time_up_animation::time_up_animation(const gradient& g)
-    : game_over_animation_base(g2d::font_manager::get_instance().load("fonts/title"), 1.1, L"時間切れ", g)
-{
-}
-
-game_over_animation::game_over_animation(const gradient& g)
-    : game_over_animation_base(g2d::font_manager::get_instance().load("fonts/gameover"), 1.1, L"げ〜むお〜ば〜", g)
-{
 }
 
 countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, float y_center)
@@ -677,12 +657,16 @@ void in_game_state_impl::set_state_game_over(bool time_up)
     set_state(STATE_GAME_OVER);
     start_sound(SOUND_GAME_OVER, false);
 
+    game_animation *animation;
+
     if (time_up) {
         world_.set_game_over();
-        set_cur_game_animation(new time_up_animation(colors_->text_gradient));
+        animation = new game_over_animation(g2d::font_manager::get_instance().load("fonts/title"), 1.1, L"時間切れ", colors_->text_gradient);
     } else {
-        set_cur_game_animation(new game_over_animation(colors_->text_gradient));
+        animation = new game_over_animation(g2d::font_manager::get_instance().load("fonts/gameover"), 1.1, L"げ〜むお〜ば〜", colors_->text_gradient);
     }
+
+    set_cur_game_animation(animation);
 }
 
 void in_game_state_impl::finish_in_game()
