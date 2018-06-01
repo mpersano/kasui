@@ -540,24 +540,19 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
-    struct
-    {
-        GLfloat *dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    const auto add_vertex = [&dest](const g2d::vec2 &vert, const g2d::vec2 &texuv, const g2d::rgba &color) {
+        *dest++ = vert.x;
+        *dest++ = vert.y;
 
-        void operator()(const g2d::vec2 &vert, const g2d::vec2 &texuv, const g2d::rgba &color)
-        {
-            *dest++ = vert.x;
-            *dest++ = vert.y;
+        *dest++ = texuv.x;
+        *dest++ = texuv.y;
 
-            *dest++ = texuv.x;
-            *dest++ = texuv.y;
-
-            *dest++ = color.r;
-            *dest++ = color.g;
-            *dest++ = color.b;
-            *dest++ = color.a;
-        }
-    } add_vertex;
+        *dest++ = color.r;
+        *dest++ = color.g;
+        *dest++ = color.b;
+        *dest++ = color.a;
+    };
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
@@ -579,29 +574,24 @@ void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int n
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
-    struct
-    {
-        GLfloat *dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    const auto add_vertex = [&dest](const g2d::vec2 &vert, const g2d::vec2 &texuv, const g2d::rgba &color0, const g2d::rgba &color1) {
+        *dest++ = vert.x;
+        *dest++ = vert.y;
 
-        void operator()(const g2d::vec2 &vert, const g2d::vec2 &texuv, const g2d::rgba &color0, const g2d::rgba &color1)
-        {
-            *dest++ = vert.x;
-            *dest++ = vert.y;
+        *dest++ = texuv.x;
+        *dest++ = texuv.y;
 
-            *dest++ = texuv.x;
-            *dest++ = texuv.y;
+        *dest++ = color0.r;
+        *dest++ = color0.g;
+        *dest++ = color0.b;
+        *dest++ = color0.a;
 
-            *dest++ = color0.r;
-            *dest++ = color0.g;
-            *dest++ = color0.b;
-            *dest++ = color0.a;
-
-            *dest++ = color1.r;
-            *dest++ = color1.g;
-            *dest++ = color1.b;
-            *dest++ = color1.a;
-        }
-    } add_vertex;
+        *dest++ = color1.r;
+        *dest++ = color1.g;
+        *dest++ = color1.b;
+        *dest++ = color1.a;
+    };
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
@@ -623,21 +613,16 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
-    struct
-    {
-        GLfloat *dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    const auto add_vertex = [&dest](const g2d::vec2 &vert, const g2d::rgba &color) {
+        *dest++ = vert.x;
+        *dest++ = vert.y;
 
-        void operator()(const g2d::vec2 &vert, const g2d::rgba &color)
-        {
-            *dest++ = vert.x;
-            *dest++ = vert.y;
-
-            *dest++ = color.r;
-            *dest++ = color.g;
-            *dest++ = color.b;
-            *dest++ = color.a;
-        }
-    } add_vertex;
+        *dest++ = color.r;
+        *dest++ = color.g;
+        *dest++ = color.b;
+        *dest++ = color.a;
+    };
 
     for (int i = 0; i < num_sprites; ++i) {
         auto p = sprites[i];
