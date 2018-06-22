@@ -61,17 +61,10 @@ enum
 
 struct game_animation
 {
-    game_animation()
-        : action(nullptr)
-    {
-    }
-
-    virtual ~game_animation() { delete action; }
-
     virtual void draw() const = 0;
     virtual bool update(uint32_t dt);
 
-    abstract_action *action;
+    std::unique_ptr<abstract_action> action;
 };
 
 struct glyph_animation : game_animation
@@ -272,7 +265,7 @@ level_intro_animation::level_intro_animation(const gradient& g)
 {
     const size_t num_glyphs = glyph_states.size();
 
-    parallel_action_group *p = new parallel_action_group;
+    auto *p = new parallel_action_group;
 
     for (size_t i = 0; i < num_glyphs; i++) {
         p->add((new sequential_action_group)
@@ -292,7 +285,7 @@ level_intro_animation::level_intro_animation(const gradient& g)
                ->add(new delay_action((num_glyphs * 30 + 20) * MS_PER_TIC))
                ->add(new property_change_action<quadratic_tween<float>>(&alpha, 1, 0, 10 * MS_PER_TIC)));
 
-    action = p;
+    action.reset(p);
 
     for (auto &p : glyph_states) {
         p.flip = 0;
@@ -305,7 +298,7 @@ level_completed_animation::level_completed_animation(const gradient& g)
     : glyph_animation(g2d::font_manager::get_instance().load("fonts/title"), GLYPH_ANIMATION_SPACING, L"成功",
                       .5 * window_width, .5 * window_height, g)
 {
-    parallel_action_group *p = new parallel_action_group;
+    auto *p = new parallel_action_group;
 
     for (size_t i = 0; i < glyph_states.size(); i++) {
         p->add((new sequential_action_group)
@@ -323,7 +316,7 @@ level_completed_animation::level_completed_animation(const gradient& g)
                ->add(new delay_action(LEVEL_COMPLETED_TICS - FADE_TICS))
                ->add(new property_change_action<quadratic_tween<float>>(&alpha, 1, 0, FADE_TICS)));
 
-    action = p;
+    action.reset(p);
 
     for (auto &p : glyph_states) {
         p.flip = .5 * M_PI;
@@ -339,7 +332,7 @@ abunai_animation::abunai_animation()
 {
     const float w = abunai_bb_->get_width();
 
-    action =
+    action.reset(
         (new parallel_action_group)
             ->add((new sequential_action_group)
                       ->add(new delay_action(10 * MS_PER_TIC))
@@ -349,7 +342,7 @@ abunai_animation::abunai_animation()
             ->add((new sequential_action_group)
                       ->add(new property_change_action<quadratic_tween<float>>(&alpha, 0, .8, 50 * MS_PER_TIC))
                       ->add(new delay_action(75 * MS_PER_TIC))
-                      ->add(new property_change_action<quadratic_tween<float>>(&alpha, .8, 0, 10 * MS_PER_TIC)));
+                      ->add(new property_change_action<quadratic_tween<float>>(&alpha, .8, 0, 10 * MS_PER_TIC))));
 }
 
 void abunai_animation::draw() const
@@ -380,7 +373,7 @@ game_over_animation::game_over_animation(const g2d::font *font, float spacing, c
     , overlay_alpha(0)
     , game_over_bb_(g2d::get_sprite("h-oh.png"))
 {
-    parallel_action_group *p = new parallel_action_group;
+    auto *p = new parallel_action_group;
 
     // overlay alpha
     p->add(new property_change_action<quadratic_tween<float>>(&overlay_alpha, 0, .8, 50 * MS_PER_TIC));
@@ -401,7 +394,7 @@ game_over_animation::game_over_animation(const g2d::font *font, float spacing, c
 
     p->add(new delay_action(300 * MS_PER_TIC));
 
-    action = p;
+    action.reset(p);
 
     for (auto &p : glyph_states) {
         p.flip = 0;
@@ -448,7 +441,7 @@ countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, floa
 
     texcoords = {gi->texuv[0], gi->texuv[1], gi->texuv[2], gi->texuv[3]};
 
-    action = (new parallel_action_group)
+    action.reset((new parallel_action_group)
                  ->add((new sequential_action_group)
                            ->add(new property_change_action<out_bounce_tween<float>>(&z, -.7, -.1, 15 * MS_PER_TIC))
                            ->add(new delay_action(10 * MS_PER_TIC))
@@ -456,7 +449,7 @@ countdown_digit::countdown_digit(const g2d::glyph_info *gi, float x_center, floa
                  ->add((new sequential_action_group)
                            ->add(new property_change_action<quadratic_tween<float>>(&alpha, 0, .6, 5 * MS_PER_TIC))
                            ->add(new delay_action(20 * MS_PER_TIC))
-                           ->add(new property_change_action<quadratic_tween<float>>(&alpha, .6, 0, 5 * MS_PER_TIC)));
+                           ->add(new property_change_action<quadratic_tween<float>>(&alpha, .6, 0, 5 * MS_PER_TIC))));
 }
 
 void countdown_digit::draw() const
@@ -521,7 +514,7 @@ private:
 
     world world_;
     int state_tics_;
-    game_animation *cur_game_animation_;
+    std::unique_ptr<game_animation> cur_game_animation_;
     pause_button pause_button_;
     timer_display timer_display_;
     score_display score_display_;
@@ -598,9 +591,7 @@ void in_game_state_impl::set_state(game_state next_state)
 
 void in_game_state_impl::set_cur_game_animation(game_animation *p)
 {
-    if (cur_game_animation_)
-        delete cur_game_animation_;
-    cur_game_animation_ = p;
+    cur_game_animation_.reset(p);
 }
 
 void in_game_state_impl::reset_level()
