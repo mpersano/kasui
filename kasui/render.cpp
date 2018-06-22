@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cassert>
 #include <stack>
+#include <tuple>
 
 namespace render {
 
@@ -444,21 +445,12 @@ void sprite_batch::flush_queue()
     for (int i = 0; i < sprite_queue_size_; ++i)
         sorted_sprites[i] = &sprite_queue_[i];
 
-    std::stable_sort(&sorted_sprites[0], &sorted_sprites[sprite_queue_size_], [](const sprite *s0, const sprite *s1) {
-        if (s0->layer != s1->layer) {
-            return s0->layer < s1->layer;
-        } else if (s0->blend != s1->blend) {
-            return static_cast<int>(s0->blend) < static_cast<int>(s1->blend);
-        } else if (s0->scissor_test != s1->scissor_test) {
-            return static_cast<int>(s0->scissor_test) < static_cast<int>(s1->scissor_test);
-        } else if (s0->program != s1->program) {
-            return s0->program < s1->program;
-        } else {
-            return s0->texture < s1->texture;
-        }
+    std::stable_sort(&sorted_sprites[0], &sorted_sprites[sprite_queue_size_], [](const auto *s0, const auto *s1) {
+        return std::tie(s0->layer, s0->blend, s0->scissor_test, s0->program, s0->texture) <
+               std::tie(s1->layer, s1->blend, s1->scissor_test, s1->program, s1->texture);
     });
 
-    const auto bind_texture = [this](const g2d::program *program, const g2d::texture *texture) {
+    const auto bind_texture = [this](auto *program, auto *texture) {
         if (texture)
             texture->bind();
 
@@ -541,7 +533,7 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
-    const auto add_vertex = [&dest](const g2d::vec2 &vert, const g2d::vec2 &texuv, const g2d::rgba &color) {
+    const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color) {
         *dest++ = vert.x;
         *dest++ = vert.y;
 
@@ -575,7 +567,7 @@ void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int n
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
-    const auto add_vertex = [&dest](const g2d::vec2 &vert, const g2d::vec2 &texuv, const g2d::rgba &color0, const g2d::rgba &color1) {
+    const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color0, const auto &color1) {
         *dest++ = vert.x;
         *dest++ = vert.y;
 
@@ -614,7 +606,7 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
     auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
-    const auto add_vertex = [&dest](const g2d::vec2 &vert, const g2d::rgba &color) {
+    const auto add_vertex = [&dest](const auto &vert, const auto &color) {
         *dest++ = vert.x;
         *dest++ = vert.y;
 
