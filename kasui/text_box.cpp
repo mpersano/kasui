@@ -100,7 +100,7 @@ void for_each_char(const wchar_t *text, float max_width, Visitor visit)
 text_box::text_box(float width)
     : width_(width)
     , height_(0)
-    , frame_texture_(g2d::texture_manager::get_instance().load("images/w-button-border.png"))
+    , frame_texture_(g2d::load_texture("images/w-button-border.png"))
 {
 }
 

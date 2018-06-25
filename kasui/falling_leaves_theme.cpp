@@ -136,7 +136,7 @@ void falling_leaves_theme::leaf::update(uint32_t dt)
 }
 
 falling_leaves_theme::falling_leaves_theme()
-    : texture_{g2d::texture_manager::get_instance().load("images/leaf.png")}
+    : texture_{g2d::load_texture("images/leaf.png")}
     , program_{load_program("shaders/vert_3d_texture_color.glsl", "shaders/frag_texture_color.glsl")}
 {
     program_->use();

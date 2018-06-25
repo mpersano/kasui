@@ -223,7 +223,7 @@ void stats_page_item::draw_frame(float alpha) const
 }
 
 kanji_info_item::kanji_info_item(const kanji_info *kanji)
-    : stats_page_item(g2d::texture_manager::get_instance().load("images/b-button-border.png"))
+    : stats_page_item(g2d::load_texture("images/b-button-border.png"))
     , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
     , kanji_{kanji}
     , large_font_{g2d::font_manager::get_instance().load("fonts/large")}
@@ -262,7 +262,7 @@ void kanji_info_item::draw(float alpha) const
 }
 
 jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
-    : stats_page_item(g2d::texture_manager::get_instance().load("images/w-button-border.png"))
+    : stats_page_item(g2d::load_texture("images/w-button-border.png"))
     , jukugo_(jukugo)
     , medium_font_{g2d::font_manager::get_instance().load("fonts/medium")}
     , micro_font_{g2d::font_manager::get_instance().load("fonts/micro")}

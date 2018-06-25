@@ -17,7 +17,7 @@ bakudan_sprite::bakudan_sprite(float x, float y)
     , y_center(y)
     , start_angle(frand(0., M_PI))
     , tics(0)
-    , glow_texture(g2d::texture_manager::get_instance().load("images/glow.png"))
+    , glow_texture(g2d::load_texture("images/glow.png"))
 {
 }
 

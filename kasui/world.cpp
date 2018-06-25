@@ -233,7 +233,7 @@ private:
 };
 
 explosion_particles::explosion_particles(const g2d::vec2 &pos, const gradient& g)
-    : texture_(g2d::texture_manager::get_instance().load("images/star.png"))
+    : texture_(g2d::load_texture("images/star.png"))
 {
     const float f = 1. / MS_PER_TIC;
 
@@ -595,8 +595,8 @@ world::world(int rows, int cols, int wanted_height)
     , cols_(cols)
     , grid_(rows_ * cols_, 0)
     , matches_(rows_ * cols_, false)
-    , blocks_texture_(g2d::texture_manager::get_instance().load("images/blocks.png"))
-    , flare_texture_(g2d::texture_manager::get_instance().load("images/flare.png"))
+    , blocks_texture_(g2d::load_texture("images/blocks.png"))
+    , flare_texture_(g2d::load_texture("images/flare.png"))
     , program_grid_background_(load_program("shaders/grid_background.vert", "shaders/sprite.frag"))
     , falling_block_queue_{*this, *this}
     , event_listener_(nullptr)

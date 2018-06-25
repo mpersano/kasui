@@ -817,7 +817,7 @@ private:
 };
 
 hiscore_input_state_impl::hiscore_input_state_impl()
-    : keyboard_texture_(g2d::texture_manager::get_instance().load("images/keyboard.png"))
+    : keyboard_texture_(g2d::load_texture("images/keyboard.png"))
     , score_text_(g2d::font_manager::get_instance().get_instance().load("fonts/large"))
     , state_(STATE_NONE)
 {

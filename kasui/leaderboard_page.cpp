@@ -226,7 +226,7 @@ item::item(int rank, wchar_t *name, int score, bool highlight)
     , name_(name)
     , score_(score)
     , highlight_(highlight)
-    , frame_texture_(g2d::texture_manager::get_instance().load("images/w-button-border.png"))
+    , frame_texture_(g2d::load_texture("images/w-button-border.png"))
     , frame_va_{8, 8, 8}
     , score_text_(g2d::font_manager::get_instance().load("fonts/small"))
 {

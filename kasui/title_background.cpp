@@ -280,7 +280,7 @@ void foreground_billboard::draw() const
 title_background::title_background()
     : billboard_(new foreground_billboard)
     , logo_(new kasui_logo)
-    , bg_texture_(g2d::texture_manager::get_instance().load("images/haru-bg.png"))
+    , bg_texture_(g2d::load_texture("images/haru-bg.png"))
 {
 }
 

@@ -38,7 +38,7 @@ void clouds_theme::cloud::update(uint32_t dt)
 }
 
 clouds_theme::clouds_theme()
-    : texture_{g2d::texture_manager::get_instance().load("images/clouds.png")}
+    : texture_{g2d::load_texture("images/clouds.png")}
 {
     reset();
 }

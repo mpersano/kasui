@@ -105,7 +105,7 @@ void sakura_petal::update(uint32_t dt)
 }
 
 sakura_fubuki::sakura_fubuki()
-    : petal_texture_(g2d::texture_manager::get_instance().load("images/petal.png"))
+    : petal_texture_(g2d::load_texture("images/petal.png"))
 {
 }
 

@@ -19,8 +19,8 @@ hint_text_box::hint_text_box(const hint &h, float cell_size, float width, const 
     , tics_(0)
     , state_(state::INTRO)
     , gradient_(g)
-    , block_texture_(g2d::texture_manager::get_instance().load("images/blocks.png"))
-    , arrow_texture_(g2d::texture_manager::get_instance().load("images/arrow.png"))
+    , block_texture_(g2d::load_texture("images/blocks.png"))
+    , arrow_texture_(g2d::load_texture("images/arrow.png"))
 {
     // text box
 

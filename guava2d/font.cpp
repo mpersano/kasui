@@ -31,7 +31,7 @@ font::font(const char *source)
 	// read textures
 
 	sprintf(path, "%s.png", source);
-	texture_ = texture_manager::get_instance().load(path);
+	texture_ = load_texture(path);
 
 	// read glyphs
 

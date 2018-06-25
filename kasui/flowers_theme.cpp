@@ -48,7 +48,7 @@ void flowers_theme::flower::update(uint32_t dt)
 }
 
 flowers_theme::flowers_theme()
-    : texture_{g2d::texture_manager::get_instance().load("images/ume.png")}
+    : texture_{g2d::load_texture("images/ume.png")}
 {
     reset();
 }

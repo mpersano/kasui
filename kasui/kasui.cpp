@@ -240,7 +240,7 @@ static void preload_resources()
     // fonts
 
     for (const char **p = textures; *p; p++)
-        g2d::texture_manager::get_instance().load(*p);
+        g2d::load_texture(*p);
 
     static const char *fonts[] = {
         "fonts/gameover", "fonts/large", "fonts/medium", "fonts/small",
@@ -314,7 +314,7 @@ void kasui_impl::resize(int width, int height)
     } else {
         // resuming after pause
 
-        g2d::texture_manager::get_instance().load_all();
+        g2d::reload_all_textures();
 #ifdef FIX_ME
         reload_all_programs();
 #endif
@@ -340,7 +340,7 @@ void kasui_impl::initialize(int width, int height)
 
     int downsample_scale = 1;
 
-    g2d::texture_manager::get_instance().set_downsample_scale(downsample_scale);
+    g2d::set_texture_downsample_scale(downsample_scale);
     preload_resources();
 
     render::init();

@@ -59,7 +59,7 @@ void sprite_manager::load_sprite_sheet(const std::string &source)
         ss << source << '.' << std::setfill('0') << std::setw(3) << sheet_index << ".png";
         const auto texture_path = ss.str();
 
-        const auto texture = texture_manager::get_instance().load(texture_path.c_str());
+        const auto texture = load_texture(texture_path.c_str());
 
         auto sp = new sprite(texture, left, top, width, height, left_margin,
                              right_margin, top_margin, bottom_margin);

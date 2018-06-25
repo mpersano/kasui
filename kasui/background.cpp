@@ -37,7 +37,7 @@ void background_initialize()
 {
     gradient_texture =
         new g2d::texture(new g2d::pixmap(GRADIENT_TEXTURE_WIDTH, GRADIENT_TEXTURE_HEIGHT, g2d::pixmap::RGB), 1);
-    g2d::texture_manager::get_instance().put("gradient-texture", gradient_texture);
+    g2d::put_texture("gradient-texture", gradient_texture);
 }
 
 void background_initialize_gradient(const g2d::rgb &from_color, const g2d::rgb &to_color)
