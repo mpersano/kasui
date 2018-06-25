@@ -12,8 +12,8 @@ combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient& g)
     : x_origin_(x)
     , y_origin_(y)
     , gradient_(g)
-    , large_font_(g2d::font_manager::get_instance().load("fonts/large"))
-    , small_font_(g2d::font_manager::get_instance().load("fonts/small"))
+    , large_font_(g2d::load_font("fonts/large"))
+    , small_font_(g2d::load_font("fonts/small"))
 {
     // XXX use boost::lexical_cast here
     std::wstringstream ss;

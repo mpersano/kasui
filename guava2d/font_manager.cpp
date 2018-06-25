@@ -1,28 +1,35 @@
-#include <cstdio>
-
 #include "font_manager.h"
+
+#include <unordered_map>
 
 namespace g2d {
 
-font_manager::font_manager()
-{ }
+namespace {
 
-font_manager &
-font_manager::get_instance()
+class font_manager
 {
-	static font_manager fm;
-	return fm;
-}
+public:
+	const font *load(const std::string& source);
 
-const font *
-font_manager::load(const char *source)
+private:
+    std::unordered_map<std::string, font *> font_dict_;
+} g_font_manager;
+
+const font *font_manager::load(const std::string& source)
 {
 	auto it = font_dict_.find(source);
 
 	if (it == font_dict_.end())
-		it = font_dict_.insert(it, dict_value_type(source, new font(source)));
+		it = font_dict_.insert(it, {source, new font(source.c_str())});
 
 	return it->second;
+}
+
+}
+
+const font *load_font(const std::string& source)
+{
+    return g_font_manager.load(source);
 }
 
 }

@@ -30,9 +30,9 @@ jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float
                       ->add(new delay_action(60 * MS_PER_TIC))
                       ->add(new property_change_action<linear_tween<float>>(&alpha_, 1., 0, 10 * MS_PER_TIC))));
 
-    kanji_font_ = g2d::font_manager::get_instance().load("fonts/large");
-    eigo_font_ = g2d::font_manager::get_instance().load("fonts/tiny");
-    furigana_font_ = g2d::font_manager::get_instance().load("fonts/small");
+    kanji_font_ = g2d::load_font("fonts/large");
+    eigo_font_ = g2d::load_font("fonts/tiny");
+    furigana_font_ = g2d::load_font("fonts/small");
 
     pos_kanji_ = {-.5f * kanji_font_->get_string_width(jukugo_info->kanji), -20.f};
     pos_furigana_ = {-.5f * furigana_font_->get_string_width(jukugo_info->reading), 64.f};

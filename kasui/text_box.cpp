@@ -1,5 +1,3 @@
-#include <algorithm>
-
 #include <guava2d/font_manager.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
@@ -9,13 +7,16 @@
 #include "render.h"
 #include "text_box.h"
 
+#include <tuple>
+#include <algorithm>
+
 namespace {
 
 template <typename Visitor>
 void for_each_char(const wchar_t *text, float max_width, Visitor visit)
 {
     const g2d::font *fonts[] = {
-        g2d::font_manager::get_instance().load("fonts/small"), g2d::font_manager::get_instance().load("fonts/tiny"),
+        g2d::load_font("fonts/small"), g2d::load_font("fonts/tiny"),
     };
 
     const int font_heights[] = {

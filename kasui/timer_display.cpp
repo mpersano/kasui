@@ -13,7 +13,7 @@
 timer_display::timer_display()
     : program_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
 {
-    const g2d::font *font = g2d::font_manager::get_instance().load("fonts/medium");
+    const g2d::font *font = g2d::load_font("fonts/medium");
 
     for (int i = 0; i < 10; i++)
         digit_glyphs_[i] = font->find_glyph(L'0' + i);

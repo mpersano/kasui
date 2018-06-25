@@ -248,7 +248,7 @@ static void preload_resources()
     };
 
     for (const char **p = fonts; *p; p++)
-        g2d::font_manager::get_instance().load(*p);
+        g2d::load_font(*p);
 
     // sprites
 

@@ -226,9 +226,9 @@ kanji_info_item::kanji_info_item(const kanji_info *kanji)
     : stats_page_item(g2d::load_texture("images/b-button-border.png"))
     , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
     , kanji_{kanji}
-    , large_font_{g2d::font_manager::get_instance().load("fonts/large")}
-    , micro_font_{g2d::font_manager::get_instance().load("fonts/micro")}
-    , small_font_{g2d::font_manager::get_instance().load("fonts/small")}
+    , large_font_{g2d::load_font("fonts/large")}
+    , micro_font_{g2d::load_font("fonts/micro")}
+    , small_font_{g2d::load_font("fonts/small")}
 {
     kanji_text_.push_back(kanji->code);
 }
@@ -264,8 +264,8 @@ void kanji_info_item::draw(float alpha) const
 jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
     : stats_page_item(g2d::load_texture("images/w-button-border.png"))
     , jukugo_(jukugo)
-    , medium_font_{g2d::font_manager::get_instance().load("fonts/medium")}
-    , micro_font_{g2d::font_manager::get_instance().load("fonts/micro")}
+    , medium_font_{g2d::load_font("fonts/medium")}
+    , micro_font_{g2d::load_font("fonts/micro")}
 {
     static wchar_t meaning_buf[512];
     xswprintf(meaning_buf, L"(%s) %s", jukugo->reading, jukugo->eigo);
@@ -315,7 +315,7 @@ void jukugo_info_item::draw(float alpha) const
 stats_page::stats_page(int level, float top_y)
     : top_y_(top_y)
     , total_height_(0)
-    , title_font_{g2d::font_manager::get_instance().load("fonts/medium")}
+    , title_font_{g2d::load_font("fonts/medium")}
 {
     struct kanji_jukugo
     {

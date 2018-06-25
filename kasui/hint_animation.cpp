@@ -13,7 +13,7 @@
 
 hint_text_box::hint_text_box(const hint &h, float cell_size, float width, const gradient& g)
     : width_(width)
-    , title_font_(g2d::font_manager::get_instance().load("fonts/medium"))
+    , title_font_(g2d::load_font("fonts/medium"))
     , text_box_(width)
     , state_tics_(0)
     , tics_(0)

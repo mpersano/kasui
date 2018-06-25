@@ -26,7 +26,7 @@
 
 void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
 {
-    const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/tiny");
+    const g2d::font *small_font = g2d::load_font("fonts/tiny");
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -228,7 +228,7 @@ item::item(int rank, wchar_t *name, int score, bool highlight)
     , highlight_(highlight)
     , frame_texture_(g2d::load_texture("images/w-button-border.png"))
     , frame_va_{8, 8, 8}
-    , score_text_(g2d::font_manager::get_instance().load("fonts/small"))
+    , score_text_(g2d::load_font("fonts/small"))
 {
     initialize_text();
     initialize_frame();
@@ -241,8 +241,8 @@ item::~item()
 
 void item::initialize_text()
 {
-    const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/small");
-    const g2d::font *tiny_font = g2d::font_manager::get_instance().load("fonts/tiny");
+    const g2d::font *small_font = g2d::load_font("fonts/small");
+    const g2d::font *tiny_font = g2d::load_font("fonts/tiny");
 
     auto gi_small = small_font->find_glyph(L'X');
     const float y_small = .5 * (-HEIGHT + gi_small->height) - gi_small->top;
@@ -454,7 +454,7 @@ private:
 leaderboard_page::leaderboard_page(const std::string &title, const std::string &cache_path)
     : cache_path_(cache_path)
 {
-    const g2d::font *font = g2d::font_manager::get_instance().load("fonts/medium");
+    const g2d::font *font = g2d::load_font("fonts/medium");
 
 #ifdef FIX_ME
     title_text_.reset();

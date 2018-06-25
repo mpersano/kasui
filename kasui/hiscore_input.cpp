@@ -205,7 +205,7 @@ input_buffer::input_buffer()
 
 void input_buffer::draw() const
 {
-    const g2d::font *font = g2d::font_manager::get_instance().load("fonts/small");
+    const g2d::font *font = g2d::load_font("fonts/small");
 
     enum
     {
@@ -818,7 +818,7 @@ private:
 
 hiscore_input_state_impl::hiscore_input_state_impl()
     : keyboard_texture_(g2d::load_texture("images/keyboard.png"))
-    , score_text_(g2d::font_manager::get_instance().get_instance().load("fonts/large"))
+    , score_text_(g2d::load_font("fonts/large"))
     , state_(STATE_NONE)
 {
     static const struct key_code_width
@@ -996,7 +996,7 @@ hiscore_input_state_impl::hiscore_input_state_impl()
 
     const float y_input_area = .6 * window_height;
 
-    auto font = g2d::font_manager::get_instance().load("fonts/small");
+    auto font = g2d::load_font("fonts/small");
 #ifdef FIX_ME
     text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
         .translate(.5 * window_width, y_input_area + 240)

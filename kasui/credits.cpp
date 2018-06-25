@@ -76,8 +76,8 @@ credits_impl::credits_impl()
     : program_outline_(load_program("shaders/sprite.vert", "shaders/credits_text_outline.frag"))
     , program_inner_(load_program("shaders/sprite.vert", "shaders/credits_text_inner.frag"))
 {
-    const g2d::font *tiny_font = g2d::font_manager::get_instance().load("fonts/tiny");
-    const g2d::font *small_font = g2d::font_manager::get_instance().load("fonts/small");
+    const g2d::font *tiny_font = g2d::load_font("fonts/tiny");
+    const g2d::font *small_font = g2d::load_font("fonts/small");
 
     add_text(small_font, 60, 560, 5 * MS_PER_TIC, "Mauro Persano");
     add_text(tiny_font, 100, 520, 15 * MS_PER_TIC, "programming, game design,");
