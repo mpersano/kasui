@@ -1,11 +1,14 @@
-#include <unordered_map>
+#include "sprite_manager.h"
 
 #include "guava2d/file.h"
 #include "guava2d/texture_manager.h"
 #include "noncopyable.h"
 #include "panic.h"
 
-#include "sprite_manager.h"
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <unordered_map>
 
 namespace g2d {
 
@@ -15,7 +18,6 @@ class sprite_manager : private noncopyable
 {
 public:
     const sprite *get_sprite(const std::string &name);
-
     void load_sprite_sheet(const std::string &path);
 
 private:
@@ -34,31 +36,32 @@ const sprite *sprite_manager::get_sprite(const std::string &name)
 
 void sprite_manager::load_sprite_sheet(const std::string &source)
 {
-    char path[512];
-    sprintf(path, "%s.spr", source.c_str());
+    const auto path = source + ".spr";;
+    file_input_stream file(path.c_str());
 
-    file_input_stream file(path);
-
-    int num_sprites = file.read_uint16();
+    const int num_sprites = file.read_uint16();
     (void)file.read_uint8(); // # of sheets
 
     for (int i = 0; i < num_sprites; i++) {
-        std::string sprite_name = file.read_string();
-        int left_margin = file.read_uint16();
-        int right_margin = file.read_uint16();
-        int top_margin = file.read_uint16();
-        int bottom_margin = file.read_uint16();
+        const std::string sprite_name = file.read_string();
+        const int left_margin = file.read_uint16();
+        const int right_margin = file.read_uint16();
+        const int top_margin = file.read_uint16();
+        const int bottom_margin = file.read_uint16();
 
-        int sheet_index = file.read_uint8();
-        int left = file.read_uint16();
-        int top = file.read_uint16();
-        int width = file.read_uint16();
-        int height = file.read_uint16();
+        const int sheet_index = file.read_uint8();
+        const int left = file.read_uint16();
+        const int top = file.read_uint16();
+        const int width = file.read_uint16();
+        const int height = file.read_uint16();
 
-        char texture_path[80];
-        sprintf(texture_path, "%s.%03d.png", source.c_str(), sheet_index);
+        std::stringstream ss;
+        ss << source << '.' << std::setfill('0') << std::setw(3) << sheet_index << ".png";
+        const auto texture_path = ss.str();
 
-        auto sp = new sprite(texture_manager::get_instance().load(texture_path), left, top, width, height, left_margin,
+        const auto texture = texture_manager::get_instance().load(texture_path.c_str());
+
+        auto sp = new sprite(texture, left, top, width, height, left_margin,
                              right_margin, top_margin, bottom_margin);
         sprite_dict_.insert({sprite_name, sp});
     }
