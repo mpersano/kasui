@@ -4,6 +4,8 @@
 #include "settings.h"
 #include "world.h"
 
+#include <string>
+
 namespace g2d
 {
 class font;
