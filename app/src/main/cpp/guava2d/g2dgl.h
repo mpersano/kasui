@@ -2,8 +2,7 @@
 #define G2D_GL_H_
 
 #ifdef ANDROID_NDK
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
+#include <GLES3/gl3.h>
 #define glOrtho glOrthof
 void gluPerspective(GLfloat, GLfloat, GLfloat, GLfloat);
 #else
