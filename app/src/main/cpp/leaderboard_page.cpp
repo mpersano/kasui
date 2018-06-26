@@ -10,11 +10,11 @@
 
 #include <iomanip>
 #include <sstream>
+#include <cassert>
 
 #include <guava2d/font_manager.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
-#include <guava2d/vertex_array.h>
 #include <guava2d/xwchar.h>
 
 #include "common.h"
@@ -70,9 +70,11 @@ private:
     void format_thousands(int n);
 
     const g2d::font *font_;
+#ifdef FIX_ME
     g2d::indexed_vertex_array<GLushort, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLfloat, 2>,
                               g2d::vertex::attrib<GLfloat, 1>>
         va_;
+#endif
     float width_;
 };
 
@@ -84,6 +86,7 @@ score_text::score_text(const g2d::font *font)
 
 void score_text::add_digit(wchar_t ch)
 {
+#ifdef FIX_ME
     const g2d::glyph_info *g = font_->find_glyph(ch);
 
     const g2d::vec2 &t0 = g->texuv[0];
@@ -115,6 +118,7 @@ void score_text::add_digit(wchar_t ch)
     va_ < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3, vert_index + 0;
 
     width_ += g->advance_x;
+#endif
 }
 
 void score_text::format_thousands(int n)
@@ -139,7 +143,9 @@ void score_text::format_thousands(int n)
 
 void score_text::initialize(int score)
 {
+#ifdef FIX_ME
     va_.reset();
+#endif
     width_ = 0;
 
     format_thousands(score);
@@ -217,7 +223,9 @@ private:
     g2d::draw_queue text_; // , score_text_;
 #endif
     const g2d::texture *frame_texture_;
+#ifdef FIX_ME
     g2d::vertex_array_texuv frame_va_[3];
+#endif
     score_text score_text_;
 };
 
@@ -227,7 +235,9 @@ item::item(int rank, wchar_t *name, int score, bool highlight)
     , score_(score)
     , highlight_(highlight)
     , frame_texture_(g2d::load_texture("images/w-button-border.png"))
+#ifdef FIX_ME
     , frame_va_{8, 8, 8}
+#endif
     , score_text_(g2d::load_font("fonts/small"))
 {
     initialize_text();
@@ -286,6 +296,7 @@ void item::initialize_text()
 
 void item::initialize_frame()
 {
+#ifdef FIX_ME
     const float x0 = 0;
     const float x1 = BORDER_RADIUS;
 
@@ -333,6 +344,7 @@ void item::initialize_frame()
 
     frame_va_[2] << x3, y2, 1, .75;
     frame_va_[2] << x3, y3, 1, 1;
+#endif
 }
 
 void item::draw(const g2d::mat4 &mat, float alpha) const
@@ -364,8 +376,10 @@ void item::draw(const g2d::mat4 &mat, float alpha) const
 
         frame_texture_->bind();
 
+#ifdef FIX_ME
         for (const auto &va : frame_va_)
             va.draw(GL_TRIANGLE_STRIP);
+#endif
     }
 
 #if 0

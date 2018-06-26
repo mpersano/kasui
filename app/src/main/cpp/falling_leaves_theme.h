@@ -3,7 +3,6 @@
 #include "theme.h"
 
 #include "guava2d/vec3.h"
-#include "guava2d/vertex_array.h"
 #include "guava2d/rgb.h"
 
 namespace g2d
@@ -24,7 +23,9 @@ public:
 private:
     struct leaf
     {
+#ifdef FIX_ME
         using vertex_array = g2d::indexed_vertex_array<GLubyte, g2d::vertex::attrib<GLfloat, 3>, g2d::vertex::attrib<GLshort, 2>, g2d::vertex::attrib<GLubyte, 4>>;
+#endif
 
         float size;
         g2d::vec3 pos, speed;
@@ -37,7 +38,9 @@ private:
         int tics, ttl;
 
         void reset();
+#ifdef FIX_ME
         void draw(vertex_array &gv) const;
+#endif
         void update(uint32_t dt);
     };
 

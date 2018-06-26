@@ -87,6 +87,7 @@ void falling_leaves_theme::leaf::reset()
     tics = 0;
 }
 
+#ifdef FIX_ME
 void falling_leaves_theme::leaf::draw(vertex_array &gv) const
 {
     float alpha_scale;
@@ -124,6 +125,7 @@ void falling_leaves_theme::leaf::draw(vertex_array &gv) const
 
     gv < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3, vert_index + 0;
 }
+#endif
 
 void falling_leaves_theme::leaf::update(uint32_t dt)
 {
@@ -159,6 +161,7 @@ void falling_leaves_theme::update(uint32_t dt)
 
 void falling_leaves_theme::draw() const
 {
+#ifdef FIX_ME
     render::end_batch();
 
     // HACK
@@ -195,4 +198,5 @@ void falling_leaves_theme::draw() const
 
     render::begin_batch();
     render::set_viewport(0, window_width, 0, window_height);
+#endif
 }

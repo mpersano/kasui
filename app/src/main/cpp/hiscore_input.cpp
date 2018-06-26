@@ -7,7 +7,6 @@
 #include <guava2d/font_manager.h>
 #include <guava2d/program.h>
 #include <guava2d/texture_manager.h>
-#include <guava2d/vertex_array.h>
 #include <guava2d/xwchar.h>
 
 #include "common.h"
@@ -67,9 +66,11 @@ private:
     void format_thousands(int n);
 
     const g2d::font *font_;
+#ifdef FIX_ME
     g2d::indexed_vertex_array<GLushort, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLfloat, 2>,
                               g2d::vertex::attrib<GLfloat, 1>>
         va_;
+#endif
     float width_;
 };
 
@@ -81,6 +82,7 @@ score_text::score_text(const g2d::font *font)
 
 void score_text::add_digit(wchar_t ch)
 {
+#ifdef FIX_ME
     const g2d::glyph_info *g = font_->find_glyph(ch);
 
     const g2d::vec2 &t0 = g->texuv[0];
@@ -112,6 +114,7 @@ void score_text::add_digit(wchar_t ch)
     va_ < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3, vert_index + 0;
 
     width_ += g->advance_x;
+#endif
 }
 
 void score_text::format_thousands(int n)
@@ -136,7 +139,9 @@ void score_text::format_thousands(int n)
 
 void score_text::initialize(int score)
 {
+#ifdef FIX_ME
     va_.reset();
+#endif
     width_ = 0;
 
     format_thousands(score);
@@ -205,6 +210,7 @@ input_buffer::input_buffer()
 
 void input_buffer::draw() const
 {
+#ifdef FIX_ME
     const g2d::font *font = g2d::load_font("fonts/small");
 
     enum
@@ -284,7 +290,6 @@ void input_buffer::draw() const
     const g2d::mat4 mat = get_ortho_projection();
 
     {
-#ifdef FIX_ME
         auto &prog = get_program_instance<program_flat>();
         prog.use();
         prog.set_proj_modelview_matrix(mat);
@@ -296,13 +301,11 @@ void input_buffer::draw() const
             prog.set_color(g2d::rgba(1, 1, 1, .25));
             cursor.draw(GL_TRIANGLE_STRIP);
         }
-#endif
     }
 
     font->get_texture()->bind();
 
     {
-#ifdef FIX_ME
         auto &prog = get_program_instance<program_text>();
         prog.use();
         prog.set_proj_modelview_matrix(mat * g2d::mat4::translation(3, -3, 0));
@@ -315,8 +318,8 @@ void input_buffer::draw() const
         prog.set_color(g2d::rgba(1, 1, 1, 1));
 
         chars.draw(GL_TRIANGLES);
-#endif
     }
+#endif
 }
 
 void input_buffer::append_char(wchar_t ch)
@@ -714,6 +717,7 @@ keyboard_layout::keyboard_layout(const g2d::texture *texture, const wchar_t *key
 
 void keyboard_layout::draw(int selected_key) const
 {
+#ifdef FIX_ME
     g2d::vertex_array_texuv va(MAX_KEYS_PER_LAYOUT * 6);
 
     for (const key *p = keys; p != &keys[num_keys]; p++) {
@@ -741,14 +745,13 @@ void keyboard_layout::draw(int selected_key) const
 
     texture_->bind();
 
-#ifdef FIX_ME
     auto &prog = get_program_instance<program_texture_decal>();
     prog.use();
     prog.set_proj_modelview_matrix(get_ortho_projection());
     prog.set_texture(0);
-#endif
 
     va.draw(GL_TRIANGLES);
+#endif
 }
 
 int keyboard_layout::find_key_for(float x, float y) const
