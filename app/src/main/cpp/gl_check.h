@@ -1,10 +1,9 @@
 #pragma once
 
-#include <GL/gl.h>
-
+#include "guava2d/g2dgl.h"
 #include "panic.h"
 
-#if 0
+#if 1
 
 #define GL_CHECK(expr) \
     [&] { \

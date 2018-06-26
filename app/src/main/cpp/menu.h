@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <functional>
 
 #include <guava2d/vec2.h>
 

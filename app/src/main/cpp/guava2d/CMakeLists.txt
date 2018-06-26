@@ -1,6 +1,3 @@
-find_package(SDL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(PNG REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(

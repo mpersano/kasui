@@ -1,13 +1,52 @@
-find_package(SDL REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(OpenGL REQUIRED)
-find_package(PNG REQUIRED)
+cmake_minimum_required(VERSION 2.6)
+
+project(kasui)
+
+option(ANDROID "Android build" OFF)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+if (ANDROID)
+    add_definitions("-DANDROID_NDK")
+endif()
+
+find_package(ZLIB REQUIRED)
+
+add_subdirectory(libpng)
+add_subdirectory(guava2d)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}
-	${SDL_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR}
-	${PNG_INCLUDE_DIRS})
+    ${ZLIB_INCLUDE_DIR}
+    ${PNG_INCLUDE_DIR})
+
+set(KASUI_LIBRARIES
+    guava2d
+    ${PNG_LIBRARY}
+    ${ZLIB_LIBRARIES})
+
+if (ANDROID)
+    list(APPEND KASUI_LIBRARIES
+        android
+        log
+        EGL
+        GLESv2)
+else()
+    find_package(SDL REQUIRED)
+    find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
+    find_package(PNG REQUIRED)
+
+    list(APPEND KASUI_LIBRARIES
+        ${SDL_LIBRARY}
+        ${GLEW_LIBRARY}
+        ${OPENGL_LIBRARIES})
+
+    include_directories(
+        ${SDL_INCLUDE_DIR}
+        ${GLEW_INCLUDE_DIR})
+endif()
+
+find_package(BISON REQUIRED)
 
 link_directories(
     ${CMAKE_BINARY_DIR}/guava2d)
@@ -33,7 +72,6 @@ set(KASUI_SOURCES
     kasui.cpp
     leaderboard_page.cpp
     line_splitter.cpp
-    main.cpp
     main_menu.cpp
     menu.cpp
     options.cpp
@@ -57,23 +95,28 @@ set(KASUI_SOURCES
     utf8.cpp
     world.cpp)
 
-find_package(BISON REQUIRED)
+if(NOT ANDROID)
+    list(APPEND KASUI_SOURCES main.cpp)
+endif()
+
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.cpp ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.h
                    COMMAND ${BISON_EXECUTABLE} --defines=${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.h -t ${CMAKE_CURRENT_SOURCE_DIR}/settings.y -o ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.cpp
                    MAIN_DEPENDENCY settings.y
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_executable(kasui ${KASUI_SOURCES})
+if (ANDROID)
+    add_library(kasui SHARED ${KASUI_SOURCES})
+else()
+    add_executable(kasui ${KASUI_SOURCES})
+endif()
 
 target_link_libraries(
-	kasui
-	guava2d
-	${SDL_LIBRARY}
-	${GLEW_LIBRARY}
-	${OPENGL_LIBRARIES}
-	${PNG_LIBRARIES})
+    kasui
+    ${KASUI_LIBRARIES})
 
-set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/assets")
+if (NOT ANDROID)
+    set(ASSETS_DIR "${CMAKE_SOURCE_DIR}/../assets")
 
-add_custom_command(TARGET kasui POST_BUILD
-    COMMAND ln -sf ${ASSETS_DIR} ${CMAKE_CURRENT_BINARY_DIR}/assets)
+    add_custom_command(TARGET kasui POST_BUILD
+        COMMAND ln -sf ${ASSETS_DIR} ${CMAKE_CURRENT_BINARY_DIR}/assets)
+endif()
