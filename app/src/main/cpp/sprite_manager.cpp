@@ -75,6 +75,6 @@ void load_sprite_sheet(const std::string &path)
 
 const sprite *get_sprite(const std::string &name)
 {
-    g_sprite_manager.get_sprite(name);
+    return g_sprite_manager.get_sprite(name);
 }
 }
