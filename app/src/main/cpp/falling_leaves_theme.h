@@ -5,6 +5,8 @@
 #include "guava2d/vec3.h"
 #include "guava2d/rgb.h"
 
+#include <array>
+
 namespace g2d
 {
 class texture;
