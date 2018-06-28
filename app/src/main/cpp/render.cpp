@@ -532,7 +532,7 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
-    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*8*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
     const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color) {
         *dest++ = vert.x;
         *dest++ = vert.y;
@@ -566,7 +566,7 @@ void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int n
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
-    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*12*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
     const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color0, const auto &color1) {
         *dest++ = vert.x;
         *dest++ = vert.y;
@@ -605,7 +605,7 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
 
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
 
-    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*6*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
     const auto add_vertex = [&dest](const auto &vert, const auto &color) {
         *dest++ = vert.x;
         *dest++ = vert.y;
