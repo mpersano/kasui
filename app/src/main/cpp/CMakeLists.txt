@@ -29,7 +29,10 @@ if (ANDROID)
         android
         log
         EGL
-        GLESv2)
+        GLESv3)
+
+    include_directories(
+        ${ANDROID_NDK}/sources/android/native_app_glue)
 else()
     find_package(SDL REQUIRED)
     find_package(GLEW REQUIRED)
@@ -83,7 +86,6 @@ set(KASUI_SOURCES
     score_display.cpp
     settings_lexer.cpp
     settings_parser.cpp
-    sound.cpp
     sprite.cpp
     sprite_manager.cpp
     stats_page.cpp
@@ -95,8 +97,14 @@ set(KASUI_SOURCES
     utf8.cpp
     world.cpp)
 
-if(NOT ANDROID)
-    list(APPEND KASUI_SOURCES main.cpp)
+if(ANDROID)
+    list(APPEND KASUI_SOURCES
+        ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+        android_main.cpp)
+else()
+    list(APPEND KASUI_SOURCES
+        sound.cpp
+        main.cpp)
 endif()
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.cpp ${CMAKE_CURRENT_SOURCE_DIR}/settings_parser.h

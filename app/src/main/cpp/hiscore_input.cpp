@@ -926,7 +926,9 @@ hiscore_input_state_impl::hiscore_input_state_impl()
         {'\n', 2}, // ok
         {ABC_KEY, 2},      {HIRAGANA_KEY, 2},
         {KATAKANA_KEY, 2}, {'\r', 2},
+#ifdef FIX_ME
         {-1, -1},
+#endif
     };
 
     // load texture
