@@ -106,7 +106,7 @@ private:
     };
 
     void load_programs();
-    void init_vbo();
+    void init_vbos();
     void init_vaos();
 
     void flush_queue();
@@ -137,7 +137,8 @@ private:
     const g2d::program *program_flat_;
     const g2d::program *program_text_outline_;
 
-    GLuint vbo_;
+    GLuint vertex_buffer_;
+    GLuint index_buffer_;
     GLuint vao_flat_;
     GLuint vao_texture_;
     GLuint vao_texture_2c_;
@@ -152,7 +153,7 @@ sprite_batch::sprite_batch()
 void sprite_batch::init()
 {
     load_programs();
-    init_vbo();
+    init_vbos();
     init_vaos();
 }
 
@@ -397,12 +398,33 @@ void sprite_batch::load_programs()
     program_text_outline_ = load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag");
 }
 
-void sprite_batch::init_vbo()
+void sprite_batch::init_vbos()
 {
-    GL_CHECK(glGenBuffers(1, &vbo_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glGenBuffers(1, &vertex_buffer_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
     GL_CHECK(glBufferData(GL_ARRAY_BUFFER, SPRITE_QUEUE_CAPACITY * 4 * 8 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW));
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+
+    const GLsizei index_buffer_size = SPRITE_QUEUE_CAPACITY * 6 * sizeof(GLushort);
+
+    GL_CHECK(glGenBuffers(1, &index_buffer_));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, nullptr, GL_DYNAMIC_DRAW));
+
+    auto index_ptr = reinterpret_cast<GLushort *>(GL_CHECK_R(glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size, GL_MAP_WRITE_BIT)));
+
+    for (int i = 0; i < SPRITE_QUEUE_CAPACITY; ++i) {
+        *index_ptr++ = i*4;
+        *index_ptr++ = i*4 + 1;
+        *index_ptr++ = i*4 + 2;
+
+        *index_ptr++ = i*4 + 2;
+        *index_ptr++ = i*4 + 3;
+        *index_ptr++ = i*4;
+    }
+
+    GL_CHECK(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
 void sprite_batch::init_vaos()
@@ -415,20 +437,20 @@ void sprite_batch::init_vaos()
 
     GL_CHECK(glGenVertexArrays(1, &vao_flat_));
     GL_CHECK(glBindVertexArray(vao_flat_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
     enable_vertex_attrib_array(0, 2, 6 * sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 4, 6 * sizeof(GLfloat), 2);
 
     GL_CHECK(glGenVertexArrays(1, &vao_texture_));
     GL_CHECK(glBindVertexArray(vao_texture_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
     enable_vertex_attrib_array(0, 2, 8 * sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 2, 8 * sizeof(GLfloat), 2);
     enable_vertex_attrib_array(2, 4, 8 * sizeof(GLfloat), 4);
 
     GL_CHECK(glGenVertexArrays(1, &vao_texture_2c_));
     GL_CHECK(glBindVertexArray(vao_texture_2c_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
     enable_vertex_attrib_array(0, 2, 12 * sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 2, 12 * sizeof(GLfloat), 2);
     enable_vertex_attrib_array(2, 4, 12 * sizeof(GLfloat), 4);
@@ -530,7 +552,7 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 {
     assert(num_sprites > 0);
 
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
 
     auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*8*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
     const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color) {
@@ -557,14 +579,15 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
     GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
 
     GL_CHECK(glBindVertexArray(vao_texture_));
-    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4 * num_sprites)); // TODO triangles, not quads
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    GL_CHECK(glDrawElements(GL_TRIANGLES, 6 * num_sprites, GL_UNSIGNED_SHORT, 0));
 }
 
 void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int num_sprites) const
 {
     assert(num_sprites > 0);
 
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
 
     auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*12*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
     const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color0, const auto &color1) {
@@ -596,14 +619,15 @@ void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int n
     GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
 
     GL_CHECK(glBindVertexArray(vao_texture_2c_));
-    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4 * num_sprites)); // TODO triangles, not quads
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    GL_CHECK(glDrawElements(GL_TRIANGLES, 6 * num_sprites, GL_UNSIGNED_SHORT, 0));
 }
 
 void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_sprites) const
 {
     assert(num_sprites > 0);
 
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vbo_));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
 
     auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*6*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
     const auto add_vertex = [&dest](const auto &vert, const auto &color) {
@@ -627,7 +651,8 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
     GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
 
     GL_CHECK(glBindVertexArray(vao_flat_));
-    GL_CHECK(glDrawArrays(GL_QUADS, 0, 4 * num_sprites)); // TODO triangles, not quads
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    GL_CHECK(glDrawElements(GL_TRIANGLES, 6 * num_sprites, GL_UNSIGNED_SHORT, 0));
 }
 
 } // anonymous namespace
