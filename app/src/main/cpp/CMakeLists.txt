@@ -95,7 +95,8 @@ set(KASUI_SOURCES
     title_background.cpp
     tutorial.cpp
     utf8.cpp
-    world.cpp)
+    world.cpp
+    fonts.cpp)
 
 if(ANDROID)
     list(APPEND KASUI_SOURCES

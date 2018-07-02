@@ -1,6 +1,5 @@
 #include "hint_animation.h"
 
-#include <guava2d/font_manager.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/vec3.h>
 #include <guava2d/xwchar.h>
@@ -10,10 +9,10 @@
 #include "jukugo.h"
 #include "settings.h" // for gradient
 #include "tween.h"
+#include "fonts.h"
 
 hint_text_box::hint_text_box(const hint &h, float cell_size, float width, const gradient& g)
     : width_(width)
-    , title_font_(g2d::load_font("fonts/medium"))
     , text_box_(width)
     , state_tics_(0)
     , tics_(0)
@@ -100,7 +99,7 @@ void hint_text_box::draw() const
     render::set_color({1.f, 1.f, 1.f, alpha});
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-    render::draw_text(title_font_, {0, .5f * text_box_.get_height()}, 55, outline_color, text_color, L"hint!");
+    render::draw_text(get_font(font::medium), {0, .5f * text_box_.get_height()}, 55, outline_color, text_color, L"hint!");
 
     render::pop_matrix();
 }

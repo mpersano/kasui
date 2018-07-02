@@ -12,7 +12,6 @@
 #include <sstream>
 #include <cassert>
 
-#include <guava2d/font_manager.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
@@ -23,10 +22,11 @@
 #include "leaderboard_page.h"
 #include "log.h"
 #include "utf8.h"
+#include "fonts.h"
 
 void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
 {
-    const g2d::font *small_font = g2d::load_font("fonts/tiny");
+    const auto *small_font = get_font(font::tiny);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -238,7 +238,7 @@ item::item(int rank, wchar_t *name, int score, bool highlight)
 #ifdef FIX_ME
     , frame_va_{8, 8, 8}
 #endif
-    , score_text_(g2d::load_font("fonts/small"))
+    , score_text_(get_font(font::small))
 {
     initialize_text();
     initialize_frame();
@@ -251,8 +251,8 @@ item::~item()
 
 void item::initialize_text()
 {
-    const g2d::font *small_font = g2d::load_font("fonts/small");
-    const g2d::font *tiny_font = g2d::load_font("fonts/tiny");
+    const auto *small_font = get_font(font::small);
+    const auto *tiny_font = get_font(font::tiny);
 
     auto gi_small = small_font->find_glyph(L'X');
     const float y_small = .5 * (-HEIGHT + gi_small->height) - gi_small->top;
@@ -468,9 +468,9 @@ private:
 leaderboard_page::leaderboard_page(const std::string &title, const std::string &cache_path)
     : cache_path_(cache_path)
 {
+#ifdef FIX_ME
     const g2d::font *font = g2d::load_font("fonts/medium");
 
-#ifdef FIX_ME
     title_text_.reset();
 
     wchar_t *title_wchar = utf8_to_wchar(title.c_str());

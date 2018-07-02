@@ -1,10 +1,9 @@
 #include "combo_sprite.h"
 
-#include <guava2d/font_manager.h>
-
 #include "common.h"
 #include "render.h"
 #include "settings.h"
+#include "fonts.h"
 
 #include <sstream>
 
@@ -12,15 +11,13 @@ combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient& g)
     : x_origin_(x)
     , y_origin_(y)
     , gradient_(g)
-    , large_font_(g2d::load_font("fonts/large"))
-    , small_font_(g2d::load_font("fonts/small"))
 {
     // XXX use boost::lexical_cast here
     std::wstringstream ss;
     ss << combo_size;
     combo_size_ = ss.str();
 
-    x_chain_text_ = large_font_->get_string_width(combo_size_.c_str()) + 12;
+    x_chain_text_ = get_font(font::large)->get_string_width(combo_size_.c_str()) + 12;
 }
 
 bool combo_sprite::update(uint32_t dt)
@@ -49,8 +46,8 @@ void combo_sprite::draw() const
     render::push_matrix();
     render::translate(x_origin_, y_origin_ + y_offset_);
 
-    render::draw_text(large_font_, {}, 50, outline_color, text_color, combo_size_.c_str());
-    render::draw_text(small_font_, {x_chain_text_, 16}, 50, outline_color, text_color, L"chain!");
+    render::draw_text(get_font(font::large), {}, 50, outline_color, text_color, combo_size_.c_str());
+    render::draw_text(get_font(font::small), {x_chain_text_, 16}, 50, outline_color, text_color, L"chain!");
 
     render::pop_matrix();
 }

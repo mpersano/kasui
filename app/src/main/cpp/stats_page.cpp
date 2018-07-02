@@ -1,6 +1,5 @@
 #include "stats_page.h"
 
-#include "guava2d/font_manager.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"
 #include "guava2d/vec3.h"
@@ -17,6 +16,7 @@
 #include "theme.h"
 #include "render.h"
 #include "program_manager.h"
+#include "fonts.h"
 
 #include <algorithm>
 #include <set>
@@ -65,9 +65,6 @@ public:
 private:
     const g2d::program *program_;
     const kanji_info *kanji_;
-    const g2d::font *large_font_;
-    const g2d::font *micro_font_;
-    const g2d::font *small_font_;
     std::wstring kanji_text_;
 };
 
@@ -90,9 +87,6 @@ private:
     void draw_text(const g2d::mat4 &proj_modelview) const;
 
     const jukugo *jukugo_;
-
-    const g2d::font *micro_font_;
-    const g2d::font *medium_font_;
 
     int height_;
     std::vector<std::wstring> meaning_text_;
@@ -123,7 +117,6 @@ private:
     void draw_title(float alpha) const;
     void update_y_offset(float dy);
 
-    const g2d::font *title_font_;
     std::vector<stats_page_item *> items_;
     std::wstring title_text_;
     float y_offset_;
@@ -226,9 +219,6 @@ kanji_info_item::kanji_info_item(const kanji_info *kanji)
     : stats_page_item(g2d::load_texture("images/b-button-border.png"))
     , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
     , kanji_{kanji}
-    , large_font_{g2d::load_font("fonts/large")}
-    , micro_font_{g2d::load_font("fonts/micro")}
-    , small_font_{g2d::load_font("fonts/small")}
 {
     kanji_text_.push_back(kanji->code);
 }
@@ -241,12 +231,12 @@ void kanji_info_item::draw(float alpha) const
 
     const auto draw_text = [this, height]() {
         render::set_text_align(text_align::LEFT);
-        render::draw_text(program_, large_font_, {10.f, -.5f * height - 28.f}, TEXT_LAYER, kanji_text_.c_str());
-        render::draw_text(program_, micro_font_, {110.f, -.5f * height + 6.f}, TEXT_LAYER, kanji_->on);
-        render::draw_text(program_, micro_font_, {110.f, -.5f * height - 24.f}, TEXT_LAYER, kanji_->kun);
+        render::draw_text(program_, get_font(font::large), {10.f, -.5f * height - 28.f}, TEXT_LAYER, kanji_text_.c_str());
+        render::draw_text(program_, get_font(font::micro), {110.f, -.5f * height + 6.f}, TEXT_LAYER, kanji_->on);
+        render::draw_text(program_, get_font(font::micro), {110.f, -.5f * height - 24.f}, TEXT_LAYER, kanji_->kun);
 
         render::set_text_align(text_align::RIGHT);
-        render::draw_text(program_, small_font_, {window_width - 20.f, -.5f * height - 12.f}, TEXT_LAYER, kanji_->meaning);
+        render::draw_text(program_, get_font(font::small), {window_width - 20.f, -.5f * height - 12.f}, TEXT_LAYER, kanji_->meaning);
     };
 
     render::set_blend_mode(blend_mode::ALPHA_BLEND);
@@ -264,14 +254,12 @@ void kanji_info_item::draw(float alpha) const
 jukugo_info_item::jukugo_info_item(const jukugo *jukugo)
     : stats_page_item(g2d::load_texture("images/w-button-border.png"))
     , jukugo_(jukugo)
-    , medium_font_{g2d::load_font("fonts/medium")}
-    , micro_font_{g2d::load_font("fonts/micro")}
 {
     static wchar_t meaning_buf[512];
     xswprintf(meaning_buf, L"(%s) %s", jukugo->reading, jukugo->eigo);
 
     {
-        line_splitter ls(micro_font_, meaning_buf);
+        line_splitter ls(get_font(font::micro), meaning_buf);
         std::wstring line;
         while (line = ls.next_line(MAX_MEANING_WIDTH), !line.empty())
             meaning_text_.push_back(line);
@@ -298,24 +286,23 @@ void jukugo_info_item::draw(float alpha) const
     render::set_color({alpha, alpha, alpha, 1.f});
 
     render::set_text_align(text_align::LEFT);
-    render::draw_text(medium_font_, {30.f, -.5f * height_ - 16.f}, TEXT_LAYER, jukugo_->kanji);
+    render::draw_text(get_font(font::medium), {30.f, -.5f * height_ - 16.f}, TEXT_LAYER, jukugo_->kanji);
 
     wchar_t *line;
     int y = -.5 * height_ + .5 * meaning_text_.size() * LINE_HEIGHT + 2;
 
     for (const auto& line : meaning_text_) {
-        render::draw_text(micro_font_, {160.f, y - 22.f}, TEXT_LAYER, line.c_str());
+        render::draw_text(get_font(font::micro), {160.f, y - 22.f}, TEXT_LAYER, line.c_str());
         y -= LINE_HEIGHT;
     }
 
     render::set_text_align(text_align::RIGHT);
-    render::draw_text(micro_font_, {window_width - 20.f, -.5f * height_ - 8.f}, TEXT_LAYER, hits_text_.c_str());
+    render::draw_text(get_font(font::micro), {window_width - 20.f, -.5f * height_ - 8.f}, TEXT_LAYER, hits_text_.c_str());
 }
 
 stats_page::stats_page(int level, float top_y)
     : top_y_(top_y)
     , total_height_(0)
-    , title_font_{g2d::load_font("fonts/medium")}
 {
     struct kanji_jukugo
     {
@@ -419,7 +406,7 @@ void stats_page::draw_title(float alpha) const
     render::set_blend_mode(blend_mode::INVERSE_BLEND);
     render::set_color({alpha, alpha, alpha, 1.f});
     render::set_text_align(text_align::CENTER);
-    render::draw_text(title_font_, {.5f * window_width, window_height - .5f * TITLE_HEIGHT - 14.f}, TEXT_LAYER, title_text_.c_str());
+    render::draw_text(get_font(font::medium), {.5f * window_width, window_height - .5f * TITLE_HEIGHT - 14.f}, TEXT_LAYER, title_text_.c_str());
 }
 
 void stats_page::update(uint32_t dt)

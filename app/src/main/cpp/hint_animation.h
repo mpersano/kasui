@@ -39,7 +39,6 @@ private:
     g2d::vec2 pos_;
     float width_;
     text_box text_box_;
-    const g2d::font *title_font_;
 
     int state_tics_, tics_;
     enum class state

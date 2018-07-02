@@ -4,8 +4,8 @@
 #include "in_game.h"
 #include "render.h"
 #include "program_manager.h"
+#include "fonts.h"
 
-#include <guava2d/font_manager.h>
 #include <guava2d/rgb.h>
 
 #include <cassert>
@@ -22,11 +22,11 @@ score_display::score_display()
 {
     reset();
 
-    const g2d::font *font = g2d::load_font("fonts/medium");
+    const auto *f = get_font(font::medium);
     for (int i = 0; i < 10; i++)
-        digit_glyphs_[i] = font->find_glyph(L'0' + i);
+        digit_glyphs_[i] = f->find_glyph(L'0' + i);
 
-    texture_ = font->get_texture();
+    texture_ = f->get_texture();
 }
 
 void score_display::reset()

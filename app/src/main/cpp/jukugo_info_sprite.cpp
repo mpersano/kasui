@@ -1,7 +1,5 @@
 #include "jukugo_info_sprite.h"
 
-#include <guava2d/font_manager.h>
-
 #include "common.h"
 #include "settings.h"
 #include "jukugo.h"
@@ -9,6 +7,7 @@
 #include "program_manager.h"
 #include "render.h"
 #include "tween.h"
+#include "fonts.h"
 
 jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float y, const gradient& g)
     : jukugo_{jukugo_info}
@@ -30,21 +29,19 @@ jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float
                       ->add(new delay_action(60 * MS_PER_TIC))
                       ->add(new property_change_action<linear_tween<float>>(&alpha_, 1., 0, 10 * MS_PER_TIC))));
 
-    kanji_font_ = g2d::load_font("fonts/large");
-    eigo_font_ = g2d::load_font("fonts/tiny");
-    furigana_font_ = g2d::load_font("fonts/small");
-
-    pos_kanji_ = {-.5f * kanji_font_->get_string_width(jukugo_info->kanji), -20.f};
-    pos_furigana_ = {-.5f * furigana_font_->get_string_width(jukugo_info->reading), 64.f};
+    pos_kanji_ = {-.5f * get_font(font::large)->get_string_width(jukugo_info->kanji), -20.f};
+    pos_furigana_ = {-.5f * get_font(font::small)->get_string_width(jukugo_info->reading), 64.f};
 
     constexpr int MAX_LINE_WIDTH = 320;
     float y_eigo = -64;
 
-    line_splitter ls(eigo_font_, jukugo_info->eigo);
+    const auto *eigo_font = get_font(font::tiny);
+
+    line_splitter ls(eigo_font, jukugo_info->eigo);
 
     std::wstring line;
     while (line = ls.next_line(MAX_LINE_WIDTH), !line.empty()) {
-        const float x = -.5 * eigo_font_->get_string_width(line.c_str());
+        const float x = -.5 * eigo_font->get_string_width(line.c_str());
         eigo_lines_.emplace_back(g2d::vec2(x, y_eigo), std::move(line));
         y_eigo -= 44;
     }
@@ -79,12 +76,14 @@ void jukugo_info_sprite::draw() const
 
     render::set_text_align(text_align::LEFT);
 
-    render::draw_text(furigana_font_, pos_furigana_, 50, top_color_outline, top_color_text, jukugo_->reading);
-    render::draw_text(kanji_font_, pos_kanji_, 50, top_color_outline, top_color_text, bottom_color_outline,
+    render::draw_text(get_font(font::small), pos_furigana_, 50, top_color_outline, top_color_text, jukugo_->reading);
+    render::draw_text(get_font(font::large), pos_kanji_, 50, top_color_outline, top_color_text, bottom_color_outline,
             bottom_color_text, jukugo_->kanji);
 
+    const auto *eigo_font = get_font(font::tiny);
+
     for (const auto &p : eigo_lines_)
-        render::draw_text(eigo_font_, p.first, 50, bottom_color_outline, bottom_color_text, p.second.c_str());
+        render::draw_text(eigo_font, p.first, 50, bottom_color_outline, bottom_color_text, p.second.c_str());
 
     render::pop_matrix();
 }

@@ -6,11 +6,6 @@
 
 #include <string>
 
-namespace g2d
-{
-class font;
-};
-
 class combo_sprite : public sprite
 {
 public:
@@ -27,8 +22,6 @@ private:
     float y_offset_ = 0;
     float x_chain_text_;
     gradient gradient_;
-    const g2d::font *large_font_;
-    const g2d::font *small_font_;
     int ttl_ = TTL;
     std::wstring combo_size_;
 };

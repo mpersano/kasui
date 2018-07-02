@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "guava2d/font.h"
-#include "guava2d/font_manager.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture.h"
 #include "guava2d/vec2.h"
@@ -14,6 +13,7 @@
 #include "main_menu.h"
 #include "program_manager.h"
 #include "render.h"
+#include "fonts.h"
 
 class credits_impl
 {
@@ -76,8 +76,8 @@ credits_impl::credits_impl()
     : program_outline_(load_program("shaders/sprite.vert", "shaders/credits_text_outline.frag"))
     , program_inner_(load_program("shaders/sprite.vert", "shaders/credits_text_inner.frag"))
 {
-    const g2d::font *tiny_font = g2d::load_font("fonts/tiny");
-    const g2d::font *small_font = g2d::load_font("fonts/small");
+    const auto *tiny_font = get_font(font::tiny);
+    const auto *small_font = get_font(font::small);
 
     add_text(small_font, 60, 560, 5 * MS_PER_TIC, "Mauro Persano");
     add_text(tiny_font, 100, 520, 15 * MS_PER_TIC, "programming, game design,");

@@ -13,7 +13,6 @@
 #include <time.h>
 #endif
 
-#include "guava2d/font_manager.h"
 #include "guava2d/g2dgl.h"
 #include "guava2d/texture_manager.h"
 
@@ -237,18 +236,8 @@ static void preload_resources()
         "images/petal.png",  "images/star.png",   "images/arrow.png", nullptr,
     };
 
-    // fonts
-
     for (const char **p = textures; *p; p++)
         g2d::load_texture(*p);
-
-    static const char *fonts[] = {
-        "fonts/gameover", "fonts/large", "fonts/medium", "fonts/small",
-        "fonts/tiny",     "fonts/title", "fonts/micro",  nullptr,
-    };
-
-    for (const char **p = fonts; *p; p++)
-        g2d::load_font(*p);
 
     // sprites
 

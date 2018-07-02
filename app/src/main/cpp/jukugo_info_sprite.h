@@ -36,10 +36,6 @@ private:
 
     gradient gradient_;
 
-    const g2d::font *kanji_font_;
-    const g2d::font *furigana_font_;
-    const g2d::font *eigo_font_;
-
     g2d::vec2 pos_kanji_;
     g2d::vec2 pos_furigana_;
     std::vector<std::pair<g2d::vec2, std::wstring>> eigo_lines_;

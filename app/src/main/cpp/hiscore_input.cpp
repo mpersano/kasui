@@ -4,7 +4,6 @@
 #include <map>
 
 #include <guava2d/font.h>
-#include <guava2d/font_manager.h>
 #include <guava2d/program.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
@@ -14,6 +13,7 @@
 #include "leaderboard_page.h"
 #include "main_menu.h"
 #include "options.h"
+#include "fonts.h"
 
 extern void draw_message(const g2d::mat4 &, float alpha, const wchar_t *);
 extern int total_tics;
@@ -821,7 +821,7 @@ private:
 
 hiscore_input_state_impl::hiscore_input_state_impl()
     : keyboard_texture_(g2d::load_texture("images/keyboard.png"))
-    , score_text_(g2d::load_font("fonts/large"))
+    , score_text_(get_font(font::large))
     , state_(STATE_NONE)
 {
     static const struct key_code_width
@@ -1001,8 +1001,8 @@ hiscore_input_state_impl::hiscore_input_state_impl()
 
     const float y_input_area = .6 * window_height;
 
-    auto font = g2d::load_font("fonts/small");
 #ifdef FIX_ME
+    auto font = g2d::load_font("fonts/small");
     text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
         .translate(.5 * window_width, y_input_area + 240)
         .align_center()

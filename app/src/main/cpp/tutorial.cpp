@@ -2,7 +2,6 @@
 #include <cstring>
 
 #include <guava2d/file.h>
-#include <guava2d/font_manager.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
 

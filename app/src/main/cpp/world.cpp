@@ -1,6 +1,5 @@
 #include "world.h"
 
-#include <guava2d/font_manager.h>
 #include <guava2d/program.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>

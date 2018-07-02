@@ -4,8 +4,8 @@
 #include "in_game.h"
 #include "render.h"
 #include "program_manager.h"
+#include "fonts.h"
 
-#include <guava2d/font_manager.h>
 #include <guava2d/rgb.h>
 
 #include <cassert>
@@ -13,14 +13,14 @@
 timer_display::timer_display()
     : program_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
 {
-    const g2d::font *font = g2d::load_font("fonts/medium");
+    const auto *f = get_font(font::medium);
 
     for (int i = 0; i < 10; i++)
-        digit_glyphs_[i] = font->find_glyph(L'0' + i);
+        digit_glyphs_[i] = f->find_glyph(L'0' + i);
 
-    byou_ = font->find_glyph(L'秒');
+    byou_ = f->find_glyph(L'秒');
 
-    texture_ = font->get_texture();
+    texture_ = f->get_texture();
 }
 
 void timer_display::draw_glyph(const g2d::glyph_info *g, float x, float y, float scale, const g2d::rgba& outline_color, const g2d::rgba& text_color) const

@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <wchar.h>
 
-#include "guava2d/font_manager.h"
 #include "guava2d/g2dgl.h"
 #include "guava2d/program.h"
 #include "guava2d/rgb.h"
@@ -39,6 +38,7 @@
 #include "tween.h"
 #include "world.h"
 #include "settings.h"
+#include "fonts.h"
 
 float grid_base_x, grid_base_y;
 
@@ -260,7 +260,7 @@ void glyph_animation::glyph_state::draw(const g2d::program *program, float alpha
 #define GLYPH_ANIMATION_SPACING 1.
 
 level_intro_animation::level_intro_animation(const gradient& g)
-    : glyph_animation(g2d::load_font("fonts/title"), GLYPH_ANIMATION_SPACING, L"用意",
+    : glyph_animation(get_font(font::title), GLYPH_ANIMATION_SPACING, L"用意",
                       .5 * window_width, .5 * window_height, g)
 {
     const size_t num_glyphs = glyph_states.size();
@@ -295,7 +295,7 @@ level_intro_animation::level_intro_animation(const gradient& g)
 }
 
 level_completed_animation::level_completed_animation(const gradient& g)
-    : glyph_animation(g2d::load_font("fonts/title"), GLYPH_ANIMATION_SPACING, L"成功",
+    : glyph_animation(get_font(font::title), GLYPH_ANIMATION_SPACING, L"成功",
                       .5 * window_width, .5 * window_height, g)
 {
     auto *p = new parallel_action_group;
@@ -652,9 +652,9 @@ void in_game_state_impl::set_state_game_over(bool time_up)
 
     if (time_up) {
         world_.set_game_over();
-        animation = new game_over_animation(g2d::load_font("fonts/title"), 1.1, L"時間切れ", colors_->text_gradient);
+        animation = new game_over_animation(get_font(font::title), 1.1, L"時間切れ", colors_->text_gradient);
     } else {
-        animation = new game_over_animation(g2d::load_font("fonts/gameover"), 1.1, L"げ〜むお〜ば〜", colors_->text_gradient);
+        animation = new game_over_animation(get_font(font::gameover), 1.1, L"げ〜むお〜ば〜", colors_->text_gradient);
     }
 
     set_cur_game_animation(animation);
@@ -782,7 +782,7 @@ void in_game_state_impl::update(uint32_t dt)
                     if (timer_display_.finished()) {
                         set_state_game_over(true);
                     } else if (timer_display_.get_tics_left() / 1000 < last_countdown_digit_) {
-                        const g2d::font *f = g2d::load_font("fonts/large");
+                        const auto *f = get_font(font::large);
                         set_cur_game_animation(new countdown_digit(f->find_glyph(L'0' + last_countdown_digit_),
                                                                    grid_base_x + .5 * world_.get_width(),
                                                                    grid_base_y + .5 * world_.get_height()));
@@ -806,8 +806,8 @@ void in_game_state_impl::draw_hud() const
     const float grid_width = world_.get_width();
     const float grid_height = world_.get_height();
 
-    const g2d::font *tiny_font = g2d::load_font("fonts/tiny");
-    const g2d::font *medium_font = g2d::load_font("fonts/medium");
+    const auto *tiny_font = get_font(font::tiny);
+    const auto *medium_font = get_font(font::medium);
 
     // no alpha
 

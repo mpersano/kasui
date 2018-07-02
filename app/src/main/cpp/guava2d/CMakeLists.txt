@@ -7,7 +7,6 @@ include_directories(
 set(GUAVA2D_SOURCES
     file.cpp
     font.cpp
-    font_manager.cpp
     panic.cpp
     pixmap.cpp
     program.cpp
