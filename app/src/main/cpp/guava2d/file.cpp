@@ -7,7 +7,6 @@
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
-
 extern AAssetManager *g_asset_manager;
 #else
 #include <sys/types.h>
@@ -24,108 +23,102 @@ namespace g2d {
 file_input_stream::file_input_stream(const char *path)
 {
 #ifndef ANDROID_NDK
-	char real_path[PATH_MAX];
+    char real_path[PATH_MAX];
 
-	sprintf(real_path, "assets/%s", path);
+    sprintf(real_path, "assets/%s", path);
 
-	struct stat sb;
+    struct stat sb;
 
-	if (::stat(real_path, &sb) < 0)
-		panic("stat on `%s' failed: %s\n", real_path, strerror(errno));
+    if (::stat(real_path, &sb) < 0)
+        panic("stat on `%s' failed: %s\n", real_path, strerror(errno));
 
-	if ((sb.st_mode & S_IFMT) != S_IFREG)
-		panic("`%s' not a regular file\n");
+    if ((sb.st_mode & S_IFMT) != S_IFREG)
+        panic("`%s' not a regular file\n");
 
-	bytes_remaining_ = sb.st_size;
+    size_ = sb.st_size;
 
-	if (!(stream_ = ::fopen(real_path, "rb")))
-		panic("failed to open `%s': %s\n", real_path, strerror(errno));
+    if (!(stream_ = ::fopen(real_path, "rb")))
+        panic("failed to open `%s': %s\n", real_path, strerror(errno));
 #else
-	AAsset *asset = AAssetManager_open(g_asset_manager, path, AASSET_MODE_UNKNOWN);
+    asset_ = AAssetManager_open(g_asset_manager, path, AASSET_MODE_UNKNOWN);
+    // XXX does this return nullptr on error?
 
-	off_t offset;
-
-        int fd = AAsset_openFileDescriptor(asset, &offset, &bytes_remaining_);
-
-	stream_ = fdopen(fd, "r");
-	fseek(stream_, offset, SEEK_SET);
-
-	AAsset_close(asset);
+    size_ = AAsset_getLength(asset_);
 #endif
 }
 
 file_input_stream::~file_input_stream()
 {
-	if (stream_)
-		fclose(stream_);
+#ifndef ANDROID_NDK
+    if (stream_)
+        fclose(stream_);
+#else
+    if (asset_)
+        AAsset_close(asset_);
+#endif
 }
 
 uint8_t
 file_input_stream::read_uint8()
 {
-	uint8_t v;
+    uint8_t v;
 
-	if (read(&v, 1) != 1)
-		panic("read failed");
+    if (read(&v, 1) != 1)
+        panic("read failed");
 
-	return v;
+    return v;
 }
 
 uint16_t
 file_input_stream::read_uint16()
 {
-	uint16_t lo = static_cast<uint16_t>(read_uint8());
-	uint16_t hi = static_cast<uint16_t>(read_uint8());
-	return lo | (hi << 8);
+    uint16_t lo = static_cast<uint16_t>(read_uint8());
+    uint16_t hi = static_cast<uint16_t>(read_uint8());
+    return lo | (hi << 8);
 }
 
 uint32_t
 file_input_stream::read_uint32()
 {
-	uint32_t lo = static_cast<uint32_t>(read_uint16());
-	uint32_t hi = static_cast<uint32_t>(read_uint16());
-	return lo | (hi << 16);
+    uint32_t lo = static_cast<uint32_t>(read_uint16());
+    uint32_t hi = static_cast<uint32_t>(read_uint16());
+    return lo | (hi << 16);
 }
 
 std::string
 file_input_stream::read_string()
 {
-	uint8_t len = read_uint8();
+    uint8_t len = read_uint8();
 
-	std::string str;
-	for (int i = 0; i < len; i++)
-		str.push_back(read_uint8());
+    std::string str;
+    for (int i = 0; i < len; i++)
+        str.push_back(read_uint8());
 
-	return str;
+    return str;
 }
 
 char *
 file_input_stream::gets(char *str, size_t size)
 {
-	if (bytes_remaining_ <= 0) {
-		return nullptr;
-	} else {
-		if (size > bytes_remaining_ + 1)
-			size = bytes_remaining_ + 1;
-
-		::fgets(str, size, stream_);
-
-		bytes_remaining_ -= strlen(str);
-
-		return str;
-	}
+    char *p;
+    for (p = str, size--; size > 0; --size) {
+        if (read(p, 1) == 0)
+            break;
+        if (*p++ == '\n')
+            break;
+    }
+    *p = '\0';
+    return p == str ? nullptr : p;
 }
 
 size_t
 file_input_stream::read(void *buf, size_t size)
 {
-	if (bytes_remaining_ <= 0)
-		return 0;
-
-	size_t bytes_read = ::fread(buf, 1, std::min(size, static_cast<size_t>(bytes_remaining_)), stream_);
-	bytes_remaining_ -= bytes_read;
-
-	return bytes_read;
+#ifndef ANDROID_NDK
+    return fread(buf, 1, size, stream_);
+#else
+    return AAsset_read(asset_, buf, size);
+#endif
 }
 
 }

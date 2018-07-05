@@ -31,7 +31,11 @@ pixmap::load(const char *path)
 	if (setjmp(png_jmpbuf(png_ptr)))
 		panic("some kind of png error");
 
-	png_init_io(png_ptr, file.get_raw_stream());
+	png_set_read_fn(png_ptr, &file, [](png_structp png_ptr, png_bytep data, png_size_t length) {
+		if (reinterpret_cast<file_input_stream *>(png_get_io_ptr(png_ptr))->read(data, length) != length)
+			png_error(png_ptr, "read error");
+	});
+
 	png_read_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, nullptr);
 
 	int color_type = png_get_color_type(png_ptr, info_ptr);

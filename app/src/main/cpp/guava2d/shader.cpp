@@ -27,7 +27,7 @@ shader::load_source(const char *path) const
 {
 	file_input_stream file(path);
 
-	size_t size = file.get_bytes_remaining();
+	size_t size = file.size();
 
 	char *source = new char[size + 1];
 	file.read(reinterpret_cast<uint8_t *>(source), size);

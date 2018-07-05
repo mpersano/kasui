@@ -25,7 +25,7 @@ panic(const char *fmt, ...)
 #ifndef ANDROID_NDK
 	fprintf(stderr, "FATAL: %s\n", buf);
 #else
-	__android_log_print(ANDROID_LOG_INFO, "kpuzzle", "FATAL: %s", buf);
+	__android_log_print(ANDROID_LOG_INFO, "kasui", "FATAL: %s", buf);
 #endif
 
 	exit(1);

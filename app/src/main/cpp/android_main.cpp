@@ -203,7 +203,7 @@ demo::init_display()
 	//
 
 	const EGLint context_attribs[] = {
-			EGL_CONTEXT_CLIENT_VERSION, 2, // request ES2.0
+			EGL_CONTEXT_CLIENT_VERSION, 3, // request ES3.0
 			EGL_NONE };
 	context_ = eglCreateContext(display_, config, NULL, context_attribs);
 
