@@ -1,6 +1,8 @@
-* Sprite batch: use triangles instead of quads
-* Sprite batch: fix implicit synchronization
-* Change `sprite` class name to something more meaningful
+* Sprite batch: fix implicit synchronization (probably use buffer orphaning)
+* Change `sprite` class name in kasui to something more meaningful
 * Use sprite batch on high score page
 * Use sprite batch on high score input page
-* Android CMake scripts
+* Use sprite batch on leaderboard page
+* Fix leaderboard
+* Fix falling leaves background
+* Android: reload OpenGL resources when context is lost
