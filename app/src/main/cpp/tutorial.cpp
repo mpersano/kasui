@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <guava2d/panic.h>
 #include <guava2d/file.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
@@ -8,7 +9,6 @@
 #include "background.h"
 #include "common.h"
 #include "main_menu.h"
-#include "panic.h"
 #include "pause_button.h"
 #include "render.h"
 #include "sprite.h"

@@ -14,31 +14,31 @@ program::program()
 program::~program()
 {
 	if (id_)
-		glDeleteProgram(id_);
+		GL_CHECK(glDeleteProgram(id_));
 }
 
 void
 program::initialize()
 {
-	id_ = glCreateProgram();
+	id_ = GL_CHECK_R(glCreateProgram());
 }
 
 void
 program::attach(const shader& shader) const
 {
-	glAttachShader(id_, shader.get_id());
+	GL_CHECK(glAttachShader(id_, shader.get_id()));
 }
 
 void
 program::link() const
 {
-	glLinkProgram(id_);
+	GL_CHECK(glLinkProgram(id_));
 }
 
 GLint
 program::get_uniform_location(const GLchar *name) const
 {
-	GLint rv = glGetUniformLocation(id_, name);
+	GLint rv = GL_CHECK_R(glGetUniformLocation(id_, name));
 	if (rv == -1)
 		panic("get_uniform_location failed for %s\n", name);
 	return rv;
@@ -47,7 +47,7 @@ program::get_uniform_location(const GLchar *name) const
 GLint
 program::get_attrib_location(const GLchar *name) const
 {
-	GLint rv = glGetAttribLocation(id_, name);
+	GLint rv = GL_CHECK_R(glGetAttribLocation(id_, name));
 	if (rv == -1)
 		fprintf(stderr, "get_attribute_location failed for %s\n", name);
 	return rv;
@@ -56,7 +56,7 @@ program::get_attrib_location(const GLchar *name) const
 void
 program::bind_attrib_location(GLuint index, const GLchar *name) const
 {
-	glBindAttribLocation(id_, index, name);
+	GL_CHECK(glBindAttribLocation(id_, index, name));
 }
 
 void
@@ -146,61 +146,61 @@ program::set_uniform_matrix4(const GLchar *name, const GLfloat *matrix) const
 void
 program::set_uniform_f(GLint location, GLfloat v0)
 {
-	glUniform1f(location, v0);
+	GL_CHECK(glUniform1f(location, v0));
 }
 
 void
 program::set_uniform_f(GLint location, GLfloat v0, GLfloat v1)
 {
-	glUniform2f(location, v0, v1);
+	GL_CHECK(glUniform2f(location, v0, v1));
 }
 
 void
 program::set_uniform_f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
 {
-	glUniform3f(location, v0, v1, v2);
+	GL_CHECK(glUniform3f(location, v0, v1, v2));
 }
 
 void
 program::set_uniform_f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
 {
-	glUniform4f(location, v0, v1, v2, v3);
+	GL_CHECK(glUniform4f(location, v0, v1, v2, v3));
 }
 
 void
 program::set_uniform_i(GLint location, GLint v0)
 {
-	glUniform1i(location, v0);
+	GL_CHECK(glUniform1i(location, v0));
 }
 
 void
 program::set_uniform_i(GLint location, GLint v0, GLint v1)
 {
-	glUniform2i(location, v0, v1);
+	GL_CHECK(glUniform2i(location, v0, v1));
 }
 
 void
 program::set_uniform_i(GLint location, GLint v0, GLint v1, GLint v2)
 {
-	glUniform3i(location, v0, v1, v2);
+	GL_CHECK(glUniform3i(location, v0, v1, v2));
 }
 
 void
 program::set_uniform_i(GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
 {
-	glUniform4i(location, v0, v1, v2, v3);
+	GL_CHECK(glUniform4i(location, v0, v1, v2, v3));
 }
 
 void
 program::set_uniform(GLint location, const vec2& v)
 {
-	glUniform2f(location, v.x, v.y);
+	GL_CHECK(glUniform2f(location, v.x, v.y));
 }
 
 void
 program::set_uniform(GLint location, const vec3& v)
 {
-	glUniform3f(location, v.x, v.y, v.z);
+	GL_CHECK(glUniform3f(location, v.x, v.y, v.z));
 }
 
 void
@@ -218,25 +218,25 @@ program::set_uniform(GLint location, const mat4& mat)
 void
 program::set_uniform_matrix4(GLint location, const GLfloat *matrix)
 {
-	glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
+	GL_CHECK(glUniformMatrix4fv(location, 1, GL_FALSE, matrix));
 }
 
 void
 program::set_uniform(GLint location, const rgb& color)
 {
-	glUniform3f(location, color.r, color.g, color.b);
+	GL_CHECK(glUniform3f(location, color.r, color.g, color.b));
 }
 
 void
 program::set_uniform(GLint location, const rgba& color)
 {
-	glUniform4f(location, color.r, color.g, color.b, color.a);
+	GL_CHECK(glUniform4f(location, color.r, color.g, color.b, color.a));
 }
 
 void
 program::use() const
 {
-	glUseProgram(id_);
+	GL_CHECK(glUseProgram(id_));
 }
 
 std::string
@@ -245,13 +245,13 @@ program::get_info_log() const
 	std::string log_string;
 
 	GLint length;
-	glGetProgramiv(id_, GL_INFO_LOG_LENGTH, &length);
+	GL_CHECK(glGetProgramiv(id_, GL_INFO_LOG_LENGTH, &length));
 
 	if (length) {
 		GLint written;
 
 		std::vector<GLchar> data(length + 1);
-		glGetProgramInfoLog(id_, length, &written, &data[0]);
+		GL_CHECK(glGetProgramInfoLog(id_, length, &written, &data[0]));
 
 		log_string.assign(data.begin(), data.begin() + written);
 	}

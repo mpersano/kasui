@@ -1,15 +1,12 @@
 #include <cstdio>
 #include <cstdlib>
-
-#include <stdarg.h>
+#include <cstdarg>
 
 #ifdef ANDROID_NDK
 #include <android/log.h>
 #endif
 
 #include "panic.h"
-
-namespace g2d {
 
 void
 panic(const char *fmt, ...)
@@ -29,6 +26,4 @@ panic(const char *fmt, ...)
 #endif
 
 	exit(1);
-}
-
 }

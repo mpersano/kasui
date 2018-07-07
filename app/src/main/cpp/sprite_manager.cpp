@@ -1,9 +1,9 @@
 #include "sprite_manager.h"
 
+#include "guava2d/panic.h"
 #include "guava2d/file.h"
 #include "guava2d/texture_manager.h"
 #include "noncopyable.h"
-#include "panic.h"
 
 #include <iostream>
 #include <sstream>

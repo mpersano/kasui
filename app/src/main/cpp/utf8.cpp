@@ -1,8 +1,8 @@
 #include <cstring>
 
 #include <guava2d/xwchar.h>
+#include <guava2d/panic.h>
 
-#include "panic.h"
 #include "utf8.h"
 
 enum

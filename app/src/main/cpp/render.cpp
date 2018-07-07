@@ -1,13 +1,14 @@
 #include "render.h"
 #include "noncopyable.h"
 
-#include "gl_check.h"
 #include "program_manager.h"
 
+#include <guava2d/g2dgl.h>
 #include <guava2d/font.h>
 #include <guava2d/program.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture.h>
+#include <guava2d/gl_buffer.h>
 
 #include <algorithm>
 #include <cassert>
@@ -54,8 +55,6 @@ class sprite_batch : private noncopyable
 {
 public:
     sprite_batch();
-
-    void init();
 
     void set_viewport(int x_min, int x_max, int y_min, int y_max);
 
@@ -105,7 +104,6 @@ private:
         bool scissor_test;
     };
 
-    void load_programs();
     void init_vbos();
     void init_vaos();
 
@@ -137,22 +135,23 @@ private:
     const g2d::program *program_flat_;
     const g2d::program *program_text_outline_;
 
-    GLuint vertex_buffer_;
-    GLuint index_buffer_;
+    g2d::gl_buffer vertex_buffer_;
+    g2d::gl_buffer index_buffer_;
+
     GLuint vao_flat_;
     GLuint vao_texture_;
     GLuint vao_texture_2c_;
 
     std::array<GLfloat, 16> proj_matrix_;
-} g_sprite_batch;
+} *g_sprite_batch;
 
 sprite_batch::sprite_batch()
+    : vertex_buffer_{GL_ARRAY_BUFFER}
+    , index_buffer_{GL_ELEMENT_ARRAY_BUFFER}
+    , program_texture_{load_program("shaders/sprite.vert", "shaders/sprite.frag")}
+    , program_flat_{load_program("shaders/flat.vert", "shaders/flat.frag")}
+    , program_text_outline_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
 {
-}
-
-void sprite_batch::init()
-{
-    load_programs();
     init_vbos();
     init_vaos();
 }
@@ -192,6 +191,7 @@ void sprite_batch::begin_batch()
     matrix_ = g2d::mat3::identity();
     matrix_stack_ = std::stack<g2d::mat3>();
     scissor_test_ = false;
+    set_scissor_box(-1, -1, 0, 0);
 }
 
 void sprite_batch::end_batch()
@@ -391,27 +391,18 @@ void sprite_batch::add_text(const g2d::font *font, const g2d::vec2 &pos, int lay
     }
 }
 
-void sprite_batch::load_programs()
-{
-    program_texture_ = load_program("shaders/sprite.vert", "shaders/sprite.frag");
-    program_flat_ = load_program("shaders/flat.vert", "shaders/flat.frag");
-    program_text_outline_ = load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag");
-}
-
 void sprite_batch::init_vbos()
 {
-    GL_CHECK(glGenBuffers(1, &vertex_buffer_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
-    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, SPRITE_QUEUE_CAPACITY * 4 * 8 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    vertex_buffer_.bind();
+    vertex_buffer_.buffer_data(SPRITE_QUEUE_CAPACITY * 4 * 8 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
+    vertex_buffer_.unbind();
 
     const GLsizei index_buffer_size = SPRITE_QUEUE_CAPACITY * 6 * sizeof(GLushort);
 
-    GL_CHECK(glGenBuffers(1, &index_buffer_));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
-    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, nullptr, GL_DYNAMIC_DRAW));
+    index_buffer_.bind();
+    index_buffer_.buffer_data(index_buffer_size, nullptr, GL_DYNAMIC_DRAW);
 
-    auto index_ptr = reinterpret_cast<GLushort *>(GL_CHECK_R(glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size, GL_MAP_WRITE_BIT)));
+    auto index_ptr = reinterpret_cast<GLushort *>(index_buffer_.map_range(0, index_buffer_size, GL_MAP_WRITE_BIT));
 
     for (int i = 0; i < SPRITE_QUEUE_CAPACITY; ++i) {
         *index_ptr++ = i*4;
@@ -423,8 +414,8 @@ void sprite_batch::init_vbos()
         *index_ptr++ = i*4;
     }
 
-    GL_CHECK(glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+    index_buffer_.unmap();
+    index_buffer_.unbind();
 }
 
 void sprite_batch::init_vaos()
@@ -437,24 +428,27 @@ void sprite_batch::init_vaos()
 
     GL_CHECK(glGenVertexArrays(1, &vao_flat_));
     GL_CHECK(glBindVertexArray(vao_flat_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+    vertex_buffer_.bind();
     enable_vertex_attrib_array(0, 2, 6 * sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 4, 6 * sizeof(GLfloat), 2);
+    vertex_buffer_.unbind();
 
     GL_CHECK(glGenVertexArrays(1, &vao_texture_));
     GL_CHECK(glBindVertexArray(vao_texture_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+    vertex_buffer_.bind();
     enable_vertex_attrib_array(0, 2, 8 * sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 2, 8 * sizeof(GLfloat), 2);
     enable_vertex_attrib_array(2, 4, 8 * sizeof(GLfloat), 4);
+    vertex_buffer_.unbind();
 
     GL_CHECK(glGenVertexArrays(1, &vao_texture_2c_));
     GL_CHECK(glBindVertexArray(vao_texture_2c_));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+    vertex_buffer_.bind();
     enable_vertex_attrib_array(0, 2, 12 * sizeof(GLfloat), 0);
     enable_vertex_attrib_array(1, 2, 12 * sizeof(GLfloat), 2);
     enable_vertex_attrib_array(2, 4, 12 * sizeof(GLfloat), 4);
     enable_vertex_attrib_array(3, 4, 12 * sizeof(GLfloat), 8);
+    vertex_buffer_.unbind();
 }
 
 void sprite_batch::flush_queue()
@@ -495,7 +489,8 @@ void sprite_batch::flush_queue()
     auto cur_num_vert_colors = sorted_sprites[0]->num_vert_colors;
     auto cur_scissor_test = sorted_sprites[0]->scissor_test;
 
-    GL_CHECK(glScissor(scissor_box_.x, scissor_box_.y, scissor_box_.width, scissor_box_.height));
+    if (scissor_box_.x != -1)
+        GL_CHECK(glScissor(scissor_box_.x, scissor_box_.y, scissor_box_.width, scissor_box_.height));
 
     bind_texture(cur_program, cur_texture);
     gl_set_blend_mode(cur_blend_mode);
@@ -552,9 +547,9 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
 {
     assert(num_sprites > 0);
 
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+    vertex_buffer_.bind();
 
-    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*8*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
+    auto dest = reinterpret_cast<GLfloat *>(vertex_buffer_.map_range(0, num_sprites*4*8*sizeof(GLfloat), GL_MAP_WRITE_BIT));
     const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color) {
         *dest++ = vert.x;
         *dest++ = vert.y;
@@ -576,10 +571,10 @@ void sprite_batch::render_sprites_texture(const sprite *const *sprites, int num_
         add_vertex(p->verts.v11, p->texcoords.v11, p->colors[0].c11);
     }
 
-    GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
+    vertex_buffer_.unmap();
 
     GL_CHECK(glBindVertexArray(vao_texture_));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    index_buffer_.bind();
     GL_CHECK(glDrawElements(GL_TRIANGLES, 6 * num_sprites, GL_UNSIGNED_SHORT, 0));
 }
 
@@ -587,9 +582,9 @@ void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int n
 {
     assert(num_sprites > 0);
 
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+    vertex_buffer_.bind();
 
-    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*12*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
+    auto dest = reinterpret_cast<GLfloat *>(vertex_buffer_.map_range(0, num_sprites*4*12*sizeof(GLfloat), GL_MAP_WRITE_BIT));
     const auto add_vertex = [&dest](const auto &vert, const auto &texuv, const auto &color0, const auto &color1) {
         *dest++ = vert.x;
         *dest++ = vert.y;
@@ -616,10 +611,10 @@ void sprite_batch::render_sprites_texture_2c(const sprite *const *sprites, int n
         add_vertex(p->verts.v11, p->texcoords.v11, p->colors[0].c11, p->colors[1].c11);
     }
 
-    GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
+    vertex_buffer_.unmap();
 
     GL_CHECK(glBindVertexArray(vao_texture_2c_));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    index_buffer_.bind();
     GL_CHECK(glDrawElements(GL_TRIANGLES, 6 * num_sprites, GL_UNSIGNED_SHORT, 0));
 }
 
@@ -627,9 +622,9 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
 {
     assert(num_sprites > 0);
 
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_));
+    vertex_buffer_.bind();
 
-    auto dest = reinterpret_cast<GLfloat *>(GL_CHECK_R(glMapBufferRange(GL_ARRAY_BUFFER, 0, num_sprites*4*6*sizeof(GLfloat), GL_MAP_WRITE_BIT)));
+    auto dest = reinterpret_cast<GLfloat *>(vertex_buffer_.map_range(0, num_sprites*4*6*sizeof(GLfloat), GL_MAP_WRITE_BIT));
     const auto add_vertex = [&dest](const auto &vert, const auto &color) {
         *dest++ = vert.x;
         *dest++ = vert.y;
@@ -648,10 +643,10 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
         add_vertex(p->verts.v11, p->colors[0].c11);
     }
 
-    GL_CHECK(glUnmapBuffer(GL_ARRAY_BUFFER));
+    vertex_buffer_.unmap();
 
     GL_CHECK(glBindVertexArray(vao_flat_));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_));
+    index_buffer_.bind();
     GL_CHECK(glDrawElements(GL_TRIANGLES, 6 * num_sprites, GL_UNSIGNED_SHORT, 0));
 }
 
@@ -659,83 +654,83 @@ void sprite_batch::render_sprites_flat(const sprite *const *sprites, int num_spr
 
 void init()
 {
-    g_sprite_batch.init();
+    g_sprite_batch = new sprite_batch();
 }
 
 void set_viewport(int x_min, int x_max, int y_min, int y_max)
 {
-    g_sprite_batch.set_viewport(x_min, x_max, y_min, y_max);
+    g_sprite_batch->set_viewport(x_min, x_max, y_min, y_max);
 }
 
 void set_scissor_box(int x, int y, int width, int height)
 {
-    g_sprite_batch.set_scissor_box(x, y, width, height);
+    g_sprite_batch->set_scissor_box(x, y, width, height);
 }
 
 void begin_batch()
 {
-    g_sprite_batch.begin_batch();
+    g_sprite_batch->begin_batch();
 }
 
 void end_batch()
 {
-    g_sprite_batch.end_batch();
+    g_sprite_batch->end_batch();
 }
 
 void push_matrix()
 {
-    g_sprite_batch.push_matrix();
+    g_sprite_batch->push_matrix();
 }
 
 void pop_matrix()
 {
-    g_sprite_batch.pop_matrix();
+    g_sprite_batch->pop_matrix();
 }
 
 void translate(float x, float y)
 {
-    g_sprite_batch.translate(x, y);
+    g_sprite_batch->translate(x, y);
 }
 
 void translate(const g2d::vec2 &v)
 {
-    g_sprite_batch.translate(v.x, v.y);
+    g_sprite_batch->translate(v.x, v.y);
 }
 
 void scale(float sx, float sy)
 {
-    g_sprite_batch.scale(sx, sy);
+    g_sprite_batch->scale(sx, sy);
 }
 
 void rotate(float a)
 {
-    g_sprite_batch.rotate(a);
+    g_sprite_batch->rotate(a);
 }
 
 void set_blend_mode(blend_mode mode)
 {
-    g_sprite_batch.set_blend_mode(mode);
+    g_sprite_batch->set_blend_mode(mode);
 }
 
 void set_scissor_test(bool enabled)
 {
-    g_sprite_batch.set_scissor_test(enabled);
+    g_sprite_batch->set_scissor_test(enabled);
 }
 
 void set_color(const g2d::rgba &color)
 {
-    g_sprite_batch.set_color(color);
+    g_sprite_batch->set_color(color);
 }
 
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad &verts, const quad &texcoords,
                int layer)
 {
-    g_sprite_batch.add_quad(program, texture, verts, texcoords, layer);
+    g_sprite_batch->add_quad(program, texture, verts, texcoords, layer);
 }
 
 void draw_quad(const g2d::texture *texture, const quad &verts, const quad &texcoords, int layer)
 {
-    g_sprite_batch.add_quad(nullptr, texture, verts, texcoords, layer);
+    g_sprite_batch->add_quad(nullptr, texture, verts, texcoords, layer);
 }
 
 void draw_box(const g2d::texture *texture, const box &verts, const box &texcoords, int layer)
@@ -757,58 +752,58 @@ void draw_box(const g2d::program *program, const g2d::texture *texture, const bo
     const float u1 = texcoords.v1.x;
     const float v1 = texcoords.v1.y;
 
-    g_sprite_batch.add_quad(program, texture, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
+    g_sprite_batch->add_quad(program, texture, {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
                             {{u0, v0}, {u1, v0}, {u1, v1}, {u0, v1}}, layer);
 }
 
 void draw_quad(const quad &verts, int layer)
 {
-    g_sprite_batch.add_quad(nullptr, nullptr, verts, {}, layer);
+    g_sprite_batch->add_quad(nullptr, nullptr, verts, {}, layer);
 }
 
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad &verts, const quad &texcoords,
                const vert_colors &colors0, const vert_colors &colors1, int layer)
 {
-    g_sprite_batch.add_quad(program, texture, verts, texcoords, colors0, colors1, layer);
+    g_sprite_batch->add_quad(program, texture, verts, texcoords, colors0, colors1, layer);
 }
 
 void draw_quad(const g2d::program *program, const g2d::texture *texture, const quad &verts, const quad &texcoords,
                const vert_colors &colors, int layer)
 {
-    g_sprite_batch.add_quad(program, texture, verts, texcoords, colors, layer);
+    g_sprite_batch->add_quad(program, texture, verts, texcoords, colors, layer);
 }
 
 void draw_quad(const g2d::texture *texture, const quad &verts, const quad &texcoords, const vert_colors &colors,
                int layer)
 {
-    g_sprite_batch.add_quad(nullptr, texture, verts, texcoords, colors, layer);
+    g_sprite_batch->add_quad(nullptr, texture, verts, texcoords, colors, layer);
 }
 
 void draw_quad(const quad &verts, const vert_colors &colors, int layer)
 {
-    g_sprite_batch.add_quad(nullptr, nullptr, verts, {}, colors, layer);
+    g_sprite_batch->add_quad(nullptr, nullptr, verts, {}, colors, layer);
 }
 
 void set_text_align(text_align align)
 {
-    g_sprite_batch.set_text_align(align);
+    g_sprite_batch->set_text_align(align);
 }
 
 void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer, const wchar_t *str)
 {
-    g_sprite_batch.add_text(nullptr, font, pos, layer, str);
+    g_sprite_batch->add_text(nullptr, font, pos, layer, str);
 }
 
 void draw_text(const g2d::program *program, const g2d::font *font, const g2d::vec2 &pos, int layer, const wchar_t *str)
 {
-    g_sprite_batch.add_text(program, font, pos, layer, str);
+    g_sprite_batch->add_text(program, font, pos, layer, str);
 }
 
 void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
                const g2d::rgba &outline_color, const g2d::rgba &text_color,
                const wchar_t *str)
 {
-    g_sprite_batch.add_text(font, pos, layer, outline_color, text_color, str);
+    g_sprite_batch->add_text(font, pos, layer, outline_color, text_color, str);
 }
 
 void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
@@ -816,7 +811,7 @@ void draw_text(const g2d::font *font, const g2d::vec2 &pos, int layer,
                const g2d::rgba &bottom_outline_color, const g2d::rgba &bottom_text_color,
                const wchar_t *str)
 {
-    g_sprite_batch.add_text(font, pos, layer, top_outline_color, top_text_color,
+    g_sprite_batch->add_text(font, pos, layer, top_outline_color, top_text_color,
             bottom_outline_color, bottom_text_color, str);
 }
 }

@@ -1,6 +1,6 @@
 #include "world.h"
 
-#include <guava2d/program.h>
+#include <guava2d/panic.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
@@ -11,7 +11,6 @@
 #include "hint_animation.h"
 #include "jukugo.h"
 #include "jukugo_info_sprite.h"
-#include "panic.h"
 #include "render.h"
 #include "settings.h"
 #include "sounds.h"

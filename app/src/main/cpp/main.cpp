@@ -16,11 +16,11 @@
 #endif
 
 #include "guava2d/g2dgl.h"
+#include "guava2d/panic.h"
 
 #include "common.h"
 #include "in_game.h"
 #include "kasui.h"
-#include "panic.h"
 
 #ifdef DUMP_FRAMES
 extern "C" {

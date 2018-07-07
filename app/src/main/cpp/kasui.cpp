@@ -15,6 +15,7 @@
 
 #include "guava2d/g2dgl.h"
 #include "guava2d/texture_manager.h"
+#include "guava2d/panic.h"
 
 #include "render.h"
 
@@ -32,7 +33,6 @@
 #include "main_menu.h"
 #include "menu.h"
 #include "options.h"
-#include "panic.h"
 #include "settings.h"
 #include "sprite_manager.h"
 #include "stats_page.h"

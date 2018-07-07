@@ -9,6 +9,8 @@ if (ANDROID)
     add_definitions("-DANDROID_NDK")
 endif()
 
+add_definitions("-DCHECK_GL_CALLS")
+
 find_package(ZLIB REQUIRED)
 
 add_subdirectory(libpng)
@@ -78,7 +80,6 @@ set(KASUI_SOURCES
     main_menu.cpp
     menu.cpp
     options.cpp
-    panic.cpp
     pause_button.cpp
     program_manager.cpp
     render.cpp

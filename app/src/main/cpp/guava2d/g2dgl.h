@@ -1,5 +1,6 @@
-#ifndef G2D_GL_H_
-#define G2D_GL_H_
+#pragma once
+
+#include "panic.h"
 
 #ifdef ANDROID_NDK
 #include <GLES3/gl3.h>
@@ -12,4 +13,24 @@ void gluPerspective(GLfloat, GLfloat, GLfloat, GLfloat);
 #endif
 #endif
 
-#endif // G2D_GL_H_
+#ifdef CHECK_GL_CALLS
+#define GL_CHECK(expr) \
+    [&] { \
+        expr; \
+        auto e = glGetError(); \
+        if (e != GL_NO_ERROR) \
+        panic("%s:%d: GL error: %x", __FILE__, __LINE__, e); \
+    }()
+
+#define GL_CHECK_R(expr) \
+    [&] { \
+        auto r = expr; \
+        auto e = glGetError(); \
+        if (e != GL_NO_ERROR) \
+            panic("%s:%d: GL error: %x", __FILE__, __LINE__, e); \
+        return r; \
+    }()
+#else
+#define GL_CHECK(expr) expr
+#define GL_CHECK_R(expr) expr
+#endif

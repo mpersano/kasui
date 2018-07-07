@@ -1,5 +1,4 @@
-#ifndef SHADER_H_
-#define SHADER_H_
+#pragma once
 
 #include <string>
 
@@ -14,8 +13,8 @@ public:
 	shader(GLenum type);
 	~shader();
 
-    shader(const shader&) = delete;
-    shader& operator=(const shader&) = delete;
+	shader(const shader&) = delete;
+	shader& operator=(const shader&) = delete;
 
 	void set_source(const char *source) const;
 	void load_source(const char *path) const;
@@ -32,5 +31,3 @@ private:
 };
 
 }
-
-#endif // SHADER_H_

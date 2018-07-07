@@ -2,9 +2,9 @@
 #include <cstring>
 
 #include "guava2d/file.h"
+#include "guava2d/panic.h"
 
 #include "kanji_info.h"
-#include "panic.h"
 #include "utf8.h"
 
 static const char *KANJI_INFO_FILE_PATH = "data/kanji";

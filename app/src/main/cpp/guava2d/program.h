@@ -1,5 +1,4 @@
-#ifndef G2D_PROGRAM_H_
-#define G2D_PROGRAM_H_
+#pragma once
 
 #include <string>
 
@@ -16,6 +15,9 @@ class program
 public:
 	program();
 	~program();
+
+	program(const program&) = delete;
+	program& operator=(const program&) = delete;
 
 	void initialize();
 	void attach(const shader& shader) const;
@@ -71,5 +73,3 @@ private:
 };
 
 }
-
-#endif // G2D_PROGRAM_H_

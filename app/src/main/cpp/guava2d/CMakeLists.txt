@@ -13,6 +13,7 @@ set(GUAVA2D_SOURCES
     shader.cpp
     texture.cpp
     texture_manager.cpp
+    gl_buffer.cpp
     xwchar.cpp)
 
 add_library(guava2d ${GUAVA2D_SOURCES})

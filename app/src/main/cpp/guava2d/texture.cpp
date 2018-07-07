@@ -6,15 +6,17 @@
 
 namespace g2d {
 
-static int
-next_power_of_2(int n)
+template <typename T>
+static T
+next_power_of_2(T n)
 {
-	int p = 1;
-
-	while (p < n)
-		p *= 2;
-
-	return p;
+    --n;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    return n + 1;
 }
 
 texture::texture(pixmap *pm, int downsample_scale)
@@ -39,26 +41,26 @@ texture::texture(pixmap *pm, int downsample_scale)
 
 texture::~texture()
 {
-	glDeleteTextures(1, &texture_id_);
+	GL_CHECK(glDeleteTextures(1, &texture_id_));
 }
 
 void
 texture::bind() const
 {
-	glBindTexture(GL_TEXTURE_2D, texture_id_);
+	GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture_id_));
 }
 
 void
 texture::load()
 {
-	glGenTextures(1, &texture_id_);
+	GL_CHECK(glGenTextures(1, &texture_id_));
 
 	bind();
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR /* GL_LINEAR_MIPMAP_LINEAR */);
+	GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+	GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 
 	upload_pixmap();
 }
@@ -68,7 +70,7 @@ texture::upload_pixmap() const
 {
 	bind();
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 
 	/* format == internalFormat in OpenGLES 1.1, see http://www.khronos.org/opengles/sdk/1.1/docs/man/glTexImage2D.xml */
 	GLint format = 0;
@@ -96,7 +98,7 @@ texture::upload_pixmap() const
 	}
 
 
-	glTexImage2D(
+	GL_CHECK(glTexImage2D(
 		GL_TEXTURE_2D,
 		0,
 		format,
@@ -104,9 +106,7 @@ texture::upload_pixmap() const
 		0,
 		format,
 		GL_UNSIGNED_BYTE,
-		pixmap_->get_bits());
-
-	// glGenerateMipmap(GL_TEXTURE_2D);
+		pixmap_->get_bits()));
 }
 
 }

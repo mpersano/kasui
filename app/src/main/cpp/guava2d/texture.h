@@ -1,5 +1,4 @@
-#ifndef TEXTURE_H_
-#define TEXTURE_H_
+#pragma once
 
 #include "g2dgl.h"
 #include "pixmap.h"
@@ -8,11 +7,14 @@
 
 namespace g2d {
 
-class texture {
+class texture
+{
 public:
 	texture(pixmap *pm, int downsample_scale);
+	~texture();
 
-	virtual ~texture();
+    texture(const texture&) = delete;
+    texture& operator=(const texture&) = delete;
 
 	pixmap *get_pixmap() const
 	{ return pixmap_.get(); }
@@ -57,5 +59,3 @@ private:
 };
 
 }
-
-#endif // TEXTURE_H_

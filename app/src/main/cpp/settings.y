@@ -3,9 +3,9 @@
 
 #include "guava2d/rgb.h"
 #include "guava2d/file.h"
+#include "guava2d/panic.h"
 
 #include "theme.h"
-#include "panic.h"
 
 #include <cstdio>
 #include <cstring>

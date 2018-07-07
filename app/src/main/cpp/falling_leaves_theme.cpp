@@ -3,7 +3,6 @@
 #include "guava2d/g2dgl.h"
 #include "guava2d/texture_manager.h"
 
-#include "gl_check.h"
 #include "common.h"
 #include "program_manager.h"
 #include "render.h"

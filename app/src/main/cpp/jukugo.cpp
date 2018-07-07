@@ -1,8 +1,8 @@
 #include "jukugo.h"
 
 #include "guava2d/file.h"
+#include "guava2d/panic.h"
 
-#include "panic.h"
 #include "utf8.h"
 
 #include <cstdio>

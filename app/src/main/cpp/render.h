@@ -2,7 +2,6 @@
 
 #include <array>
 
-#include <guava2d/g2dgl.h>
 #include <guava2d/rgb.h>
 #include <guava2d/vec2.h>
 
