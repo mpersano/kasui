@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <wchar.h>
 
-#include "guava2d/g2dgl.h"
 #include "guava2d/program.h"
 #include "guava2d/rgb.h"
 #include "guava2d/texture_manager.h"

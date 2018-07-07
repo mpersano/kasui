@@ -1,5 +1,3 @@
-#include "guava2d/g2dgl.h"
-
 #include "common.h"
 #include "pause_button.h"
 #include "render.h"

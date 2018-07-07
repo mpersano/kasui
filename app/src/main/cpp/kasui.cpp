@@ -13,7 +13,6 @@
 #include <time.h>
 #endif
 
-#include "guava2d/g2dgl.h"
 #include "guava2d/texture_manager.h"
 #include "guava2d/panic.h"
 

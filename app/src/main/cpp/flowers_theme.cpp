@@ -1,6 +1,5 @@
 #include "flowers_theme.h"
 
-#include "guava2d/g2dgl.h"
 #include "guava2d/texture_manager.h"
 
 #include "common.h"
