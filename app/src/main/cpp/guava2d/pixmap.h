@@ -1,7 +1,8 @@
 #ifndef PIXMAP_H_
 #define PIXMAP_H_
 
-#include <stdint.h>
+#include <cstdint>
+#include <vector>
 
 namespace g2d {
 
@@ -11,7 +12,8 @@ public:
 
 	pixmap(int width, int height, type pixmap_type);
 
-	virtual ~pixmap();
+	pixmap(const pixmap&) = delete;
+	pixmap& operator=(const pixmap&) = delete;
 
 	int get_width() const
 	{ return width_; }
@@ -20,10 +22,10 @@ public:
 	{ return height_; }
 
 	const uint8_t *get_bits() const
-	{ return bits_; }
+	{ return &bits_[0]; }
 
 	uint8_t *get_bits()
-	{ return bits_; }
+	{ return &bits_[0]; }
 
 	type get_type() const
 	{ return type_; }
@@ -43,12 +45,8 @@ public:
 protected:
 	int width_;
 	int height_;
-	uint8_t *bits_;
+    std::vector<uint8_t> bits_;
 	type type_;
-
-private:
-	pixmap(const pixmap&); // disable copy ctor
-	pixmap& operator=(const pixmap&); // disable assignment
 };
 
 }

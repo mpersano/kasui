@@ -87,15 +87,9 @@ pixmap::load(const char *path)
 pixmap::pixmap(int width, int height, type pixmap_type)
 : width_(width)
 , height_(height)
-, bits_(new uint8_t[width*height*get_pixel_size(pixmap_type)])
+, bits_(width*height*get_pixel_size(pixmap_type), 0)
 , type_(pixmap_type)
 {
-	::memset(bits_, 0, width*height*get_pixel_size());
-}
-
-pixmap::~pixmap()
-{
-	delete[] bits_;
 }
 
 uint8_t
@@ -106,10 +100,10 @@ pixmap::get_pixel_alpha(int row, int col) const
 
 	switch (type_) {
 		case RGB_ALPHA:
-			return (reinterpret_cast<const uint32_t *>(bits_))[row*width_ + col] >> 24;
+			return (reinterpret_cast<const uint32_t *>(&bits_[0]))[row*width_ + col] >> 24;
 
 		case GRAY_ALPHA:
-			return (reinterpret_cast<const uint16_t *>(bits_))[row*width_ + col] >> 8;
+			return (reinterpret_cast<const uint16_t *>(&bits_[0]))[row*width_ + col] >> 8;
 
 		default:
 			return 0xff;
@@ -124,8 +118,7 @@ pixmap::resize(int new_width, int new_height)
 	
 	const int pixel_size = get_pixel_size();
 
-	uint8_t *new_bits = new uint8_t[new_width*new_height*pixel_size];
-	::memset(new_bits, 0, new_width*new_height*pixel_size);
+	std::vector<uint8_t> new_bits(new_width*new_height*pixel_size, 0);
 
 	const int copy_height = min(height_, new_height);
 	const int copy_width = min(width_, new_width);
@@ -135,8 +128,6 @@ pixmap::resize(int new_width, int new_height)
 		uint8_t *src = &bits_[i*width_*pixel_size];
 		::memcpy(dest, src, copy_width*pixel_size);
 	}
-
-	delete[] bits_;
 
 	width_ = new_width;
 	height_ = new_height;
@@ -154,10 +145,10 @@ pixmap::downsample(int scale)
 	const int new_width = width_/scale;
 	const int new_height = height_/scale;
 
-	uint8_t *new_bits = new uint8_t[new_width*new_height*pixel_size];
+	std::vector<uint8_t> new_bits(new_width*new_height*pixel_size, 0);
 
-	uint8_t *dest = new_bits;
-	const uint8_t *src = bits_;
+	uint8_t *dest = &new_bits[0];
+	const uint8_t *src = &bits_[0];
 
 	int pixel_sum[pixel_size*width_];
 
@@ -184,8 +175,6 @@ pixmap::downsample(int scale)
 			p += pixel_size*scale;
 		}
 	}
-
-	delete[] bits_;
 
 	width_ = new_width;
 	height_ = new_height;
@@ -257,7 +246,7 @@ pixmap::save(const char *path) const
 	const int stride = width_*get_pixel_size();
 
 	for (int i = 0; i < height_; i++)
-		png_write_row(png_ptr, reinterpret_cast<png_byte *>(&bits_[i*stride]));
+		png_write_row(png_ptr, reinterpret_cast<png_byte *>(const_cast<uint8_t *>(&bits_[i*stride])));
 
 	png_write_end(png_ptr, info_ptr);
 

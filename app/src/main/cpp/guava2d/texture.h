@@ -4,6 +4,8 @@
 #include "g2dgl.h"
 #include "pixmap.h"
 
+#include <memory>
+
 namespace g2d {
 
 class texture {
@@ -12,11 +14,8 @@ public:
 
 	virtual ~texture();
 
-	const pixmap *get_pixmap() const
-	{ return pixmap_; }
-
-	pixmap *get_pixmap()
-	{ return pixmap_; }
+	pixmap *get_pixmap() const
+	{ return pixmap_.get(); }
 
 	int get_texture_width() const
 	{ return texture_width_; }
@@ -46,7 +45,7 @@ public:
 	void upload_pixmap() const;
 
 private:
-	pixmap *pixmap_;
+	std::unique_ptr<pixmap> pixmap_;
 
 	int downsample_scale_;
 

@@ -14,6 +14,9 @@ public:
 	shader(GLenum type);
 	~shader();
 
+    shader(const shader&) = delete;
+    shader& operator=(const shader&) = delete;
+
 	void set_source(const char *source) const;
 	void load_source(const char *path) const;
 

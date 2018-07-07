@@ -40,7 +40,6 @@ texture::texture(pixmap *pm, int downsample_scale)
 texture::~texture()
 {
 	glDeleteTextures(1, &texture_id_);
-	delete pixmap_;
 }
 
 void

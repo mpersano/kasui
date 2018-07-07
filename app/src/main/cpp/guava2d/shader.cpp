@@ -27,15 +27,12 @@ shader::load_source(const char *path) const
 {
 	file_input_stream file(path);
 
-	size_t size = file.size();
+	const auto size = file.size();
 
-	char *source = new char[size + 1];
-	file.read(reinterpret_cast<uint8_t *>(source), size);
-	source[size] = '\0';
+	std::vector<char> source(size + 1, 0);
+	file.read(reinterpret_cast<uint8_t *>(&source[0]), size);
 
-	set_source(source);
-
-	delete[] source;
+	set_source(&source[0]);
 }
 
 void
