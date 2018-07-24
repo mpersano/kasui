@@ -34,7 +34,6 @@ public:
 	static int get_pixel_size(type pixmap_type);
 
 	void resize(int new_width, int new_height);
-	void downsample(int scale);
 
 	uint8_t get_pixel_alpha(int row, int col) const;
 

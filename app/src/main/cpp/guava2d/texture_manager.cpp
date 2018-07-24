@@ -13,8 +13,6 @@ namespace {
 class texture_manager
 {
 public:
-	void set_downsample_scale(int scale);
-
 	const texture *load(const std::string& source);
 	void put(const std::string& name, texture *t);
 
@@ -22,14 +20,7 @@ public:
 
 private:
     std::unordered_map<std::string, texture *> texture_dict_;
-	int downsample_scale_ = 1;
 } g_texture_manager;
-
-void
-texture_manager::set_downsample_scale(int scale)
-{
-	downsample_scale_ = scale;
-}
 
 const texture *
 texture_manager::load(const std::string& source)
@@ -38,7 +29,7 @@ texture_manager::load(const std::string& source)
 
 	if (it == texture_dict_.end()) {
 		printf("loading %s...\n", source.c_str());
-		it = texture_dict_.insert(it, {source, new texture(pixmap::load(source.c_str()), downsample_scale_)});
+		it = texture_dict_.insert(it, {source, new texture(pixmap::load(source.c_str()))});
 	}
 
 	return it->second;
@@ -57,11 +48,6 @@ texture_manager::load_all()
         v.second->load();
 }
 
-}
-
-void set_texture_downsample_scale(int scale)
-{
-    g_texture_manager.set_downsample_scale(scale);
 }
 
 const texture *load_texture(const std::string& source)

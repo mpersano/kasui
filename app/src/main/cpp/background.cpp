@@ -36,7 +36,7 @@ void background_draw_gradient()
 void background_initialize()
 {
     gradient_texture =
-        new g2d::texture(new g2d::pixmap(GRADIENT_TEXTURE_WIDTH, GRADIENT_TEXTURE_HEIGHT, g2d::pixmap::RGB), 1);
+        new g2d::texture(new g2d::pixmap(GRADIENT_TEXTURE_WIDTH, GRADIENT_TEXTURE_HEIGHT, g2d::pixmap::RGB));
     g2d::put_texture("gradient-texture", gradient_texture);
 }
 

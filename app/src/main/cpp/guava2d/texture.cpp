@@ -19,15 +19,12 @@ next_power_of_2(T n)
     return n + 1;
 }
 
-texture::texture(pixmap *pm, int downsample_scale)
+texture::texture(pixmap *pm)
 : pixmap_(pm)
-, downsample_scale_(downsample_scale)
 , orig_pixmap_width_(pixmap_->get_width())
 , orig_pixmap_height_(pixmap_->get_height())
 , texture_id_(0)
 {
-	pixmap_->downsample(downsample_scale);
-
 	pixmap_width_ = pixmap_->get_width();
 	pixmap_height_ = pixmap_->get_height();
 

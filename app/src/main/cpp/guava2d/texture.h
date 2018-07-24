@@ -10,7 +10,7 @@ namespace g2d {
 class texture
 {
 public:
-	texture(pixmap *pm, int downsample_scale);
+	texture(pixmap *pm);
 	~texture();
 
     texture(const texture&) = delete;
@@ -31,9 +31,6 @@ public:
 	int get_pixmap_height() const
 	{ return orig_pixmap_height_; }
 
-	int get_downsample_scale() const
-	{ return downsample_scale_; }
-
 	float get_u_scale() const
 	{ return static_cast<float>(pixmap_width_)/texture_width_; }
 
@@ -48,8 +45,6 @@ public:
 
 private:
 	std::unique_ptr<pixmap> pixmap_;
-
-	int downsample_scale_;
 
 	int orig_pixmap_width_, orig_pixmap_height_;
 	int pixmap_width_, pixmap_height_;

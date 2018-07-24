@@ -134,53 +134,6 @@ pixmap::resize(int new_width, int new_height)
 	bits_ = new_bits;
 }
 
-void
-pixmap::downsample(int scale)
-{
-	if (scale == 1)
-		return;
-
-	const int pixel_size = get_pixel_size();
-
-	const int new_width = width_/scale;
-	const int new_height = height_/scale;
-
-	std::vector<uint8_t> new_bits(new_width*new_height*pixel_size, 0);
-
-	uint8_t *dest = &new_bits[0];
-	const uint8_t *src = &bits_[0];
-
-	int pixel_sum[pixel_size*width_];
-
-	for (int i = 0; i < new_height; i++) {
-		::memset(pixel_sum, 0, pixel_size*width_*sizeof *pixel_sum);
-
-		for (int j = 0; j < scale; j++) {
-			for (int k = 0; k < pixel_size*width_; k++)
-				pixel_sum[k] += *src++;
-		}
-
-		const int *p = pixel_sum;
-
-		for (int j = 0; j < new_width; j++) {
-			for (int k = 0; k < pixel_size; k++) {
-				int v = 0;
-
-				for (int l = 0; l < scale; l++)
-					v += p[k + l*pixel_size];
-
-				*dest++ = v/scale/scale;
-			}
-
-			p += pixel_size*scale;
-		}
-	}
-
-	width_ = new_width;
-	height_ = new_height;
-	bits_ = new_bits;
-}
-
 #ifndef png_jmpbuf
 #define png_jmpbuf(png_ptr) ((png_ptr)->jmpbuf)
 #endif
