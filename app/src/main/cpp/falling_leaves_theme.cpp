@@ -11,7 +11,6 @@
 #include <algorithm>
 
 namespace {
-
 constexpr auto FADE_TTL = 30 * MS_PER_TIC;
 
 void initialize_perspective_matrix(GLfloat matrix[16], float aspect)
@@ -28,19 +27,6 @@ void initialize_perspective_matrix(GLfloat matrix[16], float aspect)
     matrix[2] = 0; matrix[6] = 0; matrix[10] = (z_far + z_near)/(z_near - z_far); matrix[14] = (2.*z_far*z_near)/(z_near - z_far);
     matrix[3] = 0; matrix[7] = 0; matrix[11] = -1; matrix[15] = 0;
 }
-
-g2d::gl_buffer *get_vbo()
-{
-    static std::unique_ptr<g2d::gl_buffer> vbo = [] {
-        std::unique_ptr<g2d::gl_buffer> vbo{new g2d::gl_buffer{GL_ARRAY_BUFFER}};
-        vbo->bind();
-        vbo->buffer_data(falling_leaves_theme::NUM_LEAVES * 6 * (3 + 2 + 4) * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
-        vbo->unbind();
-        return std::move(vbo);
-    }();
-    return vbo.get();
-}
-
 }
 
 void falling_leaves_theme::leaf::reset()
@@ -147,6 +133,7 @@ void falling_leaves_theme::leaf::update(uint32_t dt)
 falling_leaves_theme::falling_leaves_theme()
     : texture_{g2d::load_texture("images/leaf.png")}
     , program_{load_program("shaders/3d_texture_color.vert", "shaders/3d_texture_color.frag")}
+    , vbo_{GL_ARRAY_BUFFER}
 {
     GLfloat matrix[16];
     initialize_perspective_matrix(matrix, window_width / window_height);
@@ -154,6 +141,10 @@ falling_leaves_theme::falling_leaves_theme()
     program_->use();
     program_->set_uniform_matrix4("proj_modelview_matrix", matrix);
     program_->set_uniform_i("tex", 0);
+
+    vbo_.bind();
+    vbo_.buffer_data(falling_leaves_theme::NUM_LEAVES * 6 * (3 + 2 + 4) * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
+    vbo_.unbind();
 }
 
 void falling_leaves_theme::reset()
@@ -189,16 +180,14 @@ void falling_leaves_theme::draw() const
 
     const GLsizei stride = (3 + 2 + 4) * sizeof(GLfloat);
 
-    auto vbo = get_vbo();
+    vbo_.bind();
 
-    vbo->bind();
-
-    auto *data = reinterpret_cast<GLfloat *>(vbo->map_range(0, NUM_LEAVES * 6 * stride, GL_MAP_WRITE_BIT));
+    auto *data = reinterpret_cast<GLfloat *>(vbo_.map_range(0, NUM_LEAVES * 6 * stride, GL_MAP_WRITE_BIT));
     for (const auto *leaf : sorted_leaves) {
         leaf->draw(data);
         data += 6 * (3 + 2 + 4);
     }
-    vbo->unmap();
+    vbo_.unmap();
 
     program_->use();
 
@@ -215,7 +204,7 @@ void falling_leaves_theme::draw() const
     GL_CHECK(glDisableVertexAttribArray(1));
     GL_CHECK(glDisableVertexAttribArray(0));
 
-    vbo->unbind();
+    vbo_.unbind();
 
     render::begin_batch();
     render::set_viewport(0, window_width, 0, window_height);

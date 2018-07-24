@@ -5,6 +5,7 @@
 #include <guava2d/g2dgl.h>
 #include <guava2d/vec3.h>
 #include <guava2d/rgb.h>
+#include <guava2d/gl_buffer.h>
 
 #include <array>
 
@@ -47,4 +48,5 @@ private:
 
     const g2d::texture *texture_;
     const g2d::program *program_;
+    g2d::gl_buffer vbo_;
 };
