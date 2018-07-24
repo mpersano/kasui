@@ -2,8 +2,9 @@
 
 #include "theme.h"
 
-#include "guava2d/vec3.h"
-#include "guava2d/rgb.h"
+#include <guava2d/g2dgl.h>
+#include <guava2d/vec3.h>
+#include <guava2d/rgb.h>
 
 #include <array>
 
@@ -22,13 +23,11 @@ public:
     void draw() const override;
     void update(uint32_t dt) override;
 
+    static constexpr int NUM_LEAVES = 30;
+
 private:
     struct leaf
     {
-#ifdef FIX_ME
-        using vertex_array = g2d::indexed_vertex_array<GLubyte, g2d::vertex::attrib<GLfloat, 3>, g2d::vertex::attrib<GLshort, 2>, g2d::vertex::attrib<GLubyte, 4>>;
-#endif
-
         float size;
         g2d::vec3 pos, speed;
         g2d::rgb color;
@@ -40,13 +39,10 @@ private:
         int tics, ttl;
 
         void reset();
-#ifdef FIX_ME
-        void draw(vertex_array &gv) const;
-#endif
+        void draw(GLfloat *vertex_data) const;
         void update(uint32_t dt);
     };
 
-    static constexpr int NUM_LEAVES = 30;
     std::array<leaf, NUM_LEAVES> leaves_;
 
     const g2d::texture *texture_;
