@@ -1,24 +1,29 @@
-#include <cassert>
-#include <cstdio>
-#include <cstring>
-#include <map>
+#include "hiscore_input.h"
+
+#include "common.h"
+#include "leaderboard_page.h"
+#include "main_menu.h"
+#include "options.h"
+#include "fonts.h"
+#include "program_manager.h"
+#include "render.h"
 
 #include <guava2d/font.h>
 #include <guava2d/program.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
 
-#include "common.h"
-#include "hiscore_input.h"
-#include "leaderboard_page.h"
-#include "main_menu.h"
-#include "options.h"
-#include "fonts.h"
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <map>
 
 extern void draw_message(const g2d::mat4 &, float alpha, const wchar_t *);
 extern int total_tics;
 
 namespace {
+constexpr const auto KEYBOARD_LAYER = 99;
+constexpr const auto INPUT_BUFFER_LAYER = 99;
 
 enum
 {
@@ -201,17 +206,20 @@ protected:
 
     wchar_t input[MAX_INPUT_LEN + 1];
     int input_len;
+    const g2d::program *program_;
 };
 
 input_buffer::input_buffer()
     : input_len(0)
+    , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
 {
 }
 
 void input_buffer::draw() const
 {
-#ifdef FIX_ME
-    const g2d::font *font = g2d::load_font("fonts/small");
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
+
+    const auto *small_font = get_font(font::small);
 
     enum
     {
@@ -222,15 +230,15 @@ void input_buffer::draw() const
 
     const float y = .6 * window_height;
 
-    g2d::vertex_array_texuv chars(MAX_INPUT_LEN * 6);
-
     float x = .5 * (window_width - LINE_WIDTH);
 
-    auto g = font->find_glyph(L'X');
+    auto g = small_font->find_glyph(L'X');
     const float y_text = y + .5 * g->height - g->top;
 
+    // text
+
     for (const wchar_t *p = input; p != &input[input_len]; p++) {
-        auto g = font->find_glyph(*p);
+        auto g = small_font->find_glyph(*p);
 
         const float x0 = x + g->left;
         const float x1 = x0 + g->width;
@@ -243,83 +251,54 @@ void input_buffer::draw() const
         const g2d::vec2 &t2 = g->texuv[2];
         const g2d::vec2 &t3 = g->texuv[3];
 
-        chars << x0, y0, t0.x, t0.y;
-        chars << x1, y0, t1.x, t1.y;
-        chars << x1, y1, t2.x, t2.y;
+        const auto draw_char = [=](int layer) {
+            render::draw_quad(
+                    program_,
+                    small_font->get_texture(),
+                    {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
+                    {t0, t1, t2, t3},
+                    layer);
 
-        chars << x1, y1, t2.x, t2.y;
-        chars << x0, y1, t3.x, t3.y;
-        chars << x0, y0, t0.x, t0.y;
+        };
+
+        render::set_color({1.f, 1.f, 1.f, 1.f});
+        draw_char(INPUT_BUFFER_LAYER);
+
+        render::push_matrix();
+        render::translate(5, -5);
+        render::set_color({0.f, 0.f, 0.f, 0.25f});
+        draw_char(INPUT_BUFFER_LAYER - 1);
+        render::pop_matrix();
 
         x += g->advance_x;
     }
 
-    g2d::vertex_array_flat cursor(4);
+    // cursor
 
-    {
+    if ((total_tics / 512) & 1) {
+        render::set_color({1.0, 1.0, 1.0, .25});
+
         const float x0 = x + 8;
         const float x1 = x0 + 12;
         const float y0 = y - .5 * LINE_HEIGHT + 4;
         const float y1 = y + .5 * LINE_HEIGHT - 4;
 
-        cursor << x0, y0;
-        cursor << x0, y1;
-        cursor << x1, y0;
-        cursor << x1, y1;
+        render::draw_quad({{x0, y0}, {x0, y1}, {x1, y1}, {x1, y0}}, INPUT_BUFFER_LAYER);
     }
 
-    g2d::vertex_array_flat box(4);
+    // box
 
     {
+        render::set_color({0.0, 0.0, 0.0, .25});
+
         const float x0 = .5 * (window_width - LINE_WIDTH);
         const float x1 = .5 * (window_width + LINE_WIDTH);
 
         const float y0 = y - .5 * LINE_HEIGHT;
         const float y1 = y + .5 * LINE_HEIGHT;
 
-        box << x0, y0;
-        box << x0, y1;
-        box << x1, y0;
-        box << x1, y1;
+        render::draw_quad({{x0, y0}, {x0, y1}, {x1, y1}, {x1, y0}}, INPUT_BUFFER_LAYER - 2);
     }
-
-    glEnable(GL_BLEND);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    const g2d::mat4 mat = get_ortho_projection();
-
-    {
-        auto &prog = get_program_instance<program_flat>();
-        prog.use();
-        prog.set_proj_modelview_matrix(mat);
-
-        prog.set_color(g2d::rgba(0, 0, 0, .25));
-        box.draw(GL_TRIANGLE_STRIP);
-
-        if ((total_tics / 512) & 1) {
-            prog.set_color(g2d::rgba(1, 1, 1, .25));
-            cursor.draw(GL_TRIANGLE_STRIP);
-        }
-    }
-
-    font->get_texture()->bind();
-
-    {
-        auto &prog = get_program_instance<program_text>();
-        prog.use();
-        prog.set_proj_modelview_matrix(mat * g2d::mat4::translation(3, -3, 0));
-        prog.set_texture(0);
-        prog.set_color(g2d::rgba(0, 0, 0, .5));
-
-        chars.draw(GL_TRIANGLES);
-
-        prog.set_proj_modelview_matrix(mat);
-        prog.set_color(g2d::rgba(1, 1, 1, 1));
-
-        chars.draw(GL_TRIANGLES);
-    }
-#endif
 }
 
 void input_buffer::append_char(wchar_t ch)
@@ -717,8 +696,8 @@ keyboard_layout::keyboard_layout(const g2d::texture *texture, const wchar_t *key
 
 void keyboard_layout::draw(int selected_key) const
 {
-#ifdef FIX_ME
-    g2d::vertex_array_texuv va(MAX_KEYS_PER_LAYOUT * 6);
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
+    render::set_color({1.f, 1.f, 1.f, 1.f});
 
     for (const key *p = keys; p != &keys[num_keys]; p++) {
         const key_info *ki = char_to_key[p->code];
@@ -731,27 +710,12 @@ void keyboard_layout::draw(int selected_key) const
         const float u = ki->u + (p->code != selected_key ? 0 : du);
         const float v = ki->v;
 
-        va << p->x, p->y, u, v;
-        va << p->x + width, p->y, u + du, v;
-        va << p->x + width, p->y - KEY_HEIGHT, u + du, v + dv;
-
-        va << p->x + width, p->y - KEY_HEIGHT, u + du, v + dv;
-        va << p->x, p->y - KEY_HEIGHT, u, v + dv;
-        va << p->x, p->y, u, v;
+        render::draw_quad(
+                texture_,
+                {{p->x, p->y}, {p->x + width, p->y}, {p->x + width, p->y - KEY_HEIGHT}, {p->x, p->y - KEY_HEIGHT}},
+                {{u, v}, {u + du, v}, {u + du, v + dv}, {u, v + dv}},
+                KEYBOARD_LAYER);
     }
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    texture_->bind();
-
-    auto &prog = get_program_instance<program_texture_decal>();
-    prog.use();
-    prog.set_proj_modelview_matrix(get_ortho_projection());
-    prog.set_texture(0);
-
-    va.draw(GL_TRIANGLES);
-#endif
 }
 
 int keyboard_layout::find_key_for(float x, float y) const
@@ -1028,33 +992,34 @@ void hiscore_input_state_impl::set_score(int score)
 {
     score_ = score;
 
+#ifdef FIX_ME
     state_ = STATE_CHECKING_HISCORE;
 
     if (!get_net_leaderboard().async_check_hiscore(this, score_))
         back_to_main_menu();
+#else
+    score_text_.initialize(score);
+    state_ = STATE_INPUT;
+#endif
 }
 
 void hiscore_input_state_impl::draw_input() const
 {
-    auto mat = get_ortho_projection();
-
     cur_keyboard_->draw(cur_selected_key_);
     input_area_.draw();
 
+#ifdef FIX_ME
     score_text_.draw(mat * g2d::mat4::translation(.5 * window_width, .6 * window_height + 150, 0), 1);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
-#ifdef FIX_ME
     auto &prog = get_program_instance<program_texture_uniform_color>();
     prog.use();
     prog.set_proj_modelview_matrix(mat);
     prog.set_texture(0);
     prog.set_color(g2d::rgba(1, 1, 1, 1));
-#endif
 
-#ifdef FIX_ME
     text_.draw();
 #endif
 }
