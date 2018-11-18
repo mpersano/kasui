@@ -10,7 +10,8 @@ enum class font
     medium,
     large,
     gameover,
-    title
+    title,
+    font_count
 };
 
 const g2d::font *get_font(font f);

@@ -1,7 +1,7 @@
 #include "render.h"
 #include "noncopyable.h"
 
-#include "program_manager.h"
+#include "programs.h"
 
 #include <guava2d/g2dgl.h>
 #include <guava2d/font.h>
@@ -148,9 +148,9 @@ private:
 sprite_batch::sprite_batch()
     : vertex_buffer_{GL_ARRAY_BUFFER}
     , index_buffer_{GL_ELEMENT_ARRAY_BUFFER}
-    , program_texture_{load_program("shaders/sprite.vert", "shaders/sprite.frag")}
-    , program_flat_{load_program("shaders/flat.vert", "shaders/flat.frag")}
-    , program_text_outline_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
+    , program_texture_{get_program(program::sprite_2d)}
+    , program_flat_{get_program(program::flat)}
+    , program_text_outline_{get_program(program::text_gradient)}
 {
     init_vbos();
     init_vaos();

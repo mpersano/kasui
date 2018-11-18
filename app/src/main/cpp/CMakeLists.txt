@@ -81,7 +81,7 @@ set(KASUI_SOURCES
     menu.cpp
     options.cpp
     pause_button.cpp
-    program_manager.cpp
+    programs.cpp
     render.cpp
     sakura.cpp
     score_display.cpp

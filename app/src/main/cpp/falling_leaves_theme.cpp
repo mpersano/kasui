@@ -3,9 +3,10 @@
 #include <guava2d/g2dgl.h>
 #include <guava2d/texture_manager.h>
 #include <guava2d/gl_buffer.h>
+#include <guava2d/program.h>
 
 #include "common.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "render.h"
 
 #include <algorithm>
@@ -132,7 +133,7 @@ void falling_leaves_theme::leaf::update(uint32_t dt)
 
 falling_leaves_theme::falling_leaves_theme()
     : texture_{g2d::load_texture("images/leaf.png")}
-    , program_{load_program("shaders/3d_texture_color.vert", "shaders/3d_texture_color.frag")}
+    , program_{get_program(program::sprite_3d)}
     , vbo_{GL_ARRAY_BUFFER}
 {
     GLfloat matrix[16];

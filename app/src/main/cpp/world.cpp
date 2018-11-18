@@ -3,6 +3,7 @@
 #include <guava2d/panic.h>
 #include <guava2d/rgb.h>
 #include <guava2d/texture_manager.h>
+#include <guava2d/program.h>
 #include <guava2d/xwchar.h>
 
 #include "bakudan_sprite.h"
@@ -15,7 +16,7 @@
 #include "settings.h"
 #include "sounds.h"
 #include "tween.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "block_info.cpp"
 
 #include <cassert>
@@ -595,7 +596,7 @@ world::world(int rows, int cols, int wanted_height)
     , matches_(rows_ * cols_, false)
     , blocks_texture_(g2d::load_texture("images/blocks.png"))
     , flare_texture_(g2d::load_texture("images/flare.png"))
-    , program_grid_background_(load_program("shaders/grid_background.vert", "shaders/sprite.frag"))
+    , program_grid_background_(get_program(program::grid_background))
     , falling_block_queue_{*this, *this}
     , event_listener_(nullptr)
 {

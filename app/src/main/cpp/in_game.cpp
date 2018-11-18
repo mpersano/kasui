@@ -27,7 +27,7 @@
 #include "main_menu.h"
 #include "options.h"
 #include "pause_button.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "render.h"
 #include "score_display.h"
 #include "sounds.h"
@@ -158,7 +158,7 @@ glyph_animation::glyph_animation(const g2d::font *font, float glyph_spacing, con
     , x_base(x_base)
     , y_base(y_base)
     , gradient_(g)
-    , program_(load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag"))
+    , program_(get_program(program::text_gradient))
 {
     int num_glyphs = xwcslen(message);
 

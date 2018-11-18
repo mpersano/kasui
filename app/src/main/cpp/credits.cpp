@@ -11,7 +11,7 @@
 #include "common.h"
 #include "credits.h"
 #include "main_menu.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "render.h"
 #include "fonts.h"
 
@@ -73,8 +73,8 @@ private:
 };
 
 credits_impl::credits_impl()
-    : program_outline_(load_program("shaders/sprite.vert", "shaders/credits_text_outline.frag"))
-    , program_inner_(load_program("shaders/sprite.vert", "shaders/credits_text_inner.frag"))
+    : program_outline_(get_program(program::text_outline))
+    , program_inner_(get_program(program::text_inner))
 {
     const auto *tiny_font = get_font(font::tiny);
     const auto *small_font = get_font(font::small);

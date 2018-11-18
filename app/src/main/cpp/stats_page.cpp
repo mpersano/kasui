@@ -15,7 +15,7 @@
 #include "sprite_manager.h"
 #include "theme.h"
 #include "render.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "fonts.h"
 
 #include <algorithm>
@@ -217,7 +217,7 @@ void stats_page_item::draw_frame(float alpha) const
 
 kanji_info_item::kanji_info_item(const kanji_info *kanji)
     : stats_page_item(g2d::load_texture("images/b-button-border.png"))
-    , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
+    , program_{get_program(program::text_inner)}
     , kanji_{kanji}
 {
     kanji_text_.push_back(kanji->code);

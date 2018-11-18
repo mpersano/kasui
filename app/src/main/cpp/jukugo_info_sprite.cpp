@@ -4,7 +4,7 @@
 #include "settings.h"
 #include "jukugo.h"
 #include "line_splitter.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "render.h"
 #include "tween.h"
 #include "fonts.h"
@@ -14,7 +14,7 @@ jukugo_info_sprite::jukugo_info_sprite(const jukugo *jukugo_info, float x, float
     , x_base_{x}
     , y_base_{y}
     , gradient_{g}
-    , program_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
+    , program_{get_program(program::text_outline)}
 {
     action_.reset(
         (new parallel_action_group)

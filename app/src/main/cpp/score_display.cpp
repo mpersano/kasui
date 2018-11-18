@@ -3,7 +3,7 @@
 #include "common.h"
 #include "in_game.h"
 #include "render.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "fonts.h"
 
 #include <guava2d/rgb.h>
@@ -18,7 +18,7 @@ enum
 };
 
 score_display::score_display()
-    : program_{load_program("shaders/sprite_2c.vert", "shaders/text_outline.frag")}
+    : program_{get_program(program::text_gradient)}
 {
     reset();
 

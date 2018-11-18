@@ -18,6 +18,7 @@
 
 #include "render.h"
 
+#include "programs.h"
 #include "background.h"
 #include "common.h"
 #include "credits.h"
@@ -241,6 +242,10 @@ static void preload_resources()
     // sprites
 
     g2d::load_sprite_sheet("sprites/sprites");
+
+    // programs
+
+    initialize_programs();
 }
 
 static uint32_t get_cur_tics()

@@ -5,7 +5,7 @@
 #include "main_menu.h"
 #include "options.h"
 #include "fonts.h"
-#include "program_manager.h"
+#include "programs.h"
 #include "render.h"
 
 #include <guava2d/font.h>
@@ -211,7 +211,7 @@ protected:
 
 input_buffer::input_buffer()
     : input_len(0)
-    , program_{load_program("shaders/sprite.vert", "shaders/text_no_outline.frag")}
+    , program_{get_program(program::text_inner)}
 {
 }
 
