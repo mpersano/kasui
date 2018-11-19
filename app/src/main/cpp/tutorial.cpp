@@ -427,10 +427,6 @@ void tutorial_state_impl::redraw() const
                 break;
         }
 
-        const g2d::mat4 mat = get_ortho_projection() *
-                              g2d::mat4::translation(.5 * window_width, window_height - .5 * text_box::HEIGHT, 0) *
-                              g2d::mat4::scale(scale, scale, 0);
-
         render::push_matrix();
         render::translate(.5 * window_width, window_height - .5 * text_box::HEIGHT);
         render::scale(scale, scale);

@@ -84,8 +84,6 @@ public:
     void reset_contents() override;
 
 private:
-    void draw_text(const g2d::mat4 &proj_modelview) const;
-
     const jukugo *jukugo_;
 
     int height_;
