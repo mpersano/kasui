@@ -64,62 +64,27 @@ public:
 
     float get_width() const { return width_; }
 
-    void draw(const g2d::mat4 &mat, float alpha) const;
+    void draw(float alpha) const;
 
 private:
     void add_digit(wchar_t ch);
     void format_thousands(int n);
 
     const g2d::font *font_;
-#ifdef FIX_ME
-    g2d::indexed_vertex_array<GLushort, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLfloat, 2>,
-                              g2d::vertex::attrib<GLfloat, 1>>
-        va_;
-#endif
-    float width_;
+    wchar_t score_text_[30];
+    size_t score_text_size_ = 0;
+    float width_ = 0.f;
 };
 
 score_text::score_text(const g2d::font *font)
     : font_(font)
-    , width_(0)
 {
 }
 
 void score_text::add_digit(wchar_t ch)
 {
-#ifdef FIX_ME
-    const g2d::glyph_info *g = font_->find_glyph(ch);
-
-    const g2d::vec2 &t0 = g->texuv[0];
-    const g2d::vec2 &t1 = g->texuv[1];
-    const g2d::vec2 &t2 = g->texuv[2];
-    const g2d::vec2 &t3 = g->texuv[3];
-
-    // XXX for now
-    const float x = width_;
-    const float y = 0;
-
-    const float x_left = x + g->left;
-    const float x_right = x_left + g->width;
-    const float y_top = y + g->top;
-    const float y_bottom = y_top - g->height;
-
-    const g2d::vec2 p0(x_left, y_top);
-    const g2d::vec2 p1(x_right, y_top);
-    const g2d::vec2 p2(x_right, y_bottom);
-    const g2d::vec2 p3(x_left, y_bottom);
-
-    const int vert_index = va_.get_num_verts();
-
-    va_ << p0.x, p0.y, t0.x, t0.y, 0;
-    va_ << p1.x, p1.y, t1.x, t1.y, 0;
-    va_ << p2.x, p2.y, t2.x, t2.y, 1;
-    va_ << p3.x, p3.y, t3.x, t3.y, 1;
-
-    va_ < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3, vert_index + 0;
-
-    width_ += g->advance_x;
-#endif
+    score_text_[score_text_size_++] = ch;
+    width_ += font_->find_glyph(ch)->advance_x;
 }
 
 void score_text::format_thousands(int n)
@@ -144,42 +109,26 @@ void score_text::format_thousands(int n)
 
 void score_text::initialize(int score)
 {
-#ifdef FIX_ME
-    va_.reset();
-#endif
     width_ = 0;
-
+    score_text_size_ = 0;
     format_thousands(score);
+    score_text_[score_text_size_] = L'\0';
 }
 
-void score_text::draw(const g2d::mat4 &mat, float alpha) const
+void score_text::draw(float alpha) const
 {
-    font_->get_texture()->bind();
+    const auto top_color = g2d::rgb{200, 200, 255} * (1. / 255.);
+    const auto bottom_color = g2d::rgb{120, 120, 255} * (1. / 255.);
 
-    const g2d::rgb top_color(200, 200, 255);
-    const g2d::rgb bottom_color(120, 120, 255);
+    const g2d::rgba top_color_text{top_color, alpha};
+    const g2d::rgba bottom_color_text{bottom_color, alpha};
+    const g2d::rgba top_color_outline{.5 * top_color, alpha};
+    const g2d::rgba bottom_color_outline{.5 * bottom_color, alpha};
 
-    const g2d::rgb top_color_text = top_color * (1. / 255);
-    const g2d::rgb bottom_color_text = bottom_color * (1. / 255);
-    const g2d::rgb top_color_outline = .5 * top_color_text;
-    const g2d::rgb bottom_color_outline = .5 * bottom_color_text;
-
-#ifdef FIX_ME
-    program_intro_text &prog = get_program_instance<program_intro_text>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat * g2d::mat4::translation(-.5 * width_, 0, 0));
-    prog.set_texture(0);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    prog.set_top_color_text(g2d::rgba(top_color_text, alpha));
-    prog.set_bottom_color_text(g2d::rgba(bottom_color_text, alpha));
-    prog.set_top_color_outline(g2d::rgba(top_color_outline, alpha));
-    prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, alpha));
-
-    va_.draw(GL_TRIANGLES);
-#endif
+    render::draw_text(font_, g2d::vec2{-.5f*width_, 0.f}, INPUT_BUFFER_LAYER,
+                      top_color_outline, top_color_text,
+                      bottom_color_outline, bottom_color_text,
+                      score_text_);
 }
 
 class input_buffer
@@ -206,12 +155,10 @@ protected:
 
     wchar_t input[MAX_INPUT_LEN + 1];
     int input_len;
-    const g2d::program *program_;
 };
 
 input_buffer::input_buffer()
     : input_len(0)
-    , program_{get_program(program::text_inner)}
 {
 }
 
@@ -237,6 +184,8 @@ void input_buffer::draw() const
 
     // text
 
+    auto *prog = get_program(program::text_inner);
+
     for (const wchar_t *p = input; p != &input[input_len]; p++) {
         auto g = small_font->find_glyph(*p);
 
@@ -253,7 +202,7 @@ void input_buffer::draw() const
 
         const auto draw_char = [=](int layer) {
             render::draw_quad(
-                    program_,
+                    prog,
                     small_font->get_texture(),
                     {{x0, y0}, {x1, y0}, {x1, y1}, {x0, y1}},
                     {t0, t1, t2, t3},
@@ -1008,9 +957,12 @@ void hiscore_input_state_impl::draw_input() const
     cur_keyboard_->draw(cur_selected_key_);
     input_area_.draw();
 
-#ifdef FIX_ME
-    score_text_.draw(mat * g2d::mat4::translation(.5 * window_width, .6 * window_height + 150, 0), 1);
+    render::push_matrix();
+    render::translate(.5 * window_width, .6 * window_height + 150);
+    score_text_.draw(1);
+    render::pop_matrix();
 
+#ifdef FIX_ME
     glEnable(GL_BLEND);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
