@@ -62,8 +62,6 @@ public:
 
     void initialize(int value);
 
-    float get_width() const { return width_; }
-
     void draw(float alpha) const;
 
 private:
@@ -73,7 +71,6 @@ private:
     const g2d::font *font_;
     wchar_t score_text_[30];
     size_t score_text_size_ = 0;
-    float width_ = 0.f;
 };
 
 score_text::score_text(const g2d::font *font)
@@ -84,7 +81,6 @@ score_text::score_text(const g2d::font *font)
 void score_text::add_digit(wchar_t ch)
 {
     score_text_[score_text_size_++] = ch;
-    width_ += font_->find_glyph(ch)->advance_x;
 }
 
 void score_text::format_thousands(int n)
@@ -109,7 +105,6 @@ void score_text::format_thousands(int n)
 
 void score_text::initialize(int score)
 {
-    width_ = 0;
     score_text_size_ = 0;
     format_thousands(score);
     score_text_[score_text_size_] = L'\0';
@@ -125,7 +120,8 @@ void score_text::draw(float alpha) const
     const g2d::rgba top_color_outline{.5 * top_color, alpha};
     const g2d::rgba bottom_color_outline{.5 * bottom_color, alpha};
 
-    render::draw_text(font_, g2d::vec2{-.5f*width_, 0.f}, INPUT_BUFFER_LAYER,
+    render::set_text_align(text_align::CENTER);
+    render::draw_text(font_, {}, INPUT_BUFFER_LAYER,
                       top_color_outline, top_color_text,
                       bottom_color_outline, bottom_color_text,
                       score_text_);
