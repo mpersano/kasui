@@ -716,9 +716,6 @@ private:
     input_buffer input_area_;
     int score_;
     score_text score_text_;
-#ifdef FIX_ME
-    g2d::draw_queue text_;
-#endif
 
     enum state
     {
@@ -907,18 +904,6 @@ hiscore_input_state_impl::hiscore_input_state_impl()
     abc_keyboard_lower_ = new keyboard_layout(keyboard_texture_, abc_keys_lower);
     hiragana_keyboard_ = new keyboard_layout(keyboard_texture_, hiragana_keys);
     katakana_keyboard_ = new keyboard_layout(keyboard_texture_, katakana_keys);
-
-    const float y_input_area = .6 * window_height;
-
-#ifdef FIX_ME
-    auto font = g2d::load_font("fonts/small");
-    text_.text_program(get_program_instance<program_texture_uniform_color>().get_raw())
-        .translate(.5 * window_width, y_input_area + 240)
-        .align_center()
-        .render_text(font, L"New high score!")
-        .translate(0, -(240 - 48))
-        .render_text(font, L"Please enter your name:");
-#endif
 }
 
 void hiscore_input_state_impl::reset()
@@ -958,18 +943,21 @@ void hiscore_input_state_impl::draw_input() const
     score_text_.draw(1);
     render::pop_matrix();
 
-#ifdef FIX_ME
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+    render::set_text_align(text_align::CENTER);
 
-    auto &prog = get_program_instance<program_texture_uniform_color>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
-    prog.set_color(g2d::rgba(1, 1, 1, 1));
+    render::set_blend_mode(blend_mode::INVERSE_BLEND);
+    render::set_color({1.f, 1.f, 1.f, 1.f});
 
-    text_.draw();
-#endif
+    const float y = .6 * window_height + 240;
+    const float x = .5 * window_width;
+
+    const auto *small_font = get_font(font::small);
+
+    render::draw_text(small_font, {x, y}, INPUT_BUFFER_LAYER,
+                      L"New high score!");
+
+    render::draw_text(small_font, {x, y - 192}, INPUT_BUFFER_LAYER,
+                      L"Please enter your name:");
 }
 
 void hiscore_input_state_impl::redraw() const
