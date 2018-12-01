@@ -1,3 +1,14 @@
+#include "leaderboard_page.h"
+
+#include "utils.h"
+#include "render.h"
+#include "common.h"
+#include "http_request.h"
+#include "kasui.h"
+#include "log.h"
+#include "utf8.h"
+#include "fonts.h"
+
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -16,22 +27,14 @@
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
 
-#include "common.h"
-#include "http_request.h"
-#include "kasui.h"
-#include "leaderboard_page.h"
-#include "log.h"
-#include "utf8.h"
-#include "fonts.h"
-
 void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
 {
+#ifdef FIX_ME
     const auto *small_font = get_font(font::tiny);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-#ifdef FIX_ME
     auto &prog = get_program_instance<program_timer_text>();
     prog.use();
     prog.set_proj_modelview_matrix(mat);
@@ -39,9 +42,7 @@ void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
 
     prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
     prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
-#endif
 
-#ifdef FIX_ME
     g2d::draw_queue()
         .text_program(prog.get_raw())
         .translate(.5 * window_width, .5 * window_height)
@@ -52,152 +53,16 @@ void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
 #endif
 }
 
-namespace {
-
-class score_text
-{
-public:
-    score_text(const g2d::font *font);
-
-    void initialize(int value);
-
-    float get_width() const { return width_; }
-
-    void draw(const g2d::mat4 &mat, float alpha) const;
-
-private:
-    void add_digit(wchar_t ch);
-    void format_thousands(int n);
-
-    const g2d::font *font_;
-#ifdef FIX_ME
-    g2d::indexed_vertex_array<GLushort, g2d::vertex::attrib<GLfloat, 2>, g2d::vertex::attrib<GLfloat, 2>,
-                              g2d::vertex::attrib<GLfloat, 1>>
-        va_;
-#endif
-    float width_;
-};
-
-score_text::score_text(const g2d::font *font)
-    : font_(font)
-    , width_(0)
-{
-}
-
-void score_text::add_digit(wchar_t ch)
-{
-#ifdef FIX_ME
-    const g2d::glyph_info *g = font_->find_glyph(ch);
-
-    const g2d::vec2 &t0 = g->texuv[0];
-    const g2d::vec2 &t1 = g->texuv[1];
-    const g2d::vec2 &t2 = g->texuv[2];
-    const g2d::vec2 &t3 = g->texuv[3];
-
-    // XXX for now
-    const float x = width_;
-    const float y = 0;
-
-    const float x_left = x + g->left;
-    const float x_right = x_left + g->width;
-    const float y_top = y + g->top;
-    const float y_bottom = y_top - g->height;
-
-    const g2d::vec2 p0(x_left, y_top);
-    const g2d::vec2 p1(x_right, y_top);
-    const g2d::vec2 p2(x_right, y_bottom);
-    const g2d::vec2 p3(x_left, y_bottom);
-
-    const int vert_index = va_.get_num_verts();
-
-    va_ << p0.x, p0.y, t0.x, t0.y, 0;
-    va_ << p1.x, p1.y, t1.x, t1.y, 0;
-    va_ << p2.x, p2.y, t2.x, t2.y, 1;
-    va_ << p3.x, p3.y, t3.x, t3.y, 1;
-
-    va_ < vert_index + 0, vert_index + 1, vert_index + 2, vert_index + 2, vert_index + 3, vert_index + 0;
-
-    width_ += g->advance_x;
-#endif
-}
-
-void score_text::format_thousands(int n)
-{
-    if (n >= 1000) {
-        format_thousands(n / 1000);
-
-        const int m = n % 1000;
-
-        add_digit(',');
-        add_digit('0' + (m / 100));
-        add_digit('0' + (m / 10) % 10);
-        add_digit('0' + m % 10);
-    } else {
-        if (n >= 100)
-            add_digit('0' + (n / 100));
-        if (n >= 10)
-            add_digit('0' + (n / 10) % 10);
-        add_digit('0' + n % 10);
-    }
-}
-
-void score_text::initialize(int score)
-{
-#ifdef FIX_ME
-    va_.reset();
-#endif
-    width_ = 0;
-
-    format_thousands(score);
-}
-
-void score_text::draw(const g2d::mat4 &mat, float alpha) const
-{
-    font_->get_texture()->bind();
-
-    const g2d::rgb top_color(200, 200, 255);
-    const g2d::rgb bottom_color(120, 120, 255);
-
-    const g2d::rgb top_color_text = top_color * (1. / 255);
-    const g2d::rgb bottom_color_text = bottom_color * (1. / 255);
-    const g2d::rgb top_color_outline = .5 * top_color_text;
-    const g2d::rgb bottom_color_outline = .5 * bottom_color_text;
-
-#ifdef FIX_ME
-    program_intro_text &prog = get_program_instance<program_intro_text>();
-    prog.use();
-    // prog.set_proj_modelview_matrix(mat*g2d::mat4::translation(-.5*width_, 0,
-    // 0));
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    prog.set_top_color_text(g2d::rgba(top_color_text, alpha));
-    prog.set_bottom_color_text(g2d::rgba(bottom_color_text, alpha));
-    prog.set_top_color_outline(g2d::rgba(top_color_outline, alpha));
-    prog.set_bottom_color_outline(g2d::rgba(bottom_color_outline, alpha));
-
-    va_.draw(GL_TRIANGLES);
-#endif
-}
-
-} // namespace
-
 class item
 {
 public:
-    item(int rank, wchar_t *name, int score, bool highlight);
-    ~item();
+    item(int rank, const std::wstring &name, int score, bool highlight);
 
-    void draw(const g2d::mat4 &mat, float alpha) const;
+    void draw(float alpha) const;
 
     int get_rank() const { return rank_; }
-
     int get_score() const { return score_; }
-
-    wchar_t *get_name() const { return name_; }
+    const std::wstring &get_name() const { return name_; }
 
     void set_rank(int rank)
     {
@@ -210,150 +75,44 @@ public:
     static const int HEIGHT = 80;
 
 private:
-    void initialize_frame();
     void initialize_text();
 
     static const int BORDER_RADIUS = 16;
 
     int rank_;
-    wchar_t *name_;
+    std::wstring name_;
     int score_;
     bool highlight_;
-#ifdef FIX_ME
-    g2d::draw_queue text_; // , score_text_;
-#endif
     const g2d::texture *frame_texture_;
-#ifdef FIX_ME
-    g2d::vertex_array_texuv frame_va_[3];
-#endif
-    score_text score_text_;
+    std::wstring rank_text_;
+    std::wstring score_text_;
 };
 
-item::item(int rank, wchar_t *name, int score, bool highlight)
+item::item(int rank, const std::wstring &name, int score, bool highlight)
     : rank_(rank)
     , name_(name)
     , score_(score)
     , highlight_(highlight)
     , frame_texture_(g2d::load_texture("images/w-button-border.png"))
-#ifdef FIX_ME
-    , frame_va_{8, 8, 8}
-#endif
-    , score_text_(get_font(font::small))
 {
     initialize_text();
-    initialize_frame();
-}
-
-item::~item()
-{
-    delete[] name_;
 }
 
 void item::initialize_text()
 {
-    const auto *small_font = get_font(font::small);
-    const auto *tiny_font = get_font(font::tiny);
-
-    auto gi_small = small_font->find_glyph(L'X');
-    const float y_small = .5 * (-HEIGHT + gi_small->height) - gi_small->top;
-
-    auto gi_tiny = tiny_font->find_glyph(L'X');
-    const float y_tiny = .5 * (-HEIGHT + gi_tiny->height) - gi_tiny->top;
-
-#ifdef FIX_ME
-    text_.reset();
-
-    text_
-        .text_program(get_program_instance<program_texture_uniform_color>().get_raw())
-
-        .push_matrix()
-        .translate(50, y_tiny)
-        .align_right()
-        // .render_text(small_font, L"%d位", rank_)
-        .render_text(tiny_font, L"%d", rank_)
-        .pop_matrix()
-
-        // .push_matrix()
-        .translate(68, y_tiny)
-        .align_left()
-        .render_text(tiny_font, L"%s", name_);
-// .pop_matrix()
-#endif
-
-#if 0
-	score_text_.reset();
-
-	score_text_
-		.text_program(get_program_instance<program_timer_text>().get_raw())
-		.translate(window_width - 28, y_small)
-		.align_right()
-		.render_text(small_font, L"%d", score_)
-		.draw();
-#else
-    score_text_.initialize(score_);
-#endif
+    rank_text_ = format_number(rank_);
+    score_text_ = format_number(score_);
 }
 
-void item::initialize_frame()
+void item::draw(float alpha) const
 {
-#ifdef FIX_ME
-    const float x0 = 0;
-    const float x1 = BORDER_RADIUS;
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-    const float x3 = window_width;
-    const float x2 = x3 - BORDER_RADIUS;
-
-    const float y0 = 0;
-    const float y1 = -BORDER_RADIUS;
-
-    const float y3 = -HEIGHT;
-    const float y2 = y3 + BORDER_RADIUS;
-
-    frame_va_[0] << x0, y0, 0, 0;
-    frame_va_[0] << x0, y1, 0, .25;
-
-    frame_va_[0] << x1, y0, .25, 0;
-    frame_va_[0] << x1, y1, .25, .25;
-
-    frame_va_[0] << x2, y0, .75, 0;
-    frame_va_[0] << x2, y1, .75, .25;
-
-    frame_va_[0] << x3, y0, 1, 0;
-    frame_va_[0] << x3, y1, 1, .25;
-
-    frame_va_[1] << x0, y1, 0, .25;
-    frame_va_[1] << x0, y2, 0, .75;
-
-    frame_va_[1] << x1, y1, .25, .25;
-    frame_va_[1] << x1, y2, .25, .75;
-
-    frame_va_[1] << x2, y1, .75, .25;
-    frame_va_[1] << x2, y2, .75, .75;
-
-    frame_va_[1] << x3, y1, 1, .25;
-    frame_va_[1] << x3, y2, 1, .75;
-
-    frame_va_[2] << x0, y2, 0, .75;
-    frame_va_[2] << x0, y3, 0, 1;
-
-    frame_va_[2] << x1, y2, .25, .75;
-    frame_va_[2] << x1, y3, .25, 1;
-
-    frame_va_[2] << x2, y2, .75, .75;
-    frame_va_[2] << x2, y3, .75, 1;
-
-    frame_va_[2] << x3, y2, 1, .75;
-    frame_va_[2] << x3, y3, 1, 1;
-#endif
-}
-
-void item::draw(const g2d::mat4 &mat, float alpha) const
-{
-    glEnable(GL_BLEND);
-
-    // draw frame
+    // frame
 
     {
+        constexpr const auto FRAME_LAYER = 100;
+
         g2d::rgba color;
 
         if (!highlight_) {
@@ -364,54 +123,88 @@ void item::draw(const g2d::mat4 &mat, float alpha) const
             color = g2d::rgba(1, t, t, alpha);
         }
 
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        const float x0 = 0;
+        const float x1 = BORDER_RADIUS;
 
-#ifdef FIX_ME
-        auto &prog = get_program_instance<program_texture_uniform_color>();
-        prog.use();
-        prog.set_proj_modelview_matrix(mat);
-        prog.set_texture(0);
-        prog.set_color(color);
-#endif
+        const float x3 = window_width;
+        const float x2 = x3 - BORDER_RADIUS;
 
-        frame_texture_->bind();
+        const float y0 = 0;
+        const float y1 = -BORDER_RADIUS;
 
-#ifdef FIX_ME
-        for (const auto &va : frame_va_)
-            va.draw(GL_TRIANGLE_STRIP);
-#endif
+        const float y3 = -HEIGHT;
+        const float y2 = y3 + BORDER_RADIUS;
+
+        const auto draw_row = [this, x0, x1, x2, x3](float y0, float y1, float u0, float u1) {
+            render::draw_quad(
+                    frame_texture_,
+                    {{x0, y0}, {x0, y1}, {x1, y1}, {x1, y0}},
+                    {{0, u0}, {0, u1}, {.25, u1}, {.25, u0}},
+                    FRAME_LAYER);
+
+            render::draw_quad(
+                    frame_texture_,
+                    {{x1, y0}, {x1, y1}, {x2, y1}, {x2, y0}},
+                    {{.25, u0}, {.25, u1}, {.75, u1}, {.75, u0}},
+                    FRAME_LAYER);
+
+            render::draw_quad(
+                    frame_texture_,
+                    {{x2, y0}, {x2, y1}, {x3, y1}, {x3, y0}},
+                    {{.75, u0}, {.75, u1}, {1, u1}, {1, u0}},
+                    FRAME_LAYER);
+        };
+
+        draw_row(y0, y1, 0, .25);
+        draw_row(y1, y2, .25, .75);
+        draw_row(y2, y3, .75, 1);
     }
 
-#if 0
-	{
-	auto& prog = get_program_instance<program_timer_text>();
-	prog.use();
-	prog.set_proj_modelview_matrix(mat);
-	prog.set_texture(0);
+    constexpr const auto TEXT_LAYER = 101;
 
-	prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
-	prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
-
-	score_text_.draw();
-	}
-#else
-    score_text_.draw(mat * g2d::mat4::translation(window_width - 28 - score_text_.get_width(), -52.5, 0), alpha);
-#endif
+    // score
 
     {
-        glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+        render::push_matrix();
 
-#ifdef FIX_ME
-        auto &prog = get_program_instance<program_texture_uniform_color>();
-        prog.use();
-        prog.set_proj_modelview_matrix(mat);
-        prog.set_texture(0);
-        prog.set_color(g2d::rgba(alpha, alpha, alpha, 1));
-#endif
+        render::translate(window_width - 28, -52.5);
 
-#ifdef FIX_ME
-        text_.draw();
-#endif
+        const auto top_color = g2d::rgb{200, 200, 255} * (1. / 255.);
+        const auto bottom_color = g2d::rgb{120, 120, 255} * (1. / 255.);
+
+        const g2d::rgba top_color_text{top_color, alpha};
+        const g2d::rgba bottom_color_text{bottom_color, alpha};
+        const g2d::rgba top_color_outline{.5 * top_color, alpha};
+        const g2d::rgba bottom_color_outline{.5 * bottom_color, alpha};
+
+        render::set_text_align(text_align::RIGHT);
+        render::draw_text(get_font(font::small), {}, TEXT_LAYER,
+                top_color_outline, top_color_text,
+                bottom_color_outline, bottom_color_text,
+                score_text_.c_str());
+
+        render::pop_matrix();
+    }
+
+    // rank and name
+
+    render::set_blend_mode(blend_mode::INVERSE_BLEND);
+
+    {
+        const auto *small_font = get_font(font::small);
+        const auto *tiny_font = get_font(font::tiny);
+
+        auto gi_small = small_font->find_glyph(L'X');
+        const float y_small = .5 * (-HEIGHT + gi_small->height) - gi_small->top;
+
+        auto gi_tiny = tiny_font->find_glyph(L'X');
+        const float y_tiny = .5 * (-HEIGHT + gi_tiny->height) - gi_tiny->top;
+
+        render::set_text_align(text_align::RIGHT);
+        render::draw_text(tiny_font, {50, y_tiny}, TEXT_LAYER, rank_text_.c_str());
+
+        render::set_text_align(text_align::LEFT);
+        render::draw_text(tiny_font, {68, y_tiny}, TEXT_LAYER, name_.c_str());
     }
 }
 
@@ -420,7 +213,7 @@ class local_leaderboard : public leaderboard_page
 public:
     local_leaderboard(const std::string &title, const std::string &cache_path);
 
-    void draw(const g2d::mat4 &mat, float alpha) const override;
+    void draw(float alpha) const override;
     bool async_check_hiscore(leaderboard_event_listener *listener, int score) override;
     bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score) override;
 };
@@ -435,7 +228,7 @@ public:
     void on_request_error();
     void on_request_completed(int status, const char *content, size_t content_len);
 
-    void draw(const g2d::mat4 &mat, float alpha) const override;
+    void draw(float alpha) const override;
     bool async_check_hiscore(leaderboard_event_listener *listener, int score) override;
     bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score) override;
 
@@ -467,21 +260,8 @@ private:
 
 leaderboard_page::leaderboard_page(const std::string &title, const std::string &cache_path)
     : cache_path_(cache_path)
+    , title_text_(title.begin(), title.end())
 {
-#ifdef FIX_ME
-    const g2d::font *font = g2d::load_font("fonts/medium");
-
-    title_text_.reset();
-
-    wchar_t *title_wchar = utf8_to_wchar(title.c_str());
-
-    title_text_.text_program(get_program_instance<program_timer_text>().get_raw())
-        .translate(.5 * window_width, window_height - .5 * TITLE_HEIGHT - 14)
-        .align_center()
-        .render_text(font, L"%s", title_wchar);
-
-    delete[] title_wchar;
-#endif
 }
 
 leaderboard_page::~leaderboard_page()
@@ -529,7 +309,7 @@ void leaderboard_page::save_cache() const
 {
     if (FILE *out = fopen(cache_path_.c_str(), "w")) {
         std::for_each(items_.begin(), items_.end(), [=](const item *p) {
-            unsigned char *name_utf8 = wchar_to_utf8(p->get_name());
+            unsigned char *name_utf8 = wchar_to_utf8(p->get_name().c_str());
             fprintf(out, "%s:%d\n", name_utf8, p->get_score());
             delete[] name_utf8;
         });
@@ -538,33 +318,29 @@ void leaderboard_page::save_cache() const
     }
 }
 
-void leaderboard_page::draw_title(const g2d::mat4 &mat, float alpha) const
+void leaderboard_page::draw_title(float alpha) const
 {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    const auto text_color = g2d::rgba{1., 1., 1., alpha};
+    const auto outline_color = g2d::rgba{.5, 0., 0., alpha};
 
-#ifdef FIX_ME
-    auto &prog = get_program_instance<program_timer_text>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-    prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
-    prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
-#endif
-
-#ifdef FIX_ME
-    title_text_.draw();
-#endif
+    render::push_matrix();
+    render::translate(.5 * window_width, window_height - .5 * TITLE_HEIGHT - 14);
+    render::set_text_align(text_align::CENTER);
+    render::draw_text(get_font(font::medium), {}, 100,
+            outline_color, text_color, outline_color, text_color,
+            title_text_.c_str());
+    render::pop_matrix();
 }
 
-void leaderboard_page::draw_items(const g2d::mat4 &mat, float alpha) const
+void leaderboard_page::draw_items(float alpha) const
 {
     const float top_y = window_height - TITLE_HEIGHT;
     const float total_height = items_.size() * item::HEIGHT;
 
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(0, 0, viewport_width, top_y * viewport_height / window_height);
+    render::set_scissor_test(true);
+    render::set_scissor_box(0, 0, viewport_width, top_y * viewport_height / window_height);
 
     float y = top_y + y_offset_;
     if (y < top_y)
@@ -574,7 +350,12 @@ void leaderboard_page::draw_items(const g2d::mat4 &mat, float alpha) const
 
     for (auto item : items_) {
         if (y - item::HEIGHT < top_y)
-            item->draw(mat * g2d::mat4::translation(0, y, 0), alpha);
+        {
+            render::push_matrix();
+            render::translate(0, y);
+            item->draw(alpha);
+            render::pop_matrix();
+        }
 
         y -= item::HEIGHT;
 
@@ -582,7 +363,7 @@ void leaderboard_page::draw_items(const g2d::mat4 &mat, float alpha) const
             break;
     }
 
-    glDisable(GL_SCISSOR_TEST);
+    render::set_scissor_test(false);
 }
 
 void leaderboard_page::update(uint32_t dt)
@@ -651,10 +432,10 @@ local_leaderboard::local_leaderboard(const std::string &title, const std::string
     }
 }
 
-void local_leaderboard::draw(const g2d::mat4 &mat, float alpha) const
+void local_leaderboard::draw(float alpha) const
 {
-    draw_title(mat, alpha);
-    draw_items(mat, alpha);
+    draw_title(alpha);
+    draw_items(alpha);
 }
 
 bool local_leaderboard::async_check_hiscore(leaderboard_event_listener *listener, int score)
@@ -703,8 +484,9 @@ void net_leaderboard::reset()
         start_loading();
 }
 
-void net_leaderboard::draw(const g2d::mat4 &mat, float alpha) const
+void net_leaderboard::draw(float alpha) const
 {
+#ifdef FIX_ME
     switch (state_) {
         case STATE_LOADING:
             draw_loading_message(mat, alpha);
@@ -722,6 +504,7 @@ void net_leaderboard::draw(const g2d::mat4 &mat, float alpha) const
         default:
             assert(0);
     }
+#endif
 }
 
 bool net_leaderboard::need_refresh() const

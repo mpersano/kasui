@@ -4,6 +4,7 @@
 #include "main_menu.h"
 #include "pause_button.h"
 #include "tween.h"
+#include "render.h"
 
 class hiscore_list_impl
 {
@@ -42,7 +43,11 @@ private:
 };
 
 hiscore_list_impl::hiscore_list_impl()
+#ifdef FIX_ME
     : leaderboard_(get_net_leaderboard())
+#else
+    : leaderboard_(get_local_leaderboard())
+#endif
     , pause_button_(window_width - pause_button::SIZE, window_height - pause_button::SIZE)
 {
     pause_button_.set_callback([this] { on_back_key(); });
@@ -66,12 +71,7 @@ void hiscore_list_impl::reset()
 
 void hiscore_list_impl::redraw() const
 {
-#if 1
     get_prev_state()->redraw(); // draw main menu background
-#else
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-#endif
 
     float x_offset, alpha;
 
@@ -94,9 +94,10 @@ void hiscore_list_impl::redraw() const
             break;
     }
 
-    g2d::mat4 mat = get_ortho_projection();
-
-    leaderboard_.draw(mat * g2d::mat4::translation(x_offset, 0, 0), alpha);
+    render::push_matrix();
+    render::translate(x_offset, 0);
+    leaderboard_.draw(alpha);
+    render::pop_matrix();
 
     pause_button_.draw(alpha);
 }

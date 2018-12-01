@@ -28,7 +28,7 @@ public:
 
     virtual void reset();
 
-    virtual void draw(const g2d::mat4 &mat, float alpha) const = 0;
+    virtual void draw(float alpha) const = 0;
 
     virtual bool async_check_hiscore(leaderboard_event_listener *listener, int score) = 0;
     virtual bool async_insert_hiscore(leaderboard_event_listener *listener, const wchar_t *name, int score) = 0;
@@ -47,17 +47,15 @@ protected:
     bool is_hiscore(int score) const;
     bool load_cache();
     void save_cache() const;
-    void draw_title(const g2d::mat4 &mat, float alpha) const;
-    void draw_items(const g2d::mat4 &mat, float alpha) const;
+    void draw_title(float alpha) const;
+    void draw_items(float alpha) const;
 
     void update_y_offset(float dy);
     void clear_items();
 
     std::string cache_path_;
 
-#ifdef FIX_ME
-    g2d::draw_queue title_text_;
-#endif
+    std::wstring title_text_;
     std::vector<item *> items_;
     float y_offset_;
     int touch_start_tic_;
