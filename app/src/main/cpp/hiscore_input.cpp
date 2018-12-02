@@ -634,6 +634,7 @@ private:
     void back_to_main_menu();
     void draw_input() const;
 
+    leaderboard_page &leaderboard_;
     bool touch_is_down_;
     int cur_selected_key_;
     const g2d::texture *keyboard_texture_;
@@ -655,7 +656,12 @@ private:
 };
 
 hiscore_input_state_impl::hiscore_input_state_impl()
-    : keyboard_texture_(g2d::load_texture("images/keyboard.png"))
+#ifdef NET_LEADERBOARD
+    : leaderboard_(get_net_leaderboard())
+#else
+    : leaderboard_(get_local_leaderboard())
+#endif
+    , keyboard_texture_(g2d::load_texture("images/keyboard.png"))
     , state_(STATE_NONE)
 {
     static const struct key_code_width
@@ -853,7 +859,7 @@ void hiscore_input_state_impl::set_score(int score)
 #ifdef FIX_ME
     state_ = STATE_CHECKING_HISCORE;
 
-    if (!get_net_leaderboard().async_check_hiscore(this, score_))
+    if (!leaderboard_.async_check_hiscore(this, score_))
         back_to_main_menu();
 #else
     score_text_ = format_number(score);
@@ -946,7 +952,7 @@ void hiscore_input_state_impl::on_touch_up()
                 case '\n':
                     if (input_area_.get_input_len() > 0) {
                         cur_options->set_player_name(input_area_.get_input());
-                        get_net_leaderboard().async_insert_hiscore(this, input_area_.get_input(), score_);
+                        leaderboard_.async_insert_hiscore(this, input_area_.get_input(), score_);
                         back_to_hiscore_list();
                         return;
                     } else {

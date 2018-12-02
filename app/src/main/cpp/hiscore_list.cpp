@@ -43,7 +43,7 @@ private:
 };
 
 hiscore_list_impl::hiscore_list_impl()
-#ifdef FIX_ME
+#ifdef NET_LEADERBOARD
     : leaderboard_(get_net_leaderboard())
 #else
     : leaderboard_(get_local_leaderboard())

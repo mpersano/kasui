@@ -10,6 +10,7 @@ if (ANDROID)
 endif()
 
 add_definitions("-DCHECK_GL_CALLS")
+# add_definitions("-DNET_LEADERBOARD")
 
 find_package(ZLIB REQUIRED)
 
