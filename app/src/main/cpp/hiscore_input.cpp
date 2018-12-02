@@ -904,11 +904,7 @@ void hiscore_input_state_impl::draw_input() const
 
 void hiscore_input_state_impl::redraw() const
 {
-#if 0
-	glClear(GL_COLOR_BUFFER_BIT);
-#else
     get_prev_state()->redraw(); // draw main menu background
-#endif
 
     // set_ortho_projection();
 
