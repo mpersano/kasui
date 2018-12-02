@@ -7,6 +7,7 @@
 #include "fonts.h"
 #include "programs.h"
 #include "render.h"
+#include "utils.h"
 
 #include <guava2d/font.h>
 #include <guava2d/program.h>
@@ -54,78 +55,6 @@ struct key_info
 };
 
 std::map<wchar_t, key_info *> char_to_key;
-
-class score_text
-{
-public:
-    score_text(const g2d::font *font);
-
-    void initialize(int value);
-
-    void draw(float alpha) const;
-
-private:
-    void add_digit(wchar_t ch);
-    void format_thousands(int n);
-
-    const g2d::font *font_;
-    wchar_t score_text_[30];
-    size_t score_text_size_ = 0;
-};
-
-score_text::score_text(const g2d::font *font)
-    : font_(font)
-{
-}
-
-void score_text::add_digit(wchar_t ch)
-{
-    score_text_[score_text_size_++] = ch;
-}
-
-void score_text::format_thousands(int n)
-{
-    if (n >= 1000) {
-        format_thousands(n / 1000);
-
-        const int m = n % 1000;
-
-        add_digit(',');
-        add_digit('0' + (m / 100));
-        add_digit('0' + (m / 10) % 10);
-        add_digit('0' + m % 10);
-    } else {
-        if (n >= 100)
-            add_digit('0' + (n / 100));
-        if (n >= 10)
-            add_digit('0' + (n / 10) % 10);
-        add_digit('0' + n % 10);
-    }
-}
-
-void score_text::initialize(int score)
-{
-    score_text_size_ = 0;
-    format_thousands(score);
-    score_text_[score_text_size_] = L'\0';
-}
-
-void score_text::draw(float alpha) const
-{
-    const auto top_color = g2d::rgb{200, 200, 255} * (1. / 255.);
-    const auto bottom_color = g2d::rgb{120, 120, 255} * (1. / 255.);
-
-    const g2d::rgba top_color_text{top_color, alpha};
-    const g2d::rgba bottom_color_text{bottom_color, alpha};
-    const g2d::rgba top_color_outline{.5 * top_color, alpha};
-    const g2d::rgba bottom_color_outline{.5 * bottom_color, alpha};
-
-    render::set_text_align(text_align::CENTER);
-    render::draw_text(font_, {}, INPUT_BUFFER_LAYER,
-                      top_color_outline, top_color_text,
-                      bottom_color_outline, bottom_color_text,
-                      score_text_);
-}
 
 class input_buffer
 {
@@ -715,7 +644,7 @@ private:
     keyboard_layout *cur_keyboard_;
     input_buffer input_area_;
     int score_;
-    score_text score_text_;
+    std::wstring score_text_;
 
     enum state
     {
@@ -727,7 +656,6 @@ private:
 
 hiscore_input_state_impl::hiscore_input_state_impl()
     : keyboard_texture_(g2d::load_texture("images/keyboard.png"))
-    , score_text_(get_font(font::large))
     , state_(STATE_NONE)
 {
     static const struct key_code_width
@@ -928,7 +856,7 @@ void hiscore_input_state_impl::set_score(int score)
     if (!get_net_leaderboard().async_check_hiscore(this, score_))
         back_to_main_menu();
 #else
-    score_text_.initialize(score);
+    score_text_ = format_number(score);
     state_ = STATE_INPUT;
 #endif
 }
@@ -940,7 +868,21 @@ void hiscore_input_state_impl::draw_input() const
 
     render::push_matrix();
     render::translate(.5 * window_width, .6 * window_height + 150);
-    score_text_.draw(1);
+    {
+        const auto top_color = g2d::rgb{200, 200, 255} * (1. / 255.);
+        const auto bottom_color = g2d::rgb{120, 120, 255} * (1. / 255.);
+
+        const g2d::rgba top_color_text{top_color, 1.};
+        const g2d::rgba bottom_color_text{bottom_color, 1.};
+        const g2d::rgba top_color_outline{.5 * top_color, 1.};
+        const g2d::rgba bottom_color_outline{.5 * bottom_color, 1.};
+
+        render::set_text_align(text_align::CENTER);
+        render::draw_text(get_font(font::large), {}, INPUT_BUFFER_LAYER,
+                top_color_outline, top_color_text,
+                bottom_color_outline, bottom_color_text,
+                score_text_.c_str());
+    }
     render::pop_matrix();
 
     render::set_text_align(text_align::CENTER);
@@ -1092,7 +1034,7 @@ void hiscore_input_state_impl::on_check_hiscore_response(bool ok, bool is_hiscor
         back_to_main_menu();
     } else {
         if (is_hiscore) {
-            score_text_.initialize(score_);
+            score_text_ = format_number(score_);
             state_ = STATE_INPUT;
         } else {
             // not a hiscore, back to menu

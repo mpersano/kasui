@@ -97,7 +97,8 @@ set(KASUI_SOURCES
     tutorial.cpp
     utf8.cpp
     world.cpp
-    fonts.cpp)
+    fonts.cpp
+    utils.cpp)
 
 if(ANDROID)
     list(APPEND KASUI_SOURCES
