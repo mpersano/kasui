@@ -19,7 +19,7 @@
 #include <cstring>
 #include <map>
 
-extern void draw_message(const g2d::mat4 &, float alpha, const wchar_t *);
+extern void draw_message(const g2d::vec2 &, float alpha, const wchar_t *);
 extern int total_tics;
 
 namespace {
@@ -606,7 +606,7 @@ int keyboard_layout::find_key_for(float x, float y) const
 
 void draw_message(const wchar_t *text)
 {
-    ::draw_message(get_ortho_projection(), 1, text);
+    ::draw_message({}, 1, text);
 }
 
 } // namespace

@@ -27,30 +27,21 @@
 #include <guava2d/texture_manager.h>
 #include <guava2d/xwchar.h>
 
-void draw_message(const g2d::mat4 &mat, float alpha, const wchar_t *text)
+void draw_message(const g2d::vec2 &pos, float alpha, const wchar_t *text)
 {
-#ifdef FIX_ME
-    const auto *small_font = get_font(font::tiny);
+    const auto text_color = g2d::rgba{1., 1., 1., alpha};
+    const auto outline_color = g2d::rgba{.5, 0., 0., alpha};
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    render::set_blend_mode(blend_mode::ALPHA_BLEND);
 
-    auto &prog = get_program_instance<program_timer_text>();
-    prog.use();
-    prog.set_proj_modelview_matrix(mat);
-    prog.set_texture(0);
-
-    prog.set_text_color(g2d::rgba(1., 1., 1., alpha));
-    prog.set_outline_color(g2d::rgba(.5, 0., 0., alpha));
-
-    g2d::draw_queue()
-        .text_program(prog.get_raw())
-        .translate(.5 * window_width, .5 * window_height)
-        .scale(1.2)
-        .align_center()
-        .render_text(small_font, L"%s", text)
-        .draw();
-#endif
+    render::push_matrix();
+    render::translate(pos + g2d::vec2{.5f * window_width, .5f * window_height});
+    render::scale(1.2, 1.2);
+    render::set_text_align(text_align::CENTER);
+    render::draw_text(get_font(font::tiny), {}, 100,
+            outline_color, text_color, outline_color, text_color,
+            text);
+    render::pop_matrix();
 }
 
 class item
@@ -232,8 +223,8 @@ private:
     bool need_refresh() const;
     bool cache_expired() const;
 
-    void draw_loading_message(const g2d::mat4 &mat, float alpha) const;
-    void draw_error_message(const g2d::mat4 &mat, float alpha) const;
+    void draw_loading_message(float alpha) const;
+    void draw_error_message(float alpha) const;
 
     void answer_hiscore_requests();
 
@@ -478,25 +469,23 @@ void net_leaderboard::reset()
 
 void net_leaderboard::draw(float alpha) const
 {
-#ifdef FIX_ME
     switch (state_) {
         case STATE_LOADING:
-            draw_loading_message(mat, alpha);
+            draw_loading_message(alpha);
             break;
 
         case STATE_ERROR:
-            draw_error_message(mat, alpha);
+            draw_error_message(alpha);
             break;
 
         case STATE_DISPLAYING:
-            draw_title(mat, alpha);
-            draw_items(mat, alpha);
+            draw_title(alpha);
+            draw_items(alpha);
             break;
 
         default:
             assert(0);
     }
-#endif
 }
 
 bool net_leaderboard::need_refresh() const
@@ -626,16 +615,18 @@ void net_leaderboard::on_request_completed(int status, const char *content, size
     answer_hiscore_requests();
 }
 
-void net_leaderboard::draw_loading_message(const g2d::mat4 &mat, float alpha) const
+void net_leaderboard::draw_loading_message(float alpha) const
 {
+#ifdef FIX_ME
     draw_message(mat, alpha, L"loading leaderboard...");
+#endif
 }
 
-void net_leaderboard::draw_error_message(const g2d::mat4 &mat, float alpha) const
+void net_leaderboard::draw_error_message(float alpha) const
 {
-    draw_message(mat * g2d::mat4::translation(0, 20, 0), alpha, L"something went wrong!");
-    draw_message(mat * g2d::mat4::translation(0, -48, 0), alpha, L"please check your");
-    draw_message(mat * g2d::mat4::translation(0, -96, 0), alpha, L"network settings");
+    draw_message({0, 20}, alpha, L"something went wrong!");
+    draw_message({0, -48}, alpha, L"please check your");
+    draw_message({0, -96}, alpha, L"network settings");
 }
 
 bool net_leaderboard::async_check_hiscore(leaderboard_event_listener *listener, int score)
