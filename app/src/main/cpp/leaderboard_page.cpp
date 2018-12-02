@@ -110,18 +110,10 @@ void item::draw(float alpha) const
 
     // frame
 
+    constexpr const auto FRAME_LAYER = 100;
+
     {
-        constexpr const auto FRAME_LAYER = 100;
-
-        g2d::rgba color;
-
-        if (!highlight_) {
-            color = g2d::rgba(1, 1, 1, alpha);
-        } else {
-            extern int total_tics;
-            float t = .875 + .125 * sin(.2 * total_tics);
-            color = g2d::rgba(1, t, t, alpha);
-        }
+        render::set_color({1, 1, 1, alpha});
 
         const float x0 = 0;
         const float x1 = BORDER_RADIUS;
