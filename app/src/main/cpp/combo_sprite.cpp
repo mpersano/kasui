@@ -5,18 +5,12 @@
 #include "settings.h"
 #include "fonts.h"
 
-#include <sstream>
-
 combo_sprite::combo_sprite(int combo_size, float x, float y, const gradient& g)
     : x_origin_(x)
     , y_origin_(y)
     , gradient_(g)
 {
-    // XXX use boost::lexical_cast here
-    std::wstringstream ss;
-    ss << combo_size;
-    combo_size_ = ss.str();
-
+    combo_size_ = std::to_wstring(combo_size);
     x_chain_text_ = get_font(font::large)->get_string_width(combo_size_.c_str()) + 12;
 }
 
